@@ -5,16 +5,19 @@
 #include <iostream>
 #include <thread>
 #include "deltaPage.hpp"
-#include "pagedVector.hpp"
-#include "rwSet.hpp"
 #include "transaction.hpp"
+#include "transVector.hpp"
 using namespace std;
+
+TransactionalVector<VAL> *transVector;
+void runThread(int threadNum);
+int main(int argc, char *argv[]);
 
 // Change these to test different situations.
 // TUNE
-size_t THREAD_COUNT = 24;
+size_t THREAD_COUNT = 1;
 // TUNE
-size_t TRANSACTION_SIZE = 1;
+size_t TRANSACTION_SIZE = 3;
 // TUNE
 size_t NUM_TRANSACTIONS = 10000;
 

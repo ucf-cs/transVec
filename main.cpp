@@ -1,25 +1,20 @@
-#include "transvec.hpp"
-
-SegmentedVector<Page<VAL> *> *array;
+#include "main.hpp"
 
 void runThread(int threadNum)
 {
-	for (int i = 0; i < NUM_TRANSACTIONS / THREAD_COUNT; i++)
+	Operation<int> *ops = new Operation<int>[TRANSACTION_SIZE];
+	for (int i = 0; i < TRANSACTION_SIZE; i++)
 	{
-		Operation<int> *ops = new Operation<int>[1];
-		ops[0].type = Operation<int>::OpType::pushBack;
-		ops[0].val = i;
-
-		Desc<int> *desc = new Desc<int>(TRANSACTION_SIZE, ops);
-
-		RWSet<int> *set = new RWSet<int>();
-		//set->executeTransaction(array, desc);
+		ops[i].type = Operation<int>::OpType::pushBack;
+		ops[i].val = i;
 	}
+	Desc<int> *desc = new Desc<int>(TRANSACTION_SIZE, ops);
+	transVector->executeTransaction(desc);
 }
 
 int main(int argc, char *argv[])
 {
-	auto array = new SegmentedVector<Page<int> *>();
+	auto transVector = new TransactionalVector<VAL>();
 
 	// Create our threads.
 	thread threads[THREAD_COUNT];

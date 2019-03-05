@@ -82,37 +82,18 @@ struct Desc
     Operation<T> *ops;
     // The status of the transaction.
     std::atomic<TxStatus> status;
+    // The status of the returned values.
+    // They are not safe to access until this is true.
+    std::atomic<bool> returnedValues;
 
     // Create a descriptor object.
     // ops:     An array of operations, passed by reference.
     // size:    The number of operations in the operations array.
-    Desc(unsigned int size, Operation<T> *ops)
-    {
-        this->size = size;
-        this->ops = ops;
-        // Transactions are always active at start.
-        status.store(active);
-        return;
-    }
-    ~Desc()
-    {
-        //delete ops;
-        return;
-    }
+    Desc(unsigned int size, Operation<T> *ops);
+    ~Desc();
 
     // Used to get our final results after a transaction commits.
-    T *getResult(size_t index)
-    {
-        if (index >= size)
-        {
-            return NULL;
-        }
-        if (status != committed)
-        {
-            return NULL;
-        }
-        return ops[index].ret;
-    }
+    T *getResult(size_t index);
 };
 
 #endif

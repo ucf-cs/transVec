@@ -1,1 +1,1 @@
-g++ -std=c++11 -g -pthread transvec.cpp && ./a.out
+g++ -std=c++11 -g -pthread main.cpp && ./a.out
