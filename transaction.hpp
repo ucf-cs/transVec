@@ -54,10 +54,6 @@ struct Operation
     // Used for push and write.
     // Pop implicitly writes an unset value for bounds checking.
     T val;
-    // The offset from our size.
-    // Add this to the size value retrieved for the transaction to get an accurate size report.
-    // TODO: Remember what this does.
-    long int offset;
     // The return value for this operation.
     // Only used for read, pop, and size.
     // Only safe to read if the transaction has committed.

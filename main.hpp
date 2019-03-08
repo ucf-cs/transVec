@@ -10,8 +10,7 @@
 
 using namespace std;
 
-TransactionalVector<VAL> *transVector;
-
+TransactionalVector<int> *transVector;
 
 void runThread(int threadNum);
 

@@ -243,15 +243,15 @@ void TransactionalVector<T>::setOperationVals(
         {
             // Get the value.
             T value = *(page->at(j, OLD_VAL));
-            /*
-            // TODO: Fix this for loop.
+
+            // Get the read list for the current element.
+            std::vector<Operation<T> *> readList = operations->at(i->first).at(j).readList;
             // For each operation attempting to read the element.
-            for (size_t k = 0; k < operations->at(i.first).at(j).readList.size(); k++)
+            for (size_t k = 0; k < readList.size(); k++)
             {
                 // Assign the return value.
-                operations->at(i->first).at(j)->readList[k] = value;
+                readList[k]->ret = value;
             }
-            */
         }
     }
 
