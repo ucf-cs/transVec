@@ -160,4 +160,5 @@ bool SegmentedVector<T>::tryWrite(size_t index, T oldVal, T newVal)
     return bucketArray[indexes.first][indexes.second].compare_exchange_strong(oldVal, newVal);
 }
 
-template class SegmentedVector<Page<int>*>;
+template class SegmentedVector<Page<size_t, int> *>;
+template class SegmentedVector<Page<int, int>*>;

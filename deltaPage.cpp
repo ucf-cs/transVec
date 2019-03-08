@@ -1,13 +1,11 @@
 #include "deltaPage.hpp"
 
-template<typename T>
-Page<T>::Page(size_t size)
+template <typename T, typename U>
+Page<T, U>::Page(size_t size)
 {
     this->size = size;
     newVal = new T[size];
     oldVal = new T[size];
-
-    newVal[5] = 5;
 
     next = NULL;
     this->transaction = NULL;
@@ -15,8 +13,8 @@ Page<T>::Page(size_t size)
     return;
 }
 
-template<typename T>
-Page<T>::~Page()
+template <typename T, typename U>
+Page<T, U>::~Page()
 {
     if (newVal != NULL)
     {
@@ -28,8 +26,8 @@ Page<T>::~Page()
     }
 }
 
-template<typename T>
-T *Page<T>::at(size_t index, bool newVals)
+template <typename T, typename U>
+T *Page<T, U>::at(size_t index, bool newVals)
 {
     // Don't go out of bounds.
     if (index > SEG_SIZE)
@@ -57,5 +55,5 @@ T *Page<T>::at(size_t index, bool newVals)
     return newVals ? &newVal[pos] : &oldVal[pos];
 }
 
-template class Page<int>;
-template class Page<size_t>;
+template class Page<int, int>;
+template class Page<size_t, int>;

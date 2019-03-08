@@ -56,6 +56,7 @@ struct Operation
     T val;
     // The offset from our size.
     // Add this to the size value retrieved for the transaction to get an accurate size report.
+    // TODO: Remember what this does.
     long int offset;
     // The return value for this operation.
     // Only used for read, pop, and size.

@@ -22,14 +22,17 @@ Desc<T>::~Desc()
 template <typename T>
 T *Desc<T>::getResult(size_t index)
 {
+    // If we request a result at an invalid operation index.
     if (index >= size)
     {
         return NULL;
     }
-    if (status != committed)
+    // If the transaction has not yet committed.
+    if (status.load() != committed)
     {
         return NULL;
     }
+    // Return the value returned by the operation.
     return &(ops[index].ret);
 }
 

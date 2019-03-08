@@ -19,7 +19,9 @@ struct Bitset
     std::bitset<size> checkBounds;
 };
 
-template <class T>
+// T: Type of data to store in the page.
+// U: Type of transaction to link to.
+template <class T, class U>
 // A delta update page.
 class Page
 {
@@ -39,7 +41,7 @@ class Page
     // A list of what modification types this transaction performs.
     Bitset<SEG_SIZE> bitset;
     // A pointer to the transaction associated with this page.
-    Desc<T> *transaction;
+    Desc<U> *transaction;
     // A pointer to the next page in the delta update list for this segment.
     Page *next;
 

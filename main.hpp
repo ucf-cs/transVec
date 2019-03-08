@@ -7,10 +7,14 @@
 #include "deltaPage.hpp"
 #include "transaction.hpp"
 #include "transVector.hpp"
+
 using namespace std;
 
 TransactionalVector<VAL> *transVector;
+
+
 void runThread(int threadNum);
+
 int main(int argc, char *argv[]);
 
 // Change these to test different situations.
