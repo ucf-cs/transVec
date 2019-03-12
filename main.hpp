@@ -20,8 +20,8 @@ int main(int argc, char *argv[]);
 // TUNE
 size_t THREAD_COUNT = 1;
 // TUNE
-size_t TRANSACTION_SIZE = 3;
+size_t TRANSACTION_SIZE = 10;
 // TUNE
-size_t NUM_TRANSACTIONS = 10000;
+size_t NUM_TRANSACTIONS = 1;
 
 #endif

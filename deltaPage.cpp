@@ -7,9 +7,6 @@ Page<T, U>::Page(size_t size)
     newVal = new T[size];
     oldVal = new T[size];
 
-    next = NULL;
-    this->transaction = NULL;
-
     return;
 }
 
@@ -43,13 +40,18 @@ T *Page<T, U>::at(size_t index, bool newVals)
     }
     // Get the number of bits before the bit at our target index.
     size_t pos = 0;
+    // Consider all bits in our bitset just short of the target.
     for (size_t i = 0; i < index; i++)
     {
+        // If the value is in the segment.
         if (usedBits[i])
         {
+            // Increment our target index by 1.
             pos++;
         }
     }
+    // Now pos is the index of our value in the array.
+
     // Return the address of the position in question.
     // This way, we can change the value stored in the page, if needed.
     return newVals ? &newVal[pos] : &oldVal[pos];

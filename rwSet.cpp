@@ -11,7 +11,7 @@ template <typename T>
 std::pair<size_t, size_t> RWSet<T>::access(size_t pos)
 {
     // All other cases.
-    return std::make_pair(pos / Page<T,T>::SEG_SIZE, pos % Page<T,T>::SEG_SIZE);
+    return std::make_pair(pos / Page<T, T>::SEG_SIZE, pos % Page<T, T>::SEG_SIZE);
 }
 
 template <typename T>
@@ -34,7 +34,8 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
                 // If the value was unset (shouldn't really be possible here), then our transaction fails.
                 if (op->lastWriteOp->val == UNSET)
                 {
-                    descriptor->status = Desc<T>::TxStatus::aborted;
+                    descriptor->status.store(Desc<T>::TxStatus::aborted);
+                    printf("Aborted!\n");
                     return false;
                 }
             }
@@ -59,7 +60,7 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
             op->lastWriteOp = &descriptor->ops[i];
             break;
         case Operation<T>::OpType::pushBack:
-            vector->getSize(descriptor);
+            getSize(descriptor, vector->size);
 
             indexes = access(size++);
             op = &operations[indexes.first][indexes.second];
@@ -70,7 +71,7 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
             op->lastWriteOp = &descriptor->ops[i];
             break;
         case Operation<T>::OpType::popBack:
-            vector->getSize(descriptor);
+            getSize(descriptor, vector->size);
 
             indexes = access(--size);
             op = &operations[indexes.first][indexes.second];
@@ -96,7 +97,7 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
             op->lastWriteOp = &descriptor->ops[i];
             break;
         case Operation<T>::OpType::size:
-            vector->getSize(descriptor);
+            getSize(descriptor, vector->size);
 
             // Note: Don't store in ret. Store in index, as a special case for size calls.
             descriptor->ops[i].index = size;
@@ -113,6 +114,12 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
             // Unexpected operation type found.
             break;
         }
+    }
+
+    // If we accessed size, we need to report what we changed it to.
+    if (sizeDesc != NULL)
+    {
+        *(sizeDesc->at(0, NEW_VAL)) = size;
     }
     return true;
 }
@@ -138,15 +145,119 @@ std::map<size_t, Page<T, T> *> RWSet<T>::setToPages(Desc<T> *descriptor)
         for (auto j = i->second.begin(); j != i->second.end(); ++j)
         {
             size_t index = j->first;
-            *page->at(index, NEW_VAL) = j->second.lastWriteOp->val;
             page->bitset.read[index] = (j->second.readList.size() > 0);
             page->bitset.write[index] = (j->second.lastWriteOp != NULL);
             page->bitset.checkBounds[index] = (j->second.checkBounds == RWOperation<T>::Assigned::yes) ? true : false;
+            *(page->at(index, NEW_VAL)) = j->second.lastWriteOp->val;
         }
         pages[i->first] = page;
     }
 
     return pages;
+}
+
+template <typename T>
+void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T> *> *pages)
+{
+    // If the returned values have already been copied over, do no more.
+    if (descriptor->returnedValues.load() == true)
+    {
+        return;
+    }
+
+    // For each page.
+    for (auto i = pages->begin(); i != pages->end(); ++i)
+    {
+        // Get the page.
+        Page<T, T> *page = i->second;
+        // For each element.
+        for (auto j = 0; j < pages->size(); ++j)
+        {
+            // Get the value.
+            T value = *(page->at(j, OLD_VAL));
+
+            // Get the read list for the current element.
+            std::vector<Operation<T> *> readList = operations.at(i->first).at(j).readList;
+            // For each operation attempting to read the element.
+            for (size_t k = 0; k < readList.size(); k++)
+            {
+                // Assign the return value.
+                readList[k]->ret = value;
+            }
+        }
+    }
+
+    // Subsequent attempts to load values will not have to repeat this work.
+    descriptor->returnedValues.store(true);
+
+    return;
+}
+
+// TODO: Implement size functions here instead of transVector.
+
+template <typename T>
+size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T> *> *sizeHead)
+{
+    if (sizeDesc != NULL)
+    {
+        return size;
+    }
+
+    // Prepend a read page to size.
+    // The size page is always of size 1.
+    // Set all unchanging page values here.
+    sizeDesc = new Page<size_t, T>(1);
+    sizeDesc->bitset.read.set();
+    sizeDesc->bitset.write.set();
+    sizeDesc->bitset.checkBounds.reset();
+    sizeDesc->transaction = descriptor;
+    sizeDesc->next = NULL;
+
+    Page<size_t, T> *rootPage;
+    do
+    {
+        // Quit if the transaction is no longer active.
+        if (descriptor->status.load() != Desc<T>::TxStatus::active)
+        {
+            return 0;
+        }
+
+        // Get the current head.
+        rootPage = sizeHead->load();
+        // If the root page does not exist, or does not contain a value in the expected position.
+        if (rootPage == NULL || rootPage->at(0, NEW_VAL) == NULL)
+        {
+            // Assume an initial size of 0.
+            *(sizeDesc->at(0, OLD_VAL)) = 0;
+        }
+        else
+        {
+            // Store the root page's value as an old value in case we abort.
+            *sizeDesc->at(0, OLD_VAL) = *rootPage->at(0, NEW_VAL);
+
+            if (rootPage->transaction->status.load() == Desc<T>::TxStatus::active)
+            {
+                // TODO: Use help scheme here.
+                // Just busy wait for now.
+                while (rootPage->transaction->status.load() == Desc<T>::TxStatus::active)
+                {
+                    continue;
+                }
+            }
+        }
+    }
+    // Replace the page.
+    // Finish on success.
+    // Retry on failure.
+    while (!sizeHead->compare_exchange_strong(rootPage, sizeDesc));
+
+    // No need to use a linked-list for size. Just deallocate the old page.
+    delete rootPage;
+
+    // Store the actual size.
+    size = *(sizeDesc->at(0, OLD_VAL));
+
+    return size;
 }
 
 template class RWSet<int>;

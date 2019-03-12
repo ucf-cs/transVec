@@ -2,25 +2,31 @@
 
 void runThread(int threadNum)
 {
-	// A list of operations for the current thread.
-	Operation<int> *ops = new Operation<int>[TRANSACTION_SIZE];
-	// For each operation.
-	for (int i = 0; i < TRANSACTION_SIZE; i++)
+	// For each transaction.
+	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
 	{
-		// All operations are pushes.
-		ops[i].type = Operation<int>::OpType::pushBack;
-		// All operations push the transaction number so they're unique to the thread.
-		ops[i].val = i;
+		// A list of operations for the current thread.
+		Operation<int> *ops = new Operation<int>[TRANSACTION_SIZE];
+		// For each operation.
+		for (int j = 0; j < TRANSACTION_SIZE; j++)
+		{
+			// All operations are pushes.
+			ops[j].type = Operation<int>::OpType::pushBack;
+			ops[j].val =
+				threadNum * NUM_TRANSACTIONS * TRANSACTION_SIZE +
+				i * TRANSACTION_SIZE +
+				j;
+		}
+		// Create a transaction containing the these operations.
+		Desc<int> *desc = new Desc<int>(TRANSACTION_SIZE, ops);
+		// Execute the transaction.
+		transVector->executeTransaction(desc);
 	}
-	// Create a transaction containing the these operations.
-	Desc<int> *desc = new Desc<int>(TRANSACTION_SIZE, ops);
-	// Execute the transaction.
-	transVector->executeTransaction(desc);
 }
 
 int main(int argc, char *argv[])
 {
-	auto transVector = new TransactionalVector<int>();
+	transVector = new TransactionalVector<int>();
 
 	// Create our threads.
 	thread threads[THREAD_COUNT];
@@ -42,6 +48,8 @@ int main(int argc, char *argv[])
 
 	// Get total execution time.
 	auto total = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - start);
+
+	transVector->printContents();
 
 	cout << "Ran with " << THREAD_COUNT << " threads and " << TRANSACTION_SIZE << " operations per transaction" << endl;
 	cout << total.count() << " milliseconds" << endl;

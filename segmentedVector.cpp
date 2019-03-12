@@ -35,6 +35,10 @@ bool SegmentedVector<T>::allocBucket(size_t bucket)
     size_t bucketSize = 1 << (highestBit(firstBucketSize) * (bucket + 1));
     // Allocate the new segment.
     std::atomic<T> *mem = new std::atomic<T>[bucketSize]();
+    // Ensure the segment is initialized to NULL.
+    for(size_t i=0;i<bucketSize;i++){
+        mem[i].store(NULL);
+    }
     // We need to initialize the NULL pointer if we want to CAS.
     std::atomic<T> *null = NULL;
     // Attempt to place the segment in shared memory.
@@ -136,6 +140,7 @@ bool SegmentedVector<T>::reserve(size_t size)
             return false;
         }
     }
+
     return true;
 }
 
@@ -143,21 +148,39 @@ template <typename T>
 T SegmentedVector<T>::read(size_t index)
 {
     std::pair<size_t, size_t> indexes = access(index);
-    return bucketArray[indexes.first][indexes.second].load();
+    T value = bucketArray[indexes.first].load()[indexes.second].load();
+    return value;
 }
 
 template <typename T>
 void SegmentedVector<T>::write(size_t index, T val)
 {
     std::pair<size_t, size_t> indexes = access(index);
-    return bucketArray[indexes.first][indexes.second].store(val);
+    return bucketArray[indexes.first].load()[indexes.second].store(val);
 }
 
 template <typename T>
 bool SegmentedVector<T>::tryWrite(size_t index, T oldVal, T newVal)
 {
     std::pair<size_t, size_t> indexes = access(index);
-    return bucketArray[indexes.first][indexes.second].compare_exchange_strong(oldVal, newVal);
+    return bucketArray[indexes.first].load()[indexes.second].compare_exchange_strong(oldVal, newVal);
+}
+
+template <typename T>
+void SegmentedVector<T>::printBuckets() {
+    // Go through each bucket.
+    for(size_t i=0;i<buckets;i++){
+        if(bucketArray[i].load() == NULL) {
+            break;
+        }
+        // Go through each element in the bucket.
+        size_t bucketSize = 1 << (highestBit(firstBucketSize) * (i + 1));
+        for(size_t j=0;j<bucketSize;j++){
+            printf("%p\n", bucketArray[i].load()[j].load());
+        }
+    }
+    printf("\n");
+    return;
 }
 
 template class SegmentedVector<Page<size_t, int> *>;

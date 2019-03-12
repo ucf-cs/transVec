@@ -17,8 +17,6 @@ template <class T>
 class TransactionalVector
 {
 private:
-  // A page holding our shared size variable.
-  std::atomic<Page<size_t, T> *> size;
   // An array of page pointers.
   SegmentedVector<Page<T, T> *> *array = NULL;
 
@@ -37,29 +35,22 @@ private:
   // startPage is used in the helping scheme to start inserting at later pages.
   void insertPages(std::map<size_t, Page<T, T> *> pages, size_t startPage = 0);
 
-  // Assign values from the readList of each operation.
-  // Once complete, we can freely read values from our operations.
-  void setOperationVals(
-      Desc<T> *descriptor,
-      std::map<size_t, Page<T, T> *> *pages,
-      std::map<size_t, std::map<size_t, RWOperation<T>>> *operations);
-
 public:
+  // A page holding our shared size variable.
+  // Access is public because the RWSet must be able to change it.
+  std::atomic<Page<size_t, T> *> *size;
+
   TransactionalVector();
 
   void getSize(Desc<T> *descriptor);
 
   Page<size_t, T> *getSizePage(Desc<T> *descriptor);
 
-  // Get a size value from the transaction's size page.
-  size_t getSize(Page<T, T> *page);
-
-  // Set the size of the page.
-  // Must be performed before committing the transaction.
-  void setSize(Page<size_t, T> *page, size_t size);
-
   // Apply a transaction to a vector.
   void executeTransaction(Desc<T> *descriptor);
+
+  // Print out the values stored in the vector.
+  void printContents();
 };
 
 #endif

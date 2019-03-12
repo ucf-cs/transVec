@@ -37,13 +37,13 @@ class Page
     // TUNE
     const static size_t SEG_SIZE = 8;
     // The number of elements being updated by this page.
-    size_t size;
+    size_t size = 0;
     // A list of what modification types this transaction performs.
     Bitset<SEG_SIZE> bitset;
     // A pointer to the transaction associated with this page.
-    Desc<U> *transaction;
+    Desc<U> *transaction = NULL;
     // A pointer to the next page in the delta update list for this segment.
-    Page *next;
+    Page *next = NULL;
 
     // Constructor that initializes a segment based on desired length.
     // Default assumes the whole segment is replaced, rather than just some of them.
