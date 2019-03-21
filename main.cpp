@@ -24,6 +24,26 @@ void runThread(int threadNum)
 	}
 }
 
+void popThread(int threadNum)
+{
+	// For each transaction.
+	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
+	{
+		// A list of operations for the current thread.
+		Operation<int> *ops = new Operation<int>[TRANSACTION_SIZE];
+		// For each operation.
+		for (int j = 0; j < TRANSACTION_SIZE; j++)
+		{
+			// All operations are pushes.
+			ops[j].type = Operation<int>::OpType::popBack;
+		}
+		// Create a transaction containing the these operations.
+		Desc<int> *desc = new Desc<int>(TRANSACTION_SIZE, ops);
+		// Execute the transaction.
+		transVector->executeTransaction(desc);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	transVector = new TransactionalVector<int>();
@@ -35,13 +55,27 @@ int main(int argc, char *argv[])
 	auto start = chrono::system_clock::now();
 
 	// Start our threads.
-	for (long i = 0; i < THREAD_COUNT; i++)
+	for (size_t i = 0; i < THREAD_COUNT; i++)
 	{
 		threads[i] = thread(runThread, i);
 	}
 
 	// Wait for all threads to complete.
-	for (int i = 0; i < THREAD_COUNT; i++)
+	for (size_t i = 0; i < THREAD_COUNT; i++)
+	{
+		threads[i].join();
+	}
+
+	transVector->printContents();
+
+	// Start our threads.
+	for (size_t i = 0; i < THREAD_COUNT; i++)
+	{
+		threads[i] = thread(popThread, i);
+	}
+
+	// Wait for all threads to complete.
+	for (size_t i = 0; i < THREAD_COUNT; i++)
 	{
 		threads[i].join();
 	}

@@ -1,17 +1,22 @@
 #include "deltaPage.hpp"
 
-template <typename T, typename U>
-Page<T, U>::Page(size_t size)
+template <typename T, typename U, size_t S>
+Page<T, U, S>::Page(size_t size)
 {
     this->size = size;
     newVal = new T[size];
     oldVal = new T[size];
+    for (size_t i = 0; i < size; i++)
+    {
+        newVal[i] = UNSET;
+        oldVal[i] = UNSET;
+    }
 
     return;
 }
 
-template <typename T, typename U>
-Page<T, U>::~Page()
+template <typename T, typename U, size_t S>
+Page<T, U, S>::~Page()
 {
     if (newVal != NULL)
     {
@@ -23,8 +28,8 @@ Page<T, U>::~Page()
     }
 }
 
-template <typename T, typename U>
-T *Page<T, U>::at(size_t index, bool newVals)
+template <typename T, typename U, size_t S>
+T *Page<T, U, S>::at(size_t index, bool newVals)
 {
     // Don't go out of bounds.
     if (index > SEG_SIZE)
@@ -57,5 +62,14 @@ T *Page<T, U>::at(size_t index, bool newVals)
     return newVals ? &newVal[pos] : &oldVal[pos];
 }
 
-template class Page<int, int>;
-template class Page<size_t, int>;
+template <typename T, typename U, size_t S>
+void Page<T, U, S>::printAt(size_t index)
+{
+    T oldVal = *(at(index, OLD_VAL));
+    T newVal = *(at(index, NEW_VAL));
+    printf("page=%p\tindex=%ld\toldVal=%ld\tnewVal=%ld", this, index, (long int)oldVal, (long int)newVal);
+    return;
+}
+
+template class Page<int, int, 8>;
+template class Page<size_t, int, 1>;

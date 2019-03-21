@@ -41,40 +41,40 @@ public:
 template <class T>
 class RWSet
 {
-  public:
-    // Map vector locations to read/write operations.
-    // Used for absolute reads/writes.
-    std::map<size_t, std::map<size_t, RWOperation<T>>> operations;
-    // An absolute reserve position.
-    size_t maxReserveAbsolute = 0;
-    // Our size descriptor. After reading size, we use this to write a new size value later.
-    Page<size_t, T> *sizeDesc = NULL;
-    // Set this if size changes.
-    size_t size;
+public:
+  // Map vector locations to read/write operations.
+  // Used for absolute reads/writes.
+  std::map<size_t, std::map<size_t, RWOperation<T>>> operations;
+  // An absolute reserve position.
+  size_t maxReserveAbsolute = 0;
+  // Our size descriptor. After reading size, we use this to write a new size value later.
+  Page<size_t, T, 1> *sizeDesc = NULL;
+  // Set this if size changes.
+  size_t size = 0;
 
-    // Map vector operations to pushes and pops relative to size.
-    // Read size, then they can be resolved to absolute indexes.
-    //RWOperation<T> *operationsList;
-    // A relative reserve position.
-    //signed long int maxReserveRelative = 0;
+  // Map vector operations to pushes and pops relative to size.
+  // Read size, then they can be resolved to absolute indexes.
+  //RWOperation<T> *operationsList;
+  // A relative reserve position.
+  //signed long int maxReserveRelative = 0;
 
-    ~RWSet();
+  ~RWSet();
 
-    // Return the indexes associated with a RW operation access.
-    std::pair<size_t, size_t> access(size_t pos);
+  // Return the indexes associated with a RW operation access.
+  std::pair<size_t, size_t> access(size_t pos);
 
-    // Converts a transaction descriptor into a read/write set.
-    bool createSet(Desc<T> *descriptor, TransactionalVector<T> *vector);
+  // Converts a transaction descriptor into a read/write set.
+  bool createSet(Desc<T> *descriptor, TransactionalVector<T> *vector);
 
-    // Convert from a set of reads and writes to a list of pages.
-    std::map<size_t, Page<T, T> *> setToPages(Desc<T> *descriptor);
+  // Convert from a set of reads and writes to a list of pages.
+  std::map<size_t, Page<T, T, 8> *> setToPages(Desc<T> *descriptor);
 
-    // Set the values in a transaction to the retrived values.
-    void setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T> *> *pages);
+  // Set the values in a transaction to the retrived values.
+  void setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, 8> *> *pages);
 
-    size_t getSize(Desc<T> *transaction, std::atomic<Page<size_t, T> *> *sizeHead);
+  size_t getSize(Desc<T> *transaction, std::atomic<Page<size_t, T, 1> *> *sizeHead);
 
-    void setSize(size_t size);
+  void setSize(size_t size);
 };
 
 #endif

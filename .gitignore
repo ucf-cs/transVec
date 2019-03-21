@@ -1,0 +1,4 @@
+# Ignore object files
+*.o
+# Ignore the final binary
+*.out

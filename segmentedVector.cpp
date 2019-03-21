@@ -183,5 +183,5 @@ void SegmentedVector<T>::printBuckets() {
     return;
 }
 
-template class SegmentedVector<Page<size_t, int> *>;
-template class SegmentedVector<Page<int, int>*>;
+template class SegmentedVector<Page<size_t, int, 1> *>;
+template class SegmentedVector<Page<int, int, 8>*>;

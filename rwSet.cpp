@@ -11,7 +11,7 @@ template <typename T>
 std::pair<size_t, size_t> RWSet<T>::access(size_t pos)
 {
     // All other cases.
-    return std::make_pair(pos / Page<T, T>::SEG_SIZE, pos % Page<T, T>::SEG_SIZE);
+    return std::make_pair(pos / Page<T, T, 8>::SEG_SIZE, pos % Page<T, T, 8>::SEG_SIZE);
 }
 
 template <typename T>
@@ -61,8 +61,15 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
             break;
         case Operation<T>::OpType::pushBack:
             getSize(descriptor, vector->size);
-
+            // This should never happen, but make sure we don't have an integer overflow.
+            if (size == SIZE_MAX)
+            {
+                descriptor->status.store(Desc<T>::TxStatus::aborted);
+                printf("Aborted!\n");
+                return false;
+            }
             indexes = access(size++);
+
             op = &operations[indexes.first][indexes.second];
             if (op->checkBounds == RWOperation<T>::Assigned::unset)
             {
@@ -72,8 +79,15 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
             break;
         case Operation<T>::OpType::popBack:
             getSize(descriptor, vector->size);
-
+            // Prevent popping past the bottom of the stack.
+            if (size < 1)
+            {
+                descriptor->status.store(Desc<T>::TxStatus::aborted);
+                printf("Aborted!\n");
+                return false;
+            }
             indexes = access(--size);
+
             op = &operations[indexes.first][indexes.second];
             // If this location has already been written to, read its value. This is done to handle operations that are totally internal to the transaction.
             if (op->lastWriteOp != NULL)
@@ -125,10 +139,10 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
 }
 
 template <typename T>
-std::map<size_t, Page<T, T> *> RWSet<T>::setToPages(Desc<T> *descriptor)
+std::map<size_t, Page<T, T, 8> *> RWSet<T>::setToPages(Desc<T> *descriptor)
 {
     // All of the pages we want to insert (except size), ordered from low to high.
-    std::map<size_t, Page<T, T> *> pages;
+    std::map<size_t, Page<T, T, 8> *> pages;
 
     // For each page to generate.
     // These are all independent of shared memory.
@@ -137,7 +151,7 @@ std::map<size_t, Page<T, T> *> RWSet<T>::setToPages(Desc<T> *descriptor)
         // Determine how many elements are in this page.
         size_t elementCount = i->second.size();
         // Create the initial page.
-        Page<T, T> *page = new Page<T, T>(elementCount);
+        Page<T, T, 8> *page = new Page<T, T, 8>(elementCount);
         // Link the page to the transaction descriptor.
         page->transaction = descriptor;
 
@@ -157,7 +171,7 @@ std::map<size_t, Page<T, T> *> RWSet<T>::setToPages(Desc<T> *descriptor)
 }
 
 template <typename T>
-void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T> *> *pages)
+void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, 8> *> *pages)
 {
     // If the returned values have already been copied over, do no more.
     if (descriptor->returnedValues.load() == true)
@@ -169,7 +183,7 @@ void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T>
     for (auto i = pages->begin(); i != pages->end(); ++i)
     {
         // Get the page.
-        Page<T, T> *page = i->second;
+        Page<T, T, 8> *page = i->second;
         // For each element.
         for (auto j = 0; j < pages->size(); ++j)
         {
@@ -196,7 +210,7 @@ void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T>
 // TODO: Implement size functions here instead of transVector.
 
 template <typename T>
-size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T> *> *sizeHead)
+size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T, 1> *> *sizeHead)
 {
     if (sizeDesc != NULL)
     {
@@ -206,14 +220,14 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T> *> *si
     // Prepend a read page to size.
     // The size page is always of size 1.
     // Set all unchanging page values here.
-    sizeDesc = new Page<size_t, T>(1);
+    sizeDesc = new Page<size_t, T, 1>(1);
     sizeDesc->bitset.read.set();
     sizeDesc->bitset.write.set();
     sizeDesc->bitset.checkBounds.reset();
     sizeDesc->transaction = descriptor;
     sizeDesc->next = NULL;
 
-    Page<size_t, T> *rootPage;
+    Page<size_t, T, 1> *rootPage;
     do
     {
         // Quit if the transaction is no longer active.
@@ -224,6 +238,7 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T> *> *si
 
         // Get the current head.
         rootPage = sizeHead->load();
+        // TODO: Something is wrong here. Find out what.
         // If the root page does not exist, or does not contain a value in the expected position.
         if (rootPage == NULL || rootPage->at(0, NEW_VAL) == NULL)
         {
