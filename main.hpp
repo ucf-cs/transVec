@@ -18,10 +18,10 @@ int main(int argc, char *argv[]);
 
 // Change these to test different situations.
 // TUNE
-size_t THREAD_COUNT = 1;
+size_t THREAD_COUNT = 24;
 // TUNE
-size_t TRANSACTION_SIZE = 10;
+size_t TRANSACTION_SIZE = 5;
 // TUNE
-size_t NUM_TRANSACTIONS = 1;
+size_t NUM_TRANSACTIONS = 5;
 
 #endif

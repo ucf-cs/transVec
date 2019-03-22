@@ -34,6 +34,9 @@ private:
   // We need these in case the associated transaction aborts.
   T *oldVal;
 
+  // Get the new or old value at the given index for the current page.
+  T *at(size_t index, bool newVals);
+
 public:
   // The number of elements represented by each segment.
   // TUNE
@@ -53,8 +56,10 @@ public:
   // Always deallocate our dynamic memory.
   ~Page();
 
-  // Get the new or old value at the given index for the current page.
-  T *at(size_t index, bool newVals = true);
+  // Read the element from the page.
+  T get(size_t index, bool newVals);
+  // Write the element into the page.
+  bool set(size_t index, bool newVals, T val);
 
   void printAt(size_t index);
 };

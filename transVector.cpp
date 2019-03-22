@@ -82,16 +82,16 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, 8> *page)
                         // We only get the new value if it was write comitted.
                         if (status == Desc<T>::TxStatus::committed && currentPage->bitset.write[i])
                         {
-                            *(page->at(i, OLD_VAL)) = *(currentPage->at(i, NEW_VAL));
+                            page->set(i, OLD_VAL, currentPage->get(i, NEW_VAL));
                         }
                         // Transaction was aborted or operation was a read.
                         // Grab the old page's old value.
                         else
                         {
-                            *(page->at(i, OLD_VAL)) = *(currentPage->at(i, OLD_VAL));
+                            page->set(i, OLD_VAL, currentPage->get(i, OLD_VAL));
                         }
                         // Abort if the operation fails our bounds check.
-                        if (page->bitset.checkBounds[i] && *(page->at(i, OLD_VAL)) == UNSET)
+                        if (page->bitset.checkBounds[i] && page->get(i, OLD_VAL) == UNSET)
                         {
                             page->transaction->status.store(Desc<T>::TxStatus::aborted);
                             printf("Aborted!\n");
@@ -182,8 +182,8 @@ TransactionalVector<T>::TransactionalVector()
     sizePage->bitset.write.set();
     sizePage->bitset.checkBounds.reset();
     // There is initially nothing in the vector. Size is 0.
-    *(sizePage->at(0, NEW_VAL)) = 0;
-    *(sizePage->at(0, OLD_VAL)) = 0;
+    sizePage->set(0, NEW_VAL, 0);
+    sizePage->set(0, OLD_VAL, 0);
     // Just point to the generic end transaction to show this operation is committed.
     sizePage->transaction = endTransaction;
     size->store(sizePage);
@@ -224,8 +224,7 @@ void TransactionalVector<T>::executeTransaction(Desc<T> *descriptor)
     }
 
     // Set values for all operations that wanted to read from shared memory.
-    // TODO: Fix this function.
-    //setOperationVals(descriptor, pages);
+    set->setOperationVals(descriptor, &pages);
 
     return;
 }
@@ -277,13 +276,13 @@ void TransactionalVector<T>::printContents()
                 for (size_t j = 0; j < Page<T, T, 8>::SEG_SIZE; j++)
                 {
                     // We only care about the possessed bits.
-                    if (posessedBits[i])
+                    if (posessedBits[j])
                     {
-                        newElements[i] = *(currentPage->at(i, OLD_VAL));
-                        oldElements[i] = *(currentPage->at(i, NEW_VAL));
+                        oldElements[j] = currentPage->get(j, OLD_VAL);
+                        newElements[j] = currentPage->get(j, NEW_VAL);
 
                         // We only get the new value if it was write comitted.
-                        if (status == Desc<T>::TxStatus::committed && currentPage->bitset.write[i])
+                        if (status == Desc<T>::TxStatus::committed && currentPage->bitset.write[j])
                         {
                             newElement = true;
                         }
@@ -304,7 +303,7 @@ void TransactionalVector<T>::printContents()
         }
         for (size_t j = 0; j < Page<T, T, 8>::SEG_SIZE; j++)
         {
-            printf("%ld:\t%d\t%d\n", i * Page<T, T, 8>::SEG_SIZE + j, oldElements[j],newElements[j]);
+            printf("%ld:\t%d\t%d\n", i * Page<T, T, 8>::SEG_SIZE + j, oldElements[j], newElements[j]);
         }
     }
     printf("\n");

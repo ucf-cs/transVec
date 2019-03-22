@@ -11,7 +11,9 @@ template <typename T>
 std::pair<size_t, size_t> RWSet<T>::access(size_t pos)
 {
     // All other cases.
-    return std::make_pair(pos / Page<T, T, 8>::SEG_SIZE, pos % Page<T, T, 8>::SEG_SIZE);
+    size_t first = pos / Page<T, T, 8>::SEG_SIZE;
+    size_t second = pos % Page<T, T, 8>::SEG_SIZE;
+    return std::make_pair(first, second);
 }
 
 template <typename T>
@@ -133,7 +135,7 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
     // If we accessed size, we need to report what we changed it to.
     if (sizeDesc != NULL)
     {
-        *(sizeDesc->at(0, NEW_VAL)) = size;
+        sizeDesc->set(0, NEW_VAL, size);
     }
     return true;
 }
@@ -162,7 +164,7 @@ std::map<size_t, Page<T, T, 8> *> RWSet<T>::setToPages(Desc<T> *descriptor)
             page->bitset.read[index] = (j->second.readList.size() > 0);
             page->bitset.write[index] = (j->second.lastWriteOp != NULL);
             page->bitset.checkBounds[index] = (j->second.checkBounds == RWOperation<T>::Assigned::yes) ? true : false;
-            *(page->at(index, NEW_VAL)) = j->second.lastWriteOp->val;
+            page->set(index, NEW_VAL, j->second.lastWriteOp->val);
         }
         pages[i->first] = page;
     }
@@ -184,11 +186,19 @@ void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T,
     {
         // Get the page.
         Page<T, T, 8> *page = i->second;
+        // Get a list of values in the page.
+        std::bitset<page->SEG_SIZE> usedBits = page->bitset.read | page->bitset.write;
         // For each element.
-        for (auto j = 0; j < pages->size(); ++j)
+        for (auto j = 0; j < page->SEG_SIZE; ++j)
         {
+            // Skip elements that aren't represented in this page.
+            if (!usedBits[j])
+            {
+                continue;
+            }
+
             // Get the value.
-            T value = *(page->at(j, OLD_VAL));
+            T value = page->get(j, OLD_VAL);
 
             // Get the read list for the current element.
             std::vector<Operation<T> *> readList = operations.at(i->first).at(j).readList;
@@ -206,8 +216,6 @@ void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T,
 
     return;
 }
-
-// TODO: Implement size functions here instead of transVector.
 
 template <typename T>
 size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T, 1> *> *sizeHead)
@@ -239,17 +247,16 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T, 1> *> 
         // Get the current head.
         rootPage = sizeHead->load();
         // TODO: Something is wrong here. Find out what.
-        // If the root page does not exist, or does not contain a value in the expected position.
-        if (rootPage == NULL || rootPage->at(0, NEW_VAL) == NULL)
+        // If the root page does not exist.
+        if (rootPage == NULL)
         {
             // Assume an initial size of 0.
-            *(sizeDesc->at(0, OLD_VAL)) = 0;
+            sizeDesc->set(0, OLD_VAL, 0);
         }
         else
         {
             // Store the root page's value as an old value in case we abort.
-            *sizeDesc->at(0, OLD_VAL) = *rootPage->at(0, NEW_VAL);
-
+            sizeDesc->set(0, OLD_VAL, rootPage->get(0, NEW_VAL));
             if (rootPage->transaction->status.load() == Desc<T>::TxStatus::active)
             {
                 // TODO: Use help scheme here.
@@ -260,17 +267,18 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T, 1> *> 
                 }
             }
         }
+        // DEBUG: Append the old page onto the new page.
+        sizeDesc->next = rootPage;
     }
-    // Replace the page.
-    // Finish on success.
-    // Retry on failure.
+    // Replace the page. Finish on success. Retry on failure.
     while (!sizeHead->compare_exchange_strong(rootPage, sizeDesc));
 
     // No need to use a linked-list for size. Just deallocate the old page.
-    delete rootPage;
+    // DEBUG: Do not deallocate the page, since we are linking it.
+    //delete rootPage;
 
     // Store the actual size.
-    size = *(sizeDesc->at(0, OLD_VAL));
+    size = sizeDesc->get(0, OLD_VAL);
 
     return size;
 }

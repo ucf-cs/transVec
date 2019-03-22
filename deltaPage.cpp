@@ -59,15 +59,40 @@ T *Page<T, U, S>::at(size_t index, bool newVals)
 
     // Return the address of the position in question.
     // This way, we can change the value stored in the page, if needed.
-    return newVals ? &newVal[pos] : &oldVal[pos];
+    if (newVals)
+    {
+        return &newVal[pos];
+    }
+    else
+    {
+        return &oldVal[pos];
+    }
+}
+
+template <typename T, typename U, size_t S>
+T Page<T, U, S>::get(size_t index, bool newVals)
+{
+    T *pointer = at(index, newVals);
+    if (pointer == NULL)
+    {
+        return UNSET;
+    }
+    return *pointer;
+}
+
+template <typename T, typename U, size_t S>
+bool Page<T, U, S>::set(size_t index, bool newVals, T val)
+{
+    T *element = at(index, newVals);
+    *element = val;
+    return true;
 }
 
 template <typename T, typename U, size_t S>
 void Page<T, U, S>::printAt(size_t index)
 {
-    T oldVal = *(at(index, OLD_VAL));
-    T newVal = *(at(index, NEW_VAL));
-    printf("page=%p\tindex=%ld\toldVal=%ld\tnewVal=%ld", this, index, (long int)oldVal, (long int)newVal);
+    T oldVal = get(index, OLD_VAL);
+    T newVal = get(index, NEW_VAL);
     return;
 }
 
