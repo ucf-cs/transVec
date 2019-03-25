@@ -11,7 +11,6 @@ Page<T, U, S>::Page(size_t size)
         newVal[i] = UNSET;
         oldVal[i] = UNSET;
     }
-
     return;
 }
 
@@ -26,6 +25,7 @@ Page<T, U, S>::~Page()
     {
         delete oldVal;
     }
+    return;
 }
 
 template <typename T, typename U, size_t S>

@@ -36,4 +36,4 @@ T *Desc<T>::getResult(size_t index)
     return &(ops[index].ret);
 }
 
-template class Desc<int>;
+template struct Desc<int>;

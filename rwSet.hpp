@@ -73,8 +73,6 @@ public:
   void setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, 8> *> *pages);
 
   size_t getSize(Desc<T> *transaction, std::atomic<Page<size_t, T, 1> *> *sizeHead);
-
-  void setSize(size_t size);
 };
 
 #endif

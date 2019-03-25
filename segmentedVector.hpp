@@ -32,6 +32,8 @@ private:
   // Pointer to array of atomic pointers to atomic generic type.
   std::atomic<std::atomic<T> *> *bucketArray;
 
+	// The maximum bit returnable for the highest bit.
+	const size_t max = 8 * sizeof(size_t) - 1;
   // Returns the position of the highest bit used in the binary representation of val.
   size_t highestBit(size_t val);
   // Retrieves the bucket.

@@ -121,7 +121,7 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
         case Operation<T>::OpType::reserve:
             // We only care about the largest reserve call.
             // All other reserve operations will consolidate into a single call at the beginning of the transaction.
-            if (descriptor->ops[i].val > maxReserveAbsolute)
+            if ((size_t)descriptor->ops[i].val > maxReserveAbsolute)
             {
                 maxReserveAbsolute = descriptor->ops[i].val;
             }
@@ -277,7 +277,7 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T, 1> *> 
     // DEBUG: Do not deallocate the page, since we are linking it.
     //delete rootPage;
 
-    // Store the actual size.
+    // Store the actual size locally.
     size = sizeDesc->get(0, OLD_VAL);
 
     return size;

@@ -1,10 +1,30 @@
 #include "segmentedVector.hpp"
 
 template <typename T>
+// TODO: This is causing a read error for the bitset. Why?
 size_t SegmentedVector<T>::highestBit(size_t val)
 {
-    // Subtract 1 so the rightmost position is 0 instead of 1.
-    return (sizeof(val) * 8) - __builtin_clz(val | 1) - 1;
+	// Subtract 1 so the rightmost position is 0 instead of 1.
+	return (sizeof(val) * 8) - __builtin_clz(val | 1) - 1;
+
+	// Slower alternate approach.
+	size_t onePos = 0;
+	for (size_t i = 0; i <= 8 * sizeof(size_t); i++)
+	{
+		// Special case for zero.
+		if (i == 8 * sizeof(size_t))
+		{
+			return 0;
+		}
+
+		size_t mask = (size_t)1 << (max - i);
+		if ((val & mask) != 0)
+		{
+			onePos = max - i;
+			break;
+		}
+	}
+	return onePos - 1;
 }
 
 template <typename T>

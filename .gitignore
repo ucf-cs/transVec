@@ -2,3 +2,5 @@
 *.o
 # Ignore the final binary
 *.out
+# Ignore ipch project index files
+/.vscode/ipch
