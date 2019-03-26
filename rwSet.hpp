@@ -72,7 +72,7 @@ public:
   // Set the values in a transaction to the retrived values.
   void setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, 8> *> *pages);
 
-  size_t getSize(Desc<T> *transaction, std::atomic<Page<size_t, T, 1> *> *sizeHead);
+  size_t getSize(Desc<T> *transaction, TransactionalVector<T> *sizeHead);
 };
 
 #endif

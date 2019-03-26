@@ -1,7 +1,6 @@
 #include "segmentedVector.hpp"
 
 template <typename T>
-// TODO: This is causing a read error for the bitset. Why?
 size_t SegmentedVector<T>::highestBit(size_t val)
 {
 	// Subtract 1 so the rightmost position is 0 instead of 1.
@@ -24,7 +23,7 @@ size_t SegmentedVector<T>::highestBit(size_t val)
 			break;
 		}
 	}
-	return onePos - 1;
+	return onePos;
 }
 
 template <typename T>

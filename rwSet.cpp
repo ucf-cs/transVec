@@ -62,7 +62,7 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
             op->lastWriteOp = &descriptor->ops[i];
             break;
         case Operation<T>::OpType::pushBack:
-            getSize(descriptor, vector->size);
+            getSize(descriptor, vector);
             // This should never happen, but make sure we don't have an integer overflow.
             if (size == SIZE_MAX)
             {
@@ -80,7 +80,7 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
             op->lastWriteOp = &descriptor->ops[i];
             break;
         case Operation<T>::OpType::popBack:
-            getSize(descriptor, vector->size);
+            getSize(descriptor, vector);
             // Prevent popping past the bottom of the stack.
             if (size < 1)
             {
@@ -113,7 +113,7 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
             op->lastWriteOp = &descriptor->ops[i];
             break;
         case Operation<T>::OpType::size:
-            getSize(descriptor, vector->size);
+            getSize(descriptor, vector);
 
             // Note: Don't store in ret. Store in index, as a special case for size calls.
             descriptor->ops[i].index = size;
@@ -218,7 +218,7 @@ void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T,
 }
 
 template <typename T>
-size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T, 1> *> *sizeHead)
+size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 {
     if (sizeDesc != NULL)
     {
@@ -235,6 +235,10 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T, 1> *> 
     sizeDesc->transaction = descriptor;
     sizeDesc->next = NULL;
 
+	// DEBUG: Ensure a reasonable default value.
+	//sizeDesc->set(0, OLD_VAL, 0);
+	//sizeDesc->set(0, NEW_VAL, 0);
+
     Page<size_t, T, 1> *rootPage;
     do
     {
@@ -245,9 +249,10 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T, 1> *> 
         }
 
         // Get the current head.
-        rootPage = sizeHead->load();
+        rootPage = vector->size.load();
         // TODO: Something is wrong here. Find out what.
         // If the root page does not exist.
+		// Root page should never be NULL, ever.
         if (rootPage == NULL)
         {
             // Assume an initial size of 0.
@@ -255,8 +260,6 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T, 1> *> 
         }
         else
         {
-            // Store the root page's value as an old value in case we abort.
-            sizeDesc->set(0, OLD_VAL, rootPage->get(0, NEW_VAL));
             if (rootPage->transaction->status.load() == Desc<T>::TxStatus::active)
             {
                 // TODO: Use help scheme here.
@@ -266,12 +269,15 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, std::atomic<Page<size_t, T, 1> *> 
                     continue;
                 }
             }
+
+			// Store the root page's value as an old value in case we abort.
+			sizeDesc->set(0, OLD_VAL, rootPage->get(0, NEW_VAL));
         }
         // DEBUG: Append the old page onto the new page.
-        sizeDesc->next = rootPage;
+        //sizeDesc->next = rootPage;
     }
     // Replace the page. Finish on success. Retry on failure.
-    while (!sizeHead->compare_exchange_strong(rootPage, sizeDesc));
+    while (!vector->size.compare_exchange_strong(rootPage, sizeDesc));
 
     // No need to use a linked-list for size. Just deallocate the old page.
     // DEBUG: Do not deallocate the page, since we are linking it.

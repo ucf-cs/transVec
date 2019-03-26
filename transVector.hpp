@@ -38,7 +38,7 @@ private:
 public:
   // A page holding our shared size variable.
   // Access is public because the RWSet must be able to change it.
-  std::atomic<Page<size_t, T, 1> *> *size;
+  std::atomic<Page<size_t, T, 1> *> size;
 
   TransactionalVector();
 

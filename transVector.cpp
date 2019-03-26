@@ -155,7 +155,7 @@ TransactionalVector<T>::TransactionalVector()
     // Keep it seperated to avoid needless contention between it and low-indexed elements.
     // It also needs to hold a different type of element than the others, a size.
     // TODO: Set the bitset for the size page, and potentially other elements.
-    size = new std::atomic<Page<size_t, T, 1> *>();
+	size.store(NULL);
 
     // Allocate an end transaction, if it hasn't been already.
     if (endTransaction == NULL)
@@ -186,7 +186,7 @@ TransactionalVector<T>::TransactionalVector()
     sizePage->set(0, OLD_VAL, 0);
     // Just point to the generic end transaction to show this operation is committed.
     sizePage->transaction = endTransaction;
-    size->store(sizePage);
+    size.store(sizePage);
 }
 
 template <typename T>
