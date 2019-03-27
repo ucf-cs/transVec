@@ -3,27 +3,27 @@
 template <typename T>
 size_t SegmentedVector<T>::highestBit(size_t val)
 {
-	// Subtract 1 so the rightmost position is 0 instead of 1.
-	return (sizeof(val) * 8) - __builtin_clz(val | 1) - 1;
+    // Subtract 1 so the rightmost position is 0 instead of 1.
+    return (sizeof(val) * 8) - __builtin_clz(val | 1) - 1;
 
-	// Slower alternate approach.
-	size_t onePos = 0;
-	for (size_t i = 0; i <= 8 * sizeof(size_t); i++)
-	{
-		// Special case for zero.
-		if (i == 8 * sizeof(size_t))
-		{
-			return 0;
-		}
+    // Slower alternate approach.
+    size_t onePos = 0;
+    for (size_t i = 0; i <= 8 * sizeof(size_t); i++)
+    {
+        // Special case for zero.
+        if (i == 8 * sizeof(size_t))
+        {
+            return 0;
+        }
 
-		size_t mask = (size_t)1 << (max - i);
-		if ((val & mask) != 0)
-		{
-			onePos = max - i;
-			break;
-		}
-	}
-	return onePos;
+        size_t mask = (size_t)1 << (max - i);
+        if ((val & mask) != 0)
+        {
+            onePos = max - i;
+            break;
+        }
+    }
+    return onePos;
 }
 
 template <typename T>
@@ -55,7 +55,8 @@ bool SegmentedVector<T>::allocBucket(size_t bucket)
     // Allocate the new segment.
     std::atomic<T> *mem = new std::atomic<T>[bucketSize]();
     // Ensure the segment is initialized to NULL.
-    for(size_t i=0;i<bucketSize;i++){
+    for (size_t i = 0; i < bucketSize; i++)
+    {
         mem[i].store(NULL);
     }
     // We need to initialize the NULL pointer if we want to CAS.
@@ -164,37 +165,81 @@ bool SegmentedVector<T>::reserve(size_t size)
 }
 
 template <typename T>
-T SegmentedVector<T>::read(size_t index)
+bool SegmentedVector<T>::read(size_t index, T &value)
 {
     std::pair<size_t, size_t> indexes = access(index);
-    T value = bucketArray[indexes.first].load()[indexes.second].load();
-    return value;
+    if (indexes.first > buckets)
+    {
+        return false;
+    }
+    std::atomic<T> *bucket = bucketArray[indexes.first].load();
+    if (bucket == NULL)
+    {
+        return false;
+    }
+    if (indexes.second > (1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
+    {
+        return false;
+    }
+    value = bucket[indexes.second].load();
+    return true;
 }
 
 template <typename T>
-void SegmentedVector<T>::write(size_t index, T val)
+bool SegmentedVector<T>::write(size_t index, T val)
 {
     std::pair<size_t, size_t> indexes = access(index);
-    return bucketArray[indexes.first].load()[indexes.second].store(val);
+    if (indexes.first > buckets)
+    {
+        return false;
+    }
+    std::atomic<T> *bucket = bucketArray[indexes.first].load();
+    if (bucket == NULL)
+    {
+        return false;
+    }
+    if (indexes.second > (1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
+    {
+        return false;
+    }
+    bucket[indexes.second].store(val);
+    return true;
 }
 
 template <typename T>
 bool SegmentedVector<T>::tryWrite(size_t index, T oldVal, T newVal)
 {
     std::pair<size_t, size_t> indexes = access(index);
-    return bucketArray[indexes.first].load()[indexes.second].compare_exchange_strong(oldVal, newVal);
+    if (indexes.first > buckets)
+    {
+        return false;
+    }
+    std::atomic<T> *bucket = bucketArray[indexes.first].load();
+    if (bucket == NULL)
+    {
+        return false;
+    }
+    if (indexes.second > (1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
+    {
+        return false;
+    }
+    return bucket[indexes.second].compare_exchange_strong(oldVal, newVal);
 }
 
 template <typename T>
-void SegmentedVector<T>::printBuckets() {
+void SegmentedVector<T>::printBuckets()
+{
     // Go through each bucket.
-    for(size_t i=0;i<buckets;i++){
-        if(bucketArray[i].load() == NULL) {
+    for (size_t i = 0; i < buckets; i++)
+    {
+        if (bucketArray[i].load() == NULL)
+        {
             break;
         }
         // Go through each element in the bucket.
         size_t bucketSize = 1 << (highestBit(firstBucketSize) * (i + 1));
-        for(size_t j=0;j<bucketSize;j++){
+        for (size_t j = 0; j < bucketSize; j++)
+        {
             printf("%p\n", bucketArray[i].load()[j].load());
         }
     }
@@ -203,4 +248,4 @@ void SegmentedVector<T>::printBuckets() {
 }
 
 template class SegmentedVector<Page<size_t, int, 1> *>;
-template class SegmentedVector<Page<int, int, 8>*>;
+template class SegmentedVector<Page<int, int, 8> *>;

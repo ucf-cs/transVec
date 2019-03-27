@@ -19,6 +19,9 @@ std::pair<size_t, size_t> RWSet<T>::access(size_t pos)
 template <typename T>
 bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
 {
+    // DEBUG
+    descriptor->print();
+
     // Go through each operation.
     for (size_t i = 0; i < descriptor->size; i++)
     {
@@ -29,7 +32,8 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
         case Operation<T>::OpType::read:
             indexes = access(descriptor->ops[i].index);
             op = &operations[indexes.first][indexes.second];
-            // If this location has already been written to, read its value. This is done to handle operations that are totally internal to the transaction.
+            // If this location has already been written to, read its value. 
+            // This is done to handle operations that are totally internal to the transaction.
             if (op->lastWriteOp != NULL)
             {
                 descriptor->ops[i].ret = op->lastWriteOp->val;
@@ -164,7 +168,15 @@ std::map<size_t, Page<T, T, 8> *> RWSet<T>::setToPages(Desc<T> *descriptor)
             page->bitset.read[index] = (j->second.readList.size() > 0);
             page->bitset.write[index] = (j->second.lastWriteOp != NULL);
             page->bitset.checkBounds[index] = (j->second.checkBounds == RWOperation<T>::Assigned::yes) ? true : false;
-            page->set(index, NEW_VAL, j->second.lastWriteOp->val);
+            if (j->second.lastWriteOp != NULL)
+            {
+                page->set(index, NEW_VAL, j->second.lastWriteOp->val);
+            }
+            // TODO: Determine if this is even nessasary.
+            else
+            {
+                page->set(index, NEW_VAL, page->get(index, OLD_VAL));
+            }
         }
         pages[i->first] = page;
     }
@@ -235,9 +247,9 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
     sizeDesc->transaction = descriptor;
     sizeDesc->next = NULL;
 
-	// DEBUG: Ensure a reasonable default value.
-	//sizeDesc->set(0, OLD_VAL, 0);
-	//sizeDesc->set(0, NEW_VAL, 0);
+    // DEBUG: Ensure a reasonable default value.
+    //sizeDesc->set(0, OLD_VAL, 0);
+    //sizeDesc->set(0, NEW_VAL, 0);
 
     Page<size_t, T, 1> *rootPage;
     do
@@ -252,7 +264,7 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
         rootPage = vector->size.load();
         // TODO: Something is wrong here. Find out what.
         // If the root page does not exist.
-		// Root page should never be NULL, ever.
+        // Root page should never be NULL, ever.
         if (rootPage == NULL)
         {
             // Assume an initial size of 0.
@@ -270,8 +282,8 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
                 }
             }
 
-			// Store the root page's value as an old value in case we abort.
-			sizeDesc->set(0, OLD_VAL, rootPage->get(0, NEW_VAL));
+            // Store the root page's value as an old value in case we abort.
+            sizeDesc->set(0, OLD_VAL, rootPage->get(0, NEW_VAL));
         }
         // DEBUG: Append the old page onto the new page.
         //sizeDesc->next = rootPage;

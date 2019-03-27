@@ -36,4 +36,64 @@ T *Desc<T>::getResult(size_t index)
     return &(ops[index].ret);
 }
 
+template <typename T>
+void Desc<T>::print()
+{
+    const char *statusStrList[] = {"active", "committed", "aborted"};
+    size_t statusStrIndex = 0;
+    switch (status.load())
+    {
+    case active:
+        statusStrIndex = 0;
+        break;
+    case committed:
+        statusStrIndex = 1;
+        break;
+    case aborted:
+        statusStrIndex = 2;
+        break;
+    }
+    printf("Transaction status:\t%s\n", statusStrList[statusStrIndex]);
+
+    printf("Ops: (size=%u)\n", size);
+    for (size_t i = 0; i < size; i++)
+    {
+        ops[i].print();
+        printf("\n");
+    }
+}
+
+template <typename T>
+void Operation<T>::print()
+{
+    const char *typeStrList[] = {"pushBack", "popBack", "reserve", "read", "write", "size"};
+    size_t typeStrIndex = 0;
+    switch (type)
+    {
+    case pushBack:
+        typeStrIndex = 0;
+        break;
+    case popBack:
+        typeStrIndex = 1;
+        break;
+    case reserve:
+        typeStrIndex = 2;
+        break;
+    case read:
+        typeStrIndex = 3;
+        break;
+    case write:
+        typeStrIndex = 4;
+        break;
+    case size:
+        typeStrIndex = 5;
+        break;
+    }
+    printf("Type:\t%s\n", typeStrList[typeStrIndex]);
+
+    printf("index:\t%lu\n", index);
+    printf("value:\t%ld\n", val);
+    printf("return:\t%ld\n", ret);
+}
+
 template struct Desc<int>;

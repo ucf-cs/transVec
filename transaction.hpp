@@ -7,6 +7,9 @@ The actual vector will pre-process each of these transactions into a simpler rea
 
 #include <atomic>
 #include <cstddef>
+#include <cstdio>
+#include <cstring>
+#include <string>
 
 // Use this typedef to quickly change what type of objects we're working with.
 // TODO: Does this actually belong here?
@@ -58,6 +61,8 @@ struct Operation
     // Only used for read, pop, and size.
     // Only safe to read if the transaction has committed.
     T ret;
+
+    void print();
 };
 
 template <class T>
@@ -91,6 +96,10 @@ struct Desc
 
     // Used to get our final results after a transaction commits.
     T *getResult(size_t index);
+
+    // Print out the contents of the vector at a given time.
+    // This function is not atomic unless the transaction has committed or aborted.
+    void print();
 };
 
 #endif

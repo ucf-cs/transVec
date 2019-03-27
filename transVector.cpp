@@ -35,7 +35,10 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, 8> *page)
         }
 
         // Get the head of the list of updates for this segment.
-        rootPage = array->read(index);
+        if (!array->read(index, rootPage))
+        {
+            return false;
+        }
 
         // Disallow prepending a page to itself.
         // TODO: Can this happen?
@@ -154,8 +157,7 @@ TransactionalVector<T>::TransactionalVector()
     // Allocate a size descriptor.
     // Keep it seperated to avoid needless contention between it and low-indexed elements.
     // It also needs to hold a different type of element than the others, a size.
-    // TODO: Set the bitset for the size page, and potentially other elements.
-	size.store(NULL);
+    size.store(NULL);
 
     // Allocate an end transaction, if it hasn't been already.
     if (endTransaction == NULL)
@@ -234,7 +236,11 @@ void TransactionalVector<T>::printContents()
 {
     for (size_t i = 0;; i++)
     {
-        Page<T, T, 8> *rootPage = array->read(i);
+        Page<T, T, 8> *rootPage = NULL;
+        if (!array->read(i, rootPage))
+        {
+            break;
+        }
         if (rootPage == NULL)
         {
             break;
