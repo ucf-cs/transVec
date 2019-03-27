@@ -8,7 +8,7 @@ template <class T>
 // TODO: Implement this in some clean way.
 class HelpScheme
 {
-    thread_local std::stack<Operation> helpstack;
+	thread_local std::stack<Operation> helpstack;
 };
 
 #endif

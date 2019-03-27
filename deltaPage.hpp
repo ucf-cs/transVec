@@ -15,9 +15,9 @@ template <size_t size>
 // This bitset keeps track of whether or not an element was read from or written to by this transaction.
 struct Bitset
 {
-  std::bitset<size> read;
-  std::bitset<size> write;
-  std::bitset<size> checkBounds;
+	std::bitset<size> read;
+	std::bitset<size> write;
+	std::bitset<size> checkBounds;
 };
 
 // T: Type of data to store in the page.
@@ -28,40 +28,40 @@ template <class T, class U, size_t S>
 class Page
 {
 private:
-  // A contiguous list of updated values, allocated dynamically on page generation.
-  T *newVal;
-  // A contiguous list of old values, allocated dynamically on page generation.
-  // We need these in case the associated transaction aborts.
-  T *oldVal;
+	// A contiguous list of updated values, allocated dynamically on page generation.
+	T *newVal;
+	// A contiguous list of old values, allocated dynamically on page generation.
+	// We need these in case the associated transaction aborts.
+	T *oldVal;
 
-  // Get the new or old value at the given index for the current page.
-  T *at(size_t index, bool newVals);
+	// Get the new or old value at the given index for the current page.
+	T *at(size_t index, bool newVals);
 
 public:
-  // The number of elements represented by each segment.
-  // TUNE
-  const static size_t SEG_SIZE = S;
-  // The number of elements being updated by this page.
-  size_t size = 0;
-  // A list of what modification types this transaction performs.
-  Bitset<SEG_SIZE> bitset;
-  // A pointer to the transaction associated with this page.
-  Desc<U> *transaction = NULL;
-  // A pointer to the next page in the delta update list for this segment.
-  Page *next = NULL;
+	// The number of elements represented by each segment.
+	// TUNE
+	const static size_t SEG_SIZE = S;
+	// The number of elements being updated by this page.
+	size_t size = 0;
+	// A list of what modification types this transaction performs.
+	Bitset<SEG_SIZE> bitset;
+	// A pointer to the transaction associated with this page.
+	Desc<U> *transaction = NULL;
+	// A pointer to the next page in the delta update list for this segment.
+	Page *next = NULL;
 
-  // Constructor that initializes a segment based on desired length.
-  // Default assumes the whole segment is replaced, rather than just some of them.
-  Page(size_t size = SEG_SIZE);
-  // Always deallocate our dynamic memory.
-  ~Page();
+	// Constructor that initializes a segment based on desired length.
+	// Default assumes the whole segment is replaced, rather than just some of them.
+	Page(size_t size = SEG_SIZE);
+	// Always deallocate our dynamic memory.
+	~Page();
 
-  // Read the element from the page.
-  T get(size_t index, bool newVals);
-  // Write the element into the page.
-  bool set(size_t index, bool newVals, T val);
+	// Read the element from the page.
+	T get(size_t index, bool newVals);
+	// Write the element into the page.
+	bool set(size_t index, bool newVals, T val);
 
-  void printAt(size_t index);
+	void printAt(size_t index);
 };
 
 #endif

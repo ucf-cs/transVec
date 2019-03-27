@@ -13,11 +13,11 @@ using namespace std;
 
 // Change these to test different situations.
 // TUNE
-const size_t THREAD_COUNT = 12;
+const size_t THREAD_COUNT = 8;
 // TUNE
 const size_t TRANSACTION_SIZE = 5;
 // TUNE
-const size_t NUM_TRANSACTIONS = 5;
+const size_t NUM_TRANSACTIONS = 5000;
 
 TransactionalVector<int> *transVector;
 
