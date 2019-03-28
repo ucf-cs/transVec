@@ -133,9 +133,101 @@ void threadRunner(thread threads[THREAD_COUNT], void function(int threadNum))
 	return;
 }
 
+void predicatePreinsert(int threadNum){
+	// A list of operations for the current thread.
+	Operation<int> *insertOps = new Operation<int>[NUM_TRANSACTIONS];
+	// For each operation.
+	for (int j = 0; j < NUM_TRANSACTIONS; j++)
+	{
+		// All operations are pushes.
+		insertOps[j].type = Operation<int>::OpType::pushBack;
+		// Push random values into the vector.
+		insertOps[j].val = rand() % INT32_MAX;
+	}
+	// Create a transaction containing the these operations.
+	Desc<int> *insertDesc = new Desc<int>(NUM_TRANSACTIONS, insertOps);
+	// Execute the transaction.
+	transVector->executeTransaction(insertDesc);
+}
+
+void predicateFind(int threadNum)
+{
+	// Get the transaction associated with the thread.
+	Desc<int> *desc = transactions[threadNum];
+	// Execute the transaction.
+	transVector->executeTransaction(desc);
+	// Get the results.
+	// Busy wait until they are ready. Should never happen, but we need to be safe.
+	while(desc->returnedValues.load() == false) {
+		continue;
+	}
+	if(desc->status.load() != Desc<int>::TxStatus::committed) {
+		printf("Error on thread %d. Transaction failed.\n", threadNum);
+	}
+	// Check for predicate matches.
+	size_t matchCount = 0;
+	for(size_t i = 0; i < desc->size; i++)
+	{
+		// Out simple predicate: the value is even.
+		if(desc->ops[i].ret % 2 == 0) {
+			matchCount++;
+		}
+	}
+	// Add to the global total.
+	totalMatches.fetch_add(matchCount);
+	return;
+}
+
+// Insert random elements into the vector and count the number of elements that satisfy the predicate.
+void predicateSearch()
+{
+	// Ensure we start with no matches.
+	totalMatches.store(0);
+
+	// Create our threads.
+	thread threads[THREAD_COUNT];
+
+	// Pre-insertion step.
+	threadRunner(threads, predicatePreinsert);
+
+	// Prepare read transactions for each thread.
+	for (size_t i = 0; i < THREAD_COUNT; i++)
+	{
+		Operation<int> *ops = new Operation<int>[NUM_TRANSACTIONS];
+		// Prepare to read the entire vector.
+		for (int j = 0; j < NUM_TRANSACTIONS; j++)
+		{
+			// Read all elements, split among threads.
+			ops[j].type = Operation<int>::OpType::read;
+			ops[j].index = i*NUM_TRANSACTIONS + j;
+		}
+		Desc<int> *desc = new Desc<int>(NUM_TRANSACTIONS, ops);
+		transactions.push_back(desc);
+	}
+
+	// Get the current time.
+	auto start = chrono::system_clock::now();
+
+	// Run the threads.
+	threadRunner(threads, predicateFind);
+
+	// Get total execution time.
+	auto total = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - start);
+
+	//transVector->printContents();
+
+	cout << "Ran with " << THREAD_COUNT << " threads and " << NUM_TRANSACTIONS << " locations per thread" << endl;
+	cout << total.count() << " milliseconds" << endl;
+
+	printf("Total: %lu matched out of %lu\n", totalMatches.load(), THREAD_COUNT*NUM_TRANSACTIONS);
+}
+
 int main(int argc, char *argv[])
 {
 	transVector = new TransactionalVector<int>();
+
+	predicateSearch();
+	return 0;
 
 	// Create our threads.
 	thread threads[THREAD_COUNT];

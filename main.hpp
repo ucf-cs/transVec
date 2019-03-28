@@ -21,6 +21,10 @@ const size_t NUM_TRANSACTIONS = 5000;
 
 TransactionalVector<int> *transVector;
 
+std::vector<Desc<int> *> transactions;
+
+std::atomic<size_t> totalMatches;
+
 int main(int argc, char *argv[]);
 
 #endif
