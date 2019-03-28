@@ -32,7 +32,7 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
 		case Operation<T>::OpType::read:
 			indexes = access(descriptor->ops[i].index);
 			op = &operations[indexes.first][indexes.second];
-			// If this location has already been written to, read its value. 
+			// If this location has already been written to, read its value.
 			// This is done to handle operations that are totally internal to the transaction.
 			if (op->lastWriteOp != NULL)
 			{
@@ -265,7 +265,6 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 
 		// Get the current head.
 		rootPage = vector->size.load();
-		// TODO: Something is wrong here. Find out what.
 		// If the root page does not exist.
 		// Root page should never be NULL, ever.
 		if (rootPage == NULL)
@@ -276,7 +275,8 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 		else
 		{
 			enum Desc<T>::TxStatus status;
-			do {
+			do
+			{
 				status = rootPage->transaction->status.load();
 				// TODO: Use help scheme here.
 				// Just busy wait for now.
@@ -285,10 +285,12 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 			// Store the root page's value as an old value in case we abort.
 			// Get the appropriate value from the root page depending on whether or not it succeeded.
 			T value;
-			if (status == Desc<T>::TxStatus::committed) {
+			if (status == Desc<T>::TxStatus::committed)
+			{
 				value = rootPage->get(0, NEW_VAL);
 			}
-			else {
+			else
+			{
 				value = rootPage->get(0, OLD_VAL);
 			}
 			sizeDesc->set(0, OLD_VAL, value);

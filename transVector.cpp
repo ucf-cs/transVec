@@ -271,8 +271,7 @@ void TransactionalVector<T>::printContents()
 				// If the current page is part of an active transaction.
 				if (status == Desc<T>::TxStatus::active)
 				{
-					// TODO: Help the active transaction.
-					// For now, just busy wait.
+					// Busy wait for the transaction to complete.
 					while (currentPage->transaction->status.load() == Desc<T>::TxStatus::active)
 					{
 						continue;
