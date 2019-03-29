@@ -16,7 +16,7 @@ class RWOperation;
 template <class T>
 class TransactionalVector
 {
-private:
+  private:
 	// An array of page pointers.
 	SegmentedVector<Page<T, T, 8> *> *array = NULL;
 
@@ -35,7 +35,7 @@ private:
 	// startPage is used in the helping scheme to start inserting at later pages.
 	void insertPages(std::map<size_t, Page<T, T, 8> *> pages, size_t startPage = 0);
 
-public:
+  public:
 	// A page holding our shared size variable.
 	// Access is public because the RWSet must be able to change it.
 	std::atomic<Page<size_t, T, 1> *> size;

@@ -1,12 +1,9 @@
 #include "deltaPage.hpp"
 
-template <typename T, typename U, size_t S>
-Page<T, U, S>::Page(size_t size)
+template <typename T, typename U, size_t S, size_t V>
+DeltaPage<T, U, S, V>::DeltaPage()
 {
-	this->size = size;
-	newVal = new T[size];
-	oldVal = new T[size];
-	for (size_t i = 0; i < size; i++)
+	for (size_t i = 0; i < SIZE; i++)
 	{
 		newVal[i] = UNSET;
 		oldVal[i] = UNSET;
@@ -14,30 +11,17 @@ Page<T, U, S>::Page(size_t size)
 	return;
 }
 
-template <typename T, typename U, size_t S>
-Page<T, U, S>::~Page()
-{
-	if (newVal != NULL)
-	{
-		delete newVal;
-	}
-	if (oldVal != NULL)
-	{
-		delete oldVal;
-	}
-	return;
-}
-
-template <typename T, typename U, size_t S>
-T *Page<T, U, S>::at(size_t index, bool newVals)
+template <typename T, typename U, size_t S, size_t V>
+T *DeltaPage<T, U, S, V>::at(size_t index, bool newVals)
 {
 	// Don't go out of bounds.
-	if (index > SEG_SIZE)
+	if (index > Page<T, U, S>::SEG_SIZE)
 	{
 		return NULL;
 	}
 	// Used bits are any locations that are read from or written to.
-	std::bitset<SEG_SIZE> usedBits = bitset.read | bitset.write;
+	std::bitset<Page<T, U, S>::SEG_SIZE> usedBits =
+		Page<T, U, S>::bitset.read | Page<T, U, S>::bitset.write;
 	// If the bit isn't even in this page, we can't return a valid value.
 	if (usedBits[index] != 1)
 	{
@@ -69,32 +53,66 @@ T *Page<T, U, S>::at(size_t index, bool newVals)
 	}
 }
 
-template <typename T, typename U, size_t S>
-T Page<T, U, S>::get(size_t index, bool newVals)
+template <class T, class U, size_t S, size_t V>
+bool DeltaPage<T, U, S, V>::get(size_t index, bool newVals, T &val)
 {
 	T *pointer = at(index, newVals);
 	if (pointer == NULL)
 	{
-		return UNSET;
+		return false;
 	}
-	return *pointer;
+	val = *pointer;
+	return true;
 }
 
-template <typename T, typename U, size_t S>
-bool Page<T, U, S>::set(size_t index, bool newVals, T val)
+template <class T, class U, size_t S, size_t V>
+bool DeltaPage<T, U, S, V>::set(size_t index, bool newVals, T val)
 {
 	T *element = at(index, newVals);
+	if (element == NULL)
+	{
+		return false;
+	}
 	*element = val;
 	return true;
 }
 
-template <typename T, typename U, size_t S>
-void Page<T, U, S>::printAt(size_t index)
+template <class T, class U, size_t S>
+Page<T, U, S> *Page<T, U, S>::getNewPage(size_t size)
 {
-	T oldVal = get(index, OLD_VAL);
-	T newVal = get(index, NEW_VAL);
-	return;
+	switch (size)
+	{
+	case 1:
+		return new DeltaPage<T, U, S, 1>;
+	case 2:
+		return new DeltaPage<T, U, S, 2>;
+	case 3:
+		return new DeltaPage<T, U, S, 3>;
+	case 4:
+		return new DeltaPage<T, U, S, 4>;
+	case 5:
+		return new DeltaPage<T, U, S, 5>;
+	case 6:
+		return new DeltaPage<T, U, S, 6>;
+	case 7:
+		return new DeltaPage<T, U, S, 7>;
+	case 8:
+		return new DeltaPage<T, U, S, 8>;
+	default:
+		printf("Invalid page size specified. Assuming size=%lu\n", S);
+		return new DeltaPage<T, U, S, S>;
+	}
 }
 
 template class Page<int, int, 8>;
+template class DeltaPage<int, int, 8, 1>;
+template class DeltaPage<int, int, 8, 2>;
+template class DeltaPage<int, int, 8, 3>;
+template class DeltaPage<int, int, 8, 4>;
+template class DeltaPage<int, int, 8, 5>;
+template class DeltaPage<int, int, 8, 6>;
+template class DeltaPage<int, int, 8, 7>;
+template class DeltaPage<int, int, 8, 8>;
+
 template class Page<size_t, int, 1>;
+template class DeltaPage<size_t, int, 1, 1>;

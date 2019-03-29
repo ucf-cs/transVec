@@ -5,8 +5,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <thread>
-#include "deltaPage.hpp"
-#include "transaction.hpp"
 #include "transVector.hpp"
 
 using namespace std;

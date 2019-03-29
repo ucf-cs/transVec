@@ -160,7 +160,7 @@ std::map<size_t, Page<T, T, 8> *> RWSet<T>::setToPages(Desc<T> *descriptor)
 		// Determine how many elements are in this page.
 		size_t elementCount = i->second.size();
 		// Create the initial page.
-		Page<T, T, 8> *page = new Page<T, T, 8>(elementCount);
+		Page<T, T, 8> *page = Page<T, T, 8>::getNewPage(elementCount);
 		// Link the page to the transaction descriptor.
 		page->transaction = descriptor;
 
@@ -178,7 +178,9 @@ std::map<size_t, Page<T, T, 8> *> RWSet<T>::setToPages(Desc<T> *descriptor)
 			// TODO: Determine if this is even nessasary.
 			else
 			{
-				page->set(index, NEW_VAL, page->get(index, OLD_VAL));
+				T val = UNSET;
+				page->get(index, OLD_VAL, val);
+				page->set(index, NEW_VAL, val);
 			}
 		}
 		pages[i->first] = page;
@@ -213,7 +215,8 @@ void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T,
 			}
 
 			// Get the value.
-			T value = page->get(j, OLD_VAL);
+			T value = UNSET;
+			page->get(j, OLD_VAL, value);
 
 			// Get the read list for the current element.
 			std::vector<Operation<T> *> readList = operations.at(i->first).at(j).readList;
@@ -243,7 +246,7 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 	// Prepend a read page to size.
 	// The size page is always of size 1.
 	// Set all unchanging page values here.
-	sizeDesc = new Page<size_t, T, 1>(1);
+	sizeDesc = new DeltaPage<size_t, T, 1, 1>;
 	sizeDesc->bitset.read.set();
 	sizeDesc->bitset.write.set();
 	sizeDesc->bitset.checkBounds.reset();
@@ -284,14 +287,14 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 
 			// Store the root page's value as an old value in case we abort.
 			// Get the appropriate value from the root page depending on whether or not it succeeded.
-			T value;
+			size_t value = UNSET;
 			if (status == Desc<T>::TxStatus::committed)
 			{
-				value = rootPage->get(0, NEW_VAL);
+				rootPage->get(0, NEW_VAL, value);
 			}
 			else
 			{
-				value = rootPage->get(0, OLD_VAL);
+				rootPage->get(0, OLD_VAL, value);
 			}
 			sizeDesc->set(0, OLD_VAL, value);
 		}
@@ -306,7 +309,7 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 	//delete rootPage;
 
 	// Store the actual size locally.
-	size = sizeDesc->get(0, OLD_VAL);
+	sizeDesc->get(0, OLD_VAL, size);
 
 	return size;
 }

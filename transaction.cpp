@@ -39,7 +39,7 @@ T *Desc<T>::getResult(size_t index)
 template <typename T>
 void Desc<T>::print()
 {
-	const char *statusStrList[] = { "active", "committed", "aborted" };
+	const char *statusStrList[] = {"active", "committed", "aborted"};
 	size_t statusStrIndex = 0;
 	switch (status.load())
 	{
@@ -66,7 +66,7 @@ void Desc<T>::print()
 template <typename T>
 void Operation<T>::print()
 {
-	const char *typeStrList[] = { "pushBack", "popBack", "reserve", "read", "write", "size" };
+	const char *typeStrList[] = {"pushBack", "popBack", "reserve", "read", "write", "size"};
 	size_t typeStrIndex = 0;
 	switch (type)
 	{

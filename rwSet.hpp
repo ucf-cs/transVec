@@ -16,7 +16,7 @@ class TransactionalVector;
 template <class T>
 class RWOperation
 {
-public:
+  public:
 	typedef enum Assigned
 	{
 		yes,
@@ -41,7 +41,7 @@ public:
 template <class T>
 class RWSet
 {
-public:
+  public:
 	// Map vector locations to read/write operations.
 	// Used for absolute reads/writes.
 	std::map<size_t, std::map<size_t, RWOperation<T>>> operations;

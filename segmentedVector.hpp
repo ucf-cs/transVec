@@ -18,7 +18,7 @@ We build off of this implementation to add support for those things.
 template <class T>
 class SegmentedVector
 {
-private:
+  private:
 	// The maximum number of buckets that can be allocated.
 	// Increase or decrease this as needed.
 	// TUNE
@@ -47,7 +47,7 @@ private:
 	// Return the bucket and element index associated with an access.
 	std::pair<size_t, size_t> access(size_t index);
 
-public:
+  public:
 	SegmentedVector();
 	SegmentedVector(size_t capacity);
 	// Should only be performed by a single thread once all other threads are done with the vector.

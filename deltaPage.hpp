@@ -27,22 +27,10 @@ template <class T, class U, size_t S>
 // A delta update page.
 class Page
 {
-private:
-	// A contiguous list of updated values, allocated dynamically on page generation.
-	T *newVal;
-	// A contiguous list of old values, allocated dynamically on page generation.
-	// We need these in case the associated transaction aborts.
-	T *oldVal;
-
-	// Get the new or old value at the given index for the current page.
-	T *at(size_t index, bool newVals);
-
-public:
+  public:
 	// The number of elements represented by each segment.
 	// TUNE
 	const static size_t SEG_SIZE = S;
-	// The number of elements being updated by this page.
-	size_t size = 0;
 	// A list of what modification types this transaction performs.
 	Bitset<SEG_SIZE> bitset;
 	// A pointer to the transaction associated with this page.
@@ -50,18 +38,35 @@ public:
 	// A pointer to the next page in the delta update list for this segment.
 	Page *next = NULL;
 
-	// Constructor that initializes a segment based on desired length.
-	// Default assumes the whole segment is replaced, rather than just some of them.
-	Page(size_t size = SEG_SIZE);
-	// Always deallocate our dynamic memory.
-	~Page();
+	virtual bool get(size_t index, bool newVals, T &val) = 0;
+	virtual bool set(size_t index, bool newVals, T val) = 0;
 
+	// Get a delta page with the appropriate size.
+	static Page<T, U, S> *getNewPage(size_t size = S);
+};
+
+template <class T, class U, size_t S, size_t V>
+class DeltaPage : public Page<T, U, S>
+{
+  private:
+	// A contiguous list of updated values.
+	T newVal[V];
+	// A contiguous list of old values.
+	// We need these in case the associated transaction aborts.
+	T oldVal[V];
+	// Get the new or old value at the given index for the current page.
+	T *at(size_t index, bool newVals);
+
+  public:
+	// The number of elements being updated by this page.
+	const static size_t SIZE = V;
+
+	// Constructor that initializes a segment.
+	DeltaPage();
 	// Read the element from the page.
-	T get(size_t index, bool newVals);
+	bool get(size_t index, bool newVals, T &val);
 	// Write the element into the page.
 	bool set(size_t index, bool newVals, T val);
-
-	void printAt(size_t index);
 };
 
 #endif

@@ -167,6 +167,7 @@ void predicateFind(int threadNum)
 	if (desc->status.load() != Desc<int>::TxStatus::committed)
 	{
 		printf("Error on thread %d. Transaction failed.\n", threadNum);
+		return;
 	}
 	// Check for predicate matches.
 	size_t matchCount = 0;
@@ -231,6 +232,7 @@ void predicateSearch()
 
 int main(int argc, char *argv[])
 {
+	// Use command line arguments to quickly test the vector in a variety of scenarios.
 	//THREAD_COUNT = atol(argv[1]);
 	//NUM_TRANSACTIONS = atol(argv[2]);
 

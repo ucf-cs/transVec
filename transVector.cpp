@@ -85,16 +85,21 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, 8> *page)
 						// We only get the new value if it was write comitted.
 						if (status == Desc<T>::TxStatus::committed && currentPage->bitset.write[i])
 						{
-							page->set(i, OLD_VAL, currentPage->get(i, NEW_VAL));
+							T val = UNSET;
+							currentPage->get(i, NEW_VAL, val);
+							page->set(i, OLD_VAL, val);
 						}
 						// Transaction was aborted or operation was a read.
 						// Grab the old page's old value.
 						else
 						{
-							page->set(i, OLD_VAL, currentPage->get(i, OLD_VAL));
+							T val = UNSET;
+							currentPage->get(i, OLD_VAL, val);
+							page->set(i, OLD_VAL, val);
 						}
-						// Abort if the operation fails our bounds check.
-						if (page->bitset.checkBounds[i] && page->get(i, OLD_VAL) == UNSET)
+						T val = UNSET;
+						// Abort if the operation fails our bounds check or we fail to get a value.
+						if (!page->get(i, OLD_VAL, val) || (page->bitset.checkBounds[i] && val == UNSET))
 						{
 							page->transaction->status.store(Desc<T>::TxStatus::aborted);
 							//printf("Aborted!\n");
@@ -169,7 +174,7 @@ TransactionalVector<T>::TransactionalVector()
 	// Allocate an end page, if it hasn't been already.
 	if (endPage == NULL)
 	{
-		endPage = new Page<T, T, 8>();
+		endPage = new DeltaPage<T, T, 8, 8>;
 		endPage->bitset.read.set();
 		endPage->bitset.write.set();
 		endPage->bitset.checkBounds.reset();
@@ -178,7 +183,7 @@ TransactionalVector<T>::TransactionalVector()
 	}
 
 	// Initialize the first size page.
-	Page<size_t, T, 1> *sizePage = new Page<size_t, T, 1>(1);
+	Page<size_t, T, 1> *sizePage = new DeltaPage<size_t, T, 1, 1>;
 	// To ensure we never try to go past the initial size page, claim all values have been set here.
 	sizePage->bitset.read.set();
 	sizePage->bitset.write.set();
@@ -283,8 +288,8 @@ void TransactionalVector<T>::printContents()
 					// We only care about the possessed bits.
 					if (posessedBits[j])
 					{
-						oldElements[j] = currentPage->get(j, OLD_VAL);
-						newElements[j] = currentPage->get(j, NEW_VAL);
+						currentPage->get(j, OLD_VAL, oldElements[j]);
+						currentPage->get(j, NEW_VAL, newElements[j]);
 
 						// We only get the new value if it was write comitted.
 						if (status == Desc<T>::TxStatus::committed && currentPage->bitset.write[j])
