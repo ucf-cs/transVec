@@ -231,6 +231,7 @@ void TransactionalVector<T>::executeTransaction(Desc<T> *descriptor)
 	}
 
 	// Set values for all operations that wanted to read from shared memory.
+	// TODO: Make sure this operation is only performed by the thread that provided this descriptor.
 	set->setOperationVals(descriptor, &pages);
 
 	return;

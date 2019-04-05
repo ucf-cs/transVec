@@ -92,8 +92,8 @@ void Operation<T>::print()
 	printf("Type:\t%s\n", typeStrList[typeStrIndex]);
 
 	printf("index:\t%lu\n", index);
-	printf("value:\t%ld\n", val);
-	printf("return:\t%ld\n", ret);
+	printf("value:\t%dl\n", val);
+	printf("return:\t%dl\n", ret);
 }
 
 template struct Desc<int>;

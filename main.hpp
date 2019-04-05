@@ -7,6 +7,8 @@
 #include <thread>
 #include "transVector.hpp"
 
+#include "vector.hpp"
+
 using namespace std;
 
 // Change these to test different situations.
@@ -17,7 +19,8 @@ const size_t TRANSACTION_SIZE = 5;
 // TUNE
 size_t NUM_TRANSACTIONS = 500000;
 
-TransactionalVector<int> *transVector;
+//TransactionalVector<int> *transVector;
+CoarseTransVector<int> *transVector;
 
 std::vector<Desc<int> *> transactions;
 

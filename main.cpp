@@ -174,6 +174,7 @@ void predicateFind(int threadNum)
 	for (size_t i = 0; i < desc->size; i++)
 	{
 		// Out simple predicate: the value is even.
+		// TODO: Currently, all return values are 0 for the coarse-grained vector.
 		if (desc->ops[i].ret % 2 == 0)
 		{
 			matchCount++;
@@ -239,7 +240,8 @@ int main(int argc, char *argv[])
 	// Seed the random number generator.
 	srand(time(NULL));
 
-	transVector = new TransactionalVector<int>();
+	transVector = new CoarseTransVector<int>();
+	//transVector = new TransactionalVector<int>();
 
 	predicateSearch();
 	return 0;

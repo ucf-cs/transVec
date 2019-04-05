@@ -128,9 +128,9 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
 		case Operation<T>::OpType::reserve:
 			// We only care about the largest reserve call.
 			// All other reserve operations will consolidate into a single call at the beginning of the transaction.
-			if ((size_t)descriptor->ops[i].val > maxReserveAbsolute)
+			if ((size_t)descriptor->ops[i].index > maxReserveAbsolute)
 			{
-				maxReserveAbsolute = descriptor->ops[i].val;
+				maxReserveAbsolute = descriptor->ops[i].index;
 			}
 			break;
 		default:
