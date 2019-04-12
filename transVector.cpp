@@ -6,9 +6,9 @@ bool TransactionalVector<T>::reserve(size_t size)
 	// Since we hold multiple elements per page, convert from a request for more elements to a request for more pages.
 
 	// Reserve a page per SEG_SIZE elements.
-	size_t reserveSize = size / Page<T, T, 8>::SEG_SIZE;
+	size_t reserveSize = size / Page<T, T, SGMT_SIZE>::SEG_SIZE;
 	// Since integer division always rounds down, add one more page to handle the remainder.
-	if (size % Page<T, T, 8>::SEG_SIZE != 0)
+	if (size % Page<T, T, SGMT_SIZE>::SEG_SIZE != 0)
 	{
 		reserveSize++;
 	}
@@ -17,14 +17,14 @@ bool TransactionalVector<T>::reserve(size_t size)
 }
 
 template <typename T>
-bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, 8> *page)
+bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, SGMT_SIZE> *page)
 {
 	// Create a bitset to keep track of all locations of interest.
-	std::bitset<Page<T, T, 8>::SEG_SIZE> targetBits;
+	std::bitset<Page<T, T, SGMT_SIZE>::SEG_SIZE> targetBits;
 	// Set all bits we want to read or write.
 	targetBits = page->bitset.read | page->bitset.write;
 
-	Page<T, T, 8> *rootPage = NULL;
+	Page<T, T, SGMT_SIZE> *rootPage = NULL;
 	do
 	{
 
@@ -49,7 +49,7 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, 8> *page)
 		}
 
 		// Initialize the current page along the linked list of updates.
-		Page<T, T, 8> *currentPage = rootPage;
+		Page<T, T, SGMT_SIZE> *currentPage = rootPage;
 		// Traverse down the existing delta updates, collecting old values as we go.
 		// We stop when we no longer need any more elements or when there are no pages left.
 		while (!targetBits.none())
@@ -60,14 +60,15 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, 8> *page)
 				currentPage = endPage;
 			}
 			// Get the set of elements the current page has that we need.
-			std::bitset<Page<T, T, 8>::SEG_SIZE> posessedBits = targetBits & (currentPage->bitset.read | currentPage->bitset.write);
+			std::bitset<Page<T, T, SGMT_SIZE>::SEG_SIZE> posessedBits = targetBits & (currentPage->bitset.read | currentPage->bitset.write);
 			// If this page has said elements.
 			if (!posessedBits.none())
 			{
 				// Check the status of the transaction.
 				typename Desc<T>::TxStatus status = currentPage->transaction->status.load();
 				// If the current page is part of an active transaction.
-				if (status == Desc<T>::TxStatus::active)
+				// No need to help reads, so check if there are any dependencies with writes.
+				if (status == Desc<T>::TxStatus::active && (posessedBits & currentPage->bitset.write) != 0)
 				{
 					// TODO: Help the active transaction.
 					// For now, just busy wait.
@@ -75,9 +76,11 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, 8> *page)
 					{
 						continue;
 					}
+					// Update our status to its final (committed or aborted) state.
+					status = currentPage->transaction->status.load();
 				}
 				// Go through the bits.
-				for (size_t i = 0; i < Page<T, T, 8>::SEG_SIZE; i++)
+				for (size_t i = 0; i < Page<T, T, SGMT_SIZE>::SEG_SIZE; i++)
 				{
 					// We only care about the possessed bits.
 					if (posessedBits[i])
@@ -128,10 +131,10 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, 8> *page)
 }
 
 template <typename T>
-void TransactionalVector<T>::insertPages(std::map<size_t, Page<T, T, 8> *> pages, size_t startPage)
+void TransactionalVector<T>::insertPages(std::map<size_t, Page<T, T, SGMT_SIZE> *> pages, size_t startPage)
 {
 	// Get the start of the map.
-	typename std::map<size_t, Page<T, T, 8> *>::iterator iter = pages.begin();
+	typename std::map<size_t, Page<T, T, SGMT_SIZE> *>::iterator iter = pages.begin();
 	// Advance part-way through.
 	if (startPage > 0)
 	{
@@ -158,7 +161,7 @@ template <typename T>
 TransactionalVector<T>::TransactionalVector()
 {
 	// Initialize our internal segmented array.
-	array = new SegmentedVector<Page<T, T, 8> *>();
+	array = new SegmentedVector<Page<T, T, SGMT_SIZE> *>();
 	// Allocate a size descriptor.
 	// Keep it seperated to avoid needless contention between it and low-indexed elements.
 	// It also needs to hold a different type of element than the others, a size.
@@ -171,10 +174,28 @@ TransactionalVector<T>::TransactionalVector()
 		endTransaction->status.store(Desc<T>::TxStatus::committed);
 	}
 
+	// Create the pool of pages.
+	DeltaPage<T, T, SGMT_SIZE, 1>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 2>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 3>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 4>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 5>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 6>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 7>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 8>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 9>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 10>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 11>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 12>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 13>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 14>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, 15>::initPool();
+	DeltaPage<T, T, SGMT_SIZE, SGMT_SIZE>::initPool();
+
 	// Allocate an end page, if it hasn't been already.
 	if (endPage == NULL)
 	{
-		endPage = new DeltaPage<T, T, 8, 8>;
+		endPage = new DeltaPage<T, T, SGMT_SIZE, SGMT_SIZE>;
 		endPage->bitset.read.set();
 		endPage->bitset.write.set();
 		endPage->bitset.checkBounds.reset();
@@ -211,7 +232,7 @@ void TransactionalVector<T>::executeTransaction(Desc<T> *descriptor)
 
 	// Convert the set into pages.
 	// TODO: Share these pages somewhere to enable helping scheme. Perhaps in the descriptor.
-	std::map<size_t, Page<T, T, 8> *> pages = set->setToPages(descriptor);
+	std::map<size_t, Page<T, T, SGMT_SIZE> *> pages = set->setToPages(descriptor);
 
 	// Insert the pages.
 	insertPages(pages);
@@ -242,7 +263,7 @@ void TransactionalVector<T>::printContents()
 {
 	for (size_t i = 0;; i++)
 	{
-		Page<T, T, 8> *rootPage = NULL;
+		Page<T, T, SGMT_SIZE> *rootPage = NULL;
 		if (!array->read(i, rootPage))
 		{
 			break;
@@ -252,11 +273,11 @@ void TransactionalVector<T>::printContents()
 			break;
 		}
 		// Initialize the current page along the linked list of updates.
-		Page<T, T, 8> *currentPage = rootPage;
-		T oldElements[Page<T, T, 8>::SEG_SIZE];
-		T newElements[Page<T, T, 8>::SEG_SIZE];
+		Page<T, T, SGMT_SIZE> *currentPage = rootPage;
+		T oldElements[Page<T, T, SGMT_SIZE>::SEG_SIZE];
+		T newElements[Page<T, T, SGMT_SIZE>::SEG_SIZE];
 		bool newElement = false;
-		std::bitset<Page<T, T, 8>::SEG_SIZE> targetBits;
+		std::bitset<Page<T, T, SGMT_SIZE>::SEG_SIZE> targetBits;
 		targetBits.set();
 		// Traverse down the existing delta updates, collecting old values as we go.
 		// We stop when we no longer need any more elements or when there are no pages left.
@@ -268,7 +289,7 @@ void TransactionalVector<T>::printContents()
 				currentPage = endPage;
 			}
 			// Get the set of elements the current page has that we need.
-			std::bitset<Page<T, T, 8>::SEG_SIZE> posessedBits = targetBits & (currentPage->bitset.read | currentPage->bitset.write);
+			std::bitset<Page<T, T, SGMT_SIZE>::SEG_SIZE> posessedBits = targetBits & (currentPage->bitset.read | currentPage->bitset.write);
 			// If this page has said elements.
 			if (!posessedBits.none())
 			{
@@ -284,7 +305,7 @@ void TransactionalVector<T>::printContents()
 					}
 				}
 				// Go through the bits.
-				for (size_t j = 0; j < Page<T, T, 8>::SEG_SIZE; j++)
+				for (size_t j = 0; j < Page<T, T, SGMT_SIZE>::SEG_SIZE; j++)
 				{
 					// We only care about the possessed bits.
 					if (posessedBits[j])
@@ -312,9 +333,9 @@ void TransactionalVector<T>::printContents()
 			// Move on to the next delta update.
 			currentPage = currentPage->next;
 		}
-		for (size_t j = 0; j < Page<T, T, 8>::SEG_SIZE; j++)
+		for (size_t j = 0; j < Page<T, T, SGMT_SIZE>::SEG_SIZE; j++)
 		{
-			printf("%ld:\t%d\t%d\n", i * Page<T, T, 8>::SEG_SIZE + j, oldElements[j], newElements[j]);
+			printf("%ld:\t%d\t%d\n", i * Page<T, T, SGMT_SIZE>::SEG_SIZE + j, oldElements[j], newElements[j]);
 		}
 	}
 	printf("\n");
@@ -323,4 +344,4 @@ void TransactionalVector<T>::printContents()
 
 template class TransactionalVector<int>;
 template class SegmentedVector<Page<size_t, int, 1> *>;
-template class SegmentedVector<Page<int, int, 8> *>;
+template class SegmentedVector<Page<int, int, SGMT_SIZE> *>;

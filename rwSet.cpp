@@ -11,8 +11,8 @@ template <typename T>
 std::pair<size_t, size_t> RWSet<T>::access(size_t pos)
 {
 	// All other cases.
-	size_t first = pos / Page<T, T, 8>::SEG_SIZE;
-	size_t second = pos % Page<T, T, 8>::SEG_SIZE;
+	size_t first = pos / Page<T, T, SGMT_SIZE>::SEG_SIZE;
+	size_t second = pos % Page<T, T, SGMT_SIZE>::SEG_SIZE;
 	return std::make_pair(first, second);
 }
 
@@ -148,10 +148,10 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
 }
 
 template <typename T>
-std::map<size_t, Page<T, T, 8> *> RWSet<T>::setToPages(Desc<T> *descriptor)
+std::map<size_t, Page<T, T, SGMT_SIZE> *> RWSet<T>::setToPages(Desc<T> *descriptor)
 {
 	// All of the pages we want to insert (except size), ordered from low to high.
-	std::map<size_t, Page<T, T, 8> *> pages;
+	std::map<size_t, Page<T, T, SGMT_SIZE> *> pages;
 
 	// For each page to generate.
 	// These are all independent of shared memory.
@@ -160,7 +160,7 @@ std::map<size_t, Page<T, T, 8> *> RWSet<T>::setToPages(Desc<T> *descriptor)
 		// Determine how many elements are in this page.
 		size_t elementCount = i->second.size();
 		// Create the initial page.
-		Page<T, T, 8> *page = Page<T, T, 8>::getNewPage(elementCount);
+		Page<T, T, SGMT_SIZE> *page = Page<T, T, SGMT_SIZE>::getNewPage(elementCount);
 		// Link the page to the transaction descriptor.
 		page->transaction = descriptor;
 
@@ -190,7 +190,7 @@ std::map<size_t, Page<T, T, 8> *> RWSet<T>::setToPages(Desc<T> *descriptor)
 }
 
 template <typename T>
-void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, 8> *> *pages)
+void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, SGMT_SIZE> *> *pages)
 {
 	// If the returned values have already been copied over, do no more.
 	if (descriptor->returnedValues.load() == true)
@@ -202,7 +202,7 @@ void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T,
 	for (auto i = pages->begin(); i != pages->end(); ++i)
 	{
 		// Get the page.
-		Page<T, T, 8> *page = i->second;
+		Page<T, T, SGMT_SIZE> *page = i->second;
 		// Get a list of values in the page.
 		std::bitset<page->SEG_SIZE> usedBits = page->bitset.read | page->bitset.write;
 		// For each element.

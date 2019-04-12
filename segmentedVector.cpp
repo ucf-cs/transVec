@@ -248,4 +248,4 @@ void SegmentedVector<T>::printBuckets()
 }
 
 template class SegmentedVector<Page<size_t, int, 1> *>;
-template class SegmentedVector<Page<int, int, 8> *>;
+template class SegmentedVector<Page<int, int, SGMT_SIZE> *>;

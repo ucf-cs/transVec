@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <map>
 #include <vector>
+
+#include "define.hpp"
 #include "deltaPage.hpp"
 #include "transaction.hpp"
 #include "transVector.hpp"
@@ -67,10 +69,10 @@ class RWSet
 	bool createSet(Desc<T> *descriptor, TransactionalVector<T> *vector);
 
 	// Convert from a set of reads and writes to a list of pages.
-	std::map<size_t, Page<T, T, 8> *> setToPages(Desc<T> *descriptor);
+	std::map<size_t, Page<T, T, SGMT_SIZE> *> setToPages(Desc<T> *descriptor);
 
 	// Set the values in a transaction to the retrived values.
-	void setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, 8> *> *pages);
+	void setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, SGMT_SIZE> *> *pages);
 
 	size_t getSize(Desc<T> *transaction, TransactionalVector<T> *sizeHead);
 };

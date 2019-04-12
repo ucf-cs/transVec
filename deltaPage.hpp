@@ -5,10 +5,15 @@
 #include <bitset>
 #include <cstddef>
 #include <typeinfo>
+
+#include "define.hpp"
 #include "transaction.hpp"
 
 #define NEW_VAL 1
 #define OLD_VAL 0
+
+//#define POOL_SIZE 380000
+#define POOL_SIZE 10000000
 
 // We can use bitsets of arbitrary size, so long as we decide at compile time.
 template <size_t size>
@@ -25,7 +30,8 @@ struct Bitset
 // S: The full size of the given segment.
 template <class T, class U, size_t S>
 // A delta update page.
-class Page
+// TODO: Alignment actually as a small negative impact on read-only performance.
+class alignas(64) Page
 {
   public:
 	// The number of elements represented by each segment.
@@ -46,7 +52,7 @@ class Page
 };
 
 template <class T, class U, size_t S, size_t V>
-class DeltaPage : public Page<T, U, S>
+class alignas(64) DeltaPage : public Page<T, U, S>
 {
   private:
 	// A contiguous list of updated values.
@@ -58,6 +64,11 @@ class DeltaPage : public Page<T, U, S>
 	T *at(size_t index, bool newVals);
 
   public:
+  	// Pool manager.
+	static DeltaPage<T, U, S, V> **pool;
+	static std::atomic<size_t> poolCounter;
+	static void initPool();
+
 	// The number of elements being updated by this page.
 	const static size_t SIZE = V;
 

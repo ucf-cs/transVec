@@ -41,6 +41,9 @@
         "string_view": "cpp",
         "system_error": "cpp",
         "deque": "cpp",
-        "cstring": "cpp"
+        "cstring": "cpp",
+        "mutex": "cpp",
+        "condition_variable": "cpp",
+        "algorithm": "cpp"
     }
 }

@@ -11,7 +11,9 @@
 # Declaration of variables
 CC = g++
 CC_FLAGS = -std=c++11 -g -pthread
-OPTIMAL_FLAGS = -std=c++11 -Ofast -pthread
+OPTIMAL_FLAGS = -std=c++11 -march=native -Ofast -pthread
+# Used to prevent crashing with dynamic allocation, for some unknown reason.
+TEST_FLAGS = -std=c++11 -march=native -O2 -pthread
  
 # File names
 EXEC = transVec.out

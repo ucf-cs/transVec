@@ -80,39 +80,240 @@ bool DeltaPage<T, U, S, V>::set(size_t index, bool newVals, T val)
 template <class T, class U, size_t S>
 Page<T, U, S> *Page<T, U, S>::getNewPage(size_t size)
 {
+	size_t index;
 	switch (size)
 	{
 	case 1:
-		return new DeltaPage<T, U, S, 1>;
+		index = DeltaPage<T, U, S, 1>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 1>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 1>;
+		}
+		break;
 	case 2:
-		return new DeltaPage<T, U, S, 2>;
+		index = DeltaPage<T, U, S, 2>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 2>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 2>;
+		}
+		break;
 	case 3:
-		return new DeltaPage<T, U, S, 3>;
+		index = DeltaPage<T, U, S, 3>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 3>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 3>;
+		}
+		break;
 	case 4:
-		return new DeltaPage<T, U, S, 4>;
+		index = DeltaPage<T, U, S, 4>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 4>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 4>;
+		}
+		break;
 	case 5:
-		return new DeltaPage<T, U, S, 5>;
+		index = DeltaPage<T, U, S, 5>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 5>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 5>;
+		}
+		break;
 	case 6:
-		return new DeltaPage<T, U, S, 6>;
+		index = DeltaPage<T, U, S, 6>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 6>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 6>;
+		}
+		break;
 	case 7:
-		return new DeltaPage<T, U, S, 7>;
+		index = DeltaPage<T, U, S, 7>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 7>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 7>;
+		}
+		break;
 	case 8:
-		return new DeltaPage<T, U, S, 8>;
+		index = DeltaPage<T, U, S, 8>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 8>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 8>;
+		}
+		break;
+	case 9:
+		index = DeltaPage<T, U, S, 9>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 9>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 9>;
+		}
+		break;
+	case 10:
+		index = DeltaPage<T, U, S, 10>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 10>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 10>;
+		}
+		break;
+	case 11:
+		index = DeltaPage<T, U, S, 11>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 11>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 11>;
+		}
+		break;
+	case 12:
+		index = DeltaPage<T, U, S, 12>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 12>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 12>;
+		}
+		break;
+	case 13:
+		index = DeltaPage<T, U, S, 13>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 13>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 13>;
+		}
+		break;
+	case 14:
+		index = DeltaPage<T, U, S, 14>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 14>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 14>;
+		}
+		break;
+	case 15:
+		index = DeltaPage<T, U, S, 15>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 15>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 15>;
+		}
+		break;
+	case 16:
+		index = DeltaPage<T, U, S, 16>::poolCounter.fetch_add(1);
+		if (index < POOL_SIZE)
+		{
+			return DeltaPage<T, U, S, 16>::pool[index];
+		}
+		else
+		{
+			printf("Pool for update size %lu is full.\n", size);
+			return new DeltaPage<T, U, S, 16>;
+		}
+		break;
 	default:
-		printf("Invalid page size specified. Assuming size=%lu\n", S);
+		printf("Invalid page size specified (%lu). Assuming size=%lu\n", size, S);
 		return new DeltaPage<T, U, S, S>;
 	}
 }
 
-template class Page<int, int, 8>;
-template class DeltaPage<int, int, 8, 1>;
-template class DeltaPage<int, int, 8, 2>;
-template class DeltaPage<int, int, 8, 3>;
-template class DeltaPage<int, int, 8, 4>;
-template class DeltaPage<int, int, 8, 5>;
-template class DeltaPage<int, int, 8, 6>;
-template class DeltaPage<int, int, 8, 7>;
-template class DeltaPage<int, int, 8, 8>;
+template <class T, class U, size_t S, size_t V>
+void DeltaPage<T, U, S, V>::initPool()
+{
+	poolCounter.store(0);
+	pool = new DeltaPage<T, U, S, V>*[POOL_SIZE];
+	for(size_t i=0;i<POOL_SIZE;i++){
+		pool[i] = new DeltaPage<T, U, S, V>;
+	}
+}
+
+template <class T, class U, size_t S, size_t V>
+std::atomic<size_t> DeltaPage<T, U, S, V>::poolCounter;
+
+template <class T, class U, size_t S, size_t V>
+DeltaPage<T, U, S, V> **DeltaPage<T, U, S, V>::pool;
+
+template class Page<int, int, SGMT_SIZE>;
+template class DeltaPage<int, int, SGMT_SIZE, 1>;
+template class DeltaPage<int, int, SGMT_SIZE, 2>;
+template class DeltaPage<int, int, SGMT_SIZE, 3>;
+template class DeltaPage<int, int, SGMT_SIZE, 4>;
+template class DeltaPage<int, int, SGMT_SIZE, 5>;
+template class DeltaPage<int, int, SGMT_SIZE, 6>;
+template class DeltaPage<int, int, SGMT_SIZE, 7>;
+template class DeltaPage<int, int, SGMT_SIZE, 8>;
+template class DeltaPage<int, int, SGMT_SIZE, 9>;
+template class DeltaPage<int, int, SGMT_SIZE, 10>;
+template class DeltaPage<int, int, SGMT_SIZE, 11>;
+template class DeltaPage<int, int, SGMT_SIZE, 12>;
+template class DeltaPage<int, int, SGMT_SIZE, 13>;
+template class DeltaPage<int, int, SGMT_SIZE, 14>;
+template class DeltaPage<int, int, SGMT_SIZE, 15>;
+template class DeltaPage<int, int, SGMT_SIZE, 16>;
 
 template class Page<size_t, int, 1>;
 template class DeltaPage<size_t, int, 1, 1>;

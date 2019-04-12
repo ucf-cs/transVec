@@ -105,7 +105,6 @@ void randThread(int threadNum)
 		// For each operation.
 		for (int j = 0; j < transSize; j++)
 		{
-			// All operations are pushes.
 			ops[j].type = Operation<int>::OpType(rand() % 6);
 			ops[j].index = rand() % 1000;
 			ops[j].val = rand() % 1000;
@@ -234,14 +233,16 @@ void predicateSearch()
 int main(int argc, char *argv[])
 {
 	// Use command line arguments to quickly test the vector in a variety of scenarios.
-	//THREAD_COUNT = atol(argv[1]);
-	//NUM_TRANSACTIONS = atol(argv[2]);
+	THREAD_COUNT = atol(argv[1]);
+	NUM_TRANSACTIONS = atol(argv[2]);
 
 	// Seed the random number generator.
 	srand(time(NULL));
 
-	transVector = new CoarseTransVector<int>();
-	//transVector = new TransactionalVector<int>();
+	//transVector = new CoarseTransVector<int>();
+	transVector = new TransactionalVector<int>();
+
+	printf("Largest page is %lu bytes.\n", sizeof(DeltaPage<int, int, SGMT_SIZE, SGMT_SIZE>));
 
 	predicateSearch();
 	return 0;
