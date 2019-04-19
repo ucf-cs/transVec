@@ -4,3 +4,5 @@
 *.out
 # Ignore ipch project index files
 .vscode/ipch
+# Ignore output file
+output.txt
