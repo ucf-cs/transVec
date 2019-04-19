@@ -168,19 +168,15 @@ std::map<size_t, Page<T, T, SGMT_SIZE> *> RWSet<T>::setToPages(Desc<T> *descript
 		for (auto j = i->second.begin(); j != i->second.end(); ++j)
 		{
 			size_t index = j->first;
+			// Infer a read based on the read list size.
 			page->bitset.read[index] = (j->second.readList.size() > 0);
+			// Infer a write based on the write op pointer.
 			page->bitset.write[index] = (j->second.lastWriteOp != NULL);
 			page->bitset.checkBounds[index] = (j->second.checkBounds == RWOperation<T>::Assigned::yes) ? true : false;
+			// If a write occured, place the appropriate new value from it.
 			if (j->second.lastWriteOp != NULL)
 			{
 				page->set(index, NEW_VAL, j->second.lastWriteOp->val);
-			}
-			// TODO: Determine if this is even nessasary.
-			else
-			{
-				T val = UNSET;
-				page->get(index, OLD_VAL, val);
-				page->set(index, NEW_VAL, val);
 			}
 		}
 		pages[i->first] = page;
@@ -253,11 +249,7 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 	sizeDesc->transaction = descriptor;
 	sizeDesc->next = NULL;
 
-	// DEBUG: Ensure a reasonable default value.
-	//sizeDesc->set(0, OLD_VAL, 0);
-	//sizeDesc->set(0, NEW_VAL, 0);
-
-	Page<size_t, T, 1> *rootPage;
+	Page<size_t, T, 1> *rootPage = NULL;
 	do
 	{
 		// Quit if the transaction is no longer active.
@@ -298,15 +290,11 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 			}
 			sizeDesc->set(0, OLD_VAL, value);
 		}
-		// DEBUG: Append the old page onto the new page.
-		//sizeDesc->next = rootPage;
+		// Append the old page onto the new page. Used to maintain history.
+		sizeDesc->next = rootPage;
 	}
 	// Replace the page. Finish on success. Retry on failure.
 	while (!vector->size.compare_exchange_strong(rootPage, sizeDesc));
-
-	// No need to use a linked-list for size. Just deallocate the old page.
-	// TODO: It is not safe to deallocate the rootPage here since another thread may be using it still.
-	//delete rootPage;
 
 	// Store the actual size locally.
 	sizeDesc->get(0, OLD_VAL, size);
@@ -314,4 +302,4 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 	return size;
 }
 
-template class RWSet<int>;
+template class RWSet<VAL>;

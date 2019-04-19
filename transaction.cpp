@@ -96,4 +96,4 @@ void Operation<T>::print()
 	printf("return:\t%dl\n", ret);
 }
 
-template struct Desc<int>;
+template struct Desc<VAL>;

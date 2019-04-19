@@ -24,8 +24,11 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, SGMT_SIZE> *pa
 	// Set all bits we want to read or write.
 	targetBits = page->bitset.read | page->bitset.write;
 
+	// The head of the linkedlist of updates.
 	Page<T, T, SGMT_SIZE> *rootPage = NULL;
-	do
+	// The previous head. The new page has been updated up to this point.
+	Page<T, T, SGMT_SIZE> *prevRoot = NULL;
+	while (true)
 	{
 
 		// Quit if the transaction is no longer active.
@@ -41,7 +44,7 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, SGMT_SIZE> *pa
 		}
 
 		// Disallow prepending a page to itself.
-		// TODO: Can this happen?
+		// May occur during helping.
 		if (rootPage == page)
 		{
 			assert(false);
@@ -58,6 +61,10 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, SGMT_SIZE> *pa
 			if (currentPage == NULL)
 			{
 				currentPage = endPage;
+			}
+			// If we reach a page that we already traversed in a previous loop, then there's no reason to traverse again.
+			if(currentPage == prevRoot) {
+				break;
 			}
 			// Get the set of elements the current page has that we need.
 			std::bitset<Page<T, T, SGMT_SIZE>::SEG_SIZE> posessedBits = targetBits & (currentPage->bitset.read | currentPage->bitset.write);
@@ -121,11 +128,19 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, SGMT_SIZE> *pa
 
 		// Link our new page to the old root page.
 		page->next = rootPage;
+
+		// Insert the page into the desired location.
+		if (array->tryWrite(index, rootPage, page))
+		{
+			// Finish on success.
+			break;
+		}
+		else
+		{
+			// Retry on failure.
+			prevRoot = rootPage;
+		}
 	}
-	// Insert the page into the desired location.
-	// Finish on success.
-	// Retry on failure.
-	while (!array->tryWrite(index, rootPage, page));
 
 	return true;
 }
@@ -134,13 +149,13 @@ template <typename T>
 void TransactionalVector<T>::insertPages(std::map<size_t, Page<T, T, SGMT_SIZE> *> pages, size_t startPage)
 {
 	// Get the start of the map.
-	typename std::map<size_t, Page<T, T, SGMT_SIZE> *>::iterator iter = pages.begin();
+	typename std::map<size_t, Page<T, T, SGMT_SIZE> *>::reverse_iterator iter = pages.rbegin();
 	// Advance part-way through.
 	if (startPage > 0)
 	{
 		std::advance(iter, startPage);
 	}
-	for (auto i = iter; i != pages.end(); ++i)
+	for (auto i = iter; i != pages.rend(); ++i)
 	{
 		// If some prepend produced a failure, don't insert any more pages for this transaction.
 		if (i->second->transaction->status.load() == Desc<T>::TxStatus::aborted)
@@ -342,6 +357,6 @@ void TransactionalVector<T>::printContents()
 	return;
 }
 
-template class TransactionalVector<int>;
-template class SegmentedVector<Page<size_t, int, 1> *>;
-template class SegmentedVector<Page<int, int, SGMT_SIZE> *>;
+template class TransactionalVector<VAL>;
+template class SegmentedVector<Page<size_t, VAL, 1> *>;
+template class SegmentedVector<Page<VAL, VAL, SGMT_SIZE> *>;

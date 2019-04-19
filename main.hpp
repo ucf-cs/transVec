@@ -19,10 +19,11 @@ const size_t TRANSACTION_SIZE = 5;
 // TUNE
 size_t NUM_TRANSACTIONS = 500000;
 
-TransactionalVector<int> *transVector;
-//CoarseTransVector<int> *transVector;
+TransactionalVector<VAL> *transVector;
+//CoarseTransVector<VAL> *transVector;
+//GCCSTMVector<VAL> *transVector;
 
-std::vector<Desc<int> *> transactions;
+std::vector<Desc<VAL> *> transactions;
 
 std::atomic<size_t> totalMatches;
 

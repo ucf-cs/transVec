@@ -11,14 +11,7 @@ The actual vector will pre-process each of these transactions into a simpler rea
 #include <cstring>
 #include <string>
 
-// Use this typedef to quickly change what type of objects we're working with.
-// TODO: Does this actually belong here?
-typedef int VAL;
-
-// This reserved value indicates that a value cannot be set by a read or write here.
-// Must differ depending on T.
-// Consider templating the unset value relative to T?
-const VAL UNSET = INT32_MIN;
+#include "define.hpp"
 
 template <class T>
 // A standard, user-generated operation.

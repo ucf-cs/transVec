@@ -6,19 +6,19 @@ void pushThread(int threadNum)
 	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
 	{
 		// A list of operations for the current thread.
-		Operation<int> *ops = new Operation<int>[TRANSACTION_SIZE];
+		Operation<VAL> *ops = new Operation<VAL>[TRANSACTION_SIZE];
 		// For each operation.
-		for (int j = 0; j < TRANSACTION_SIZE; j++)
+		for (size_t j = 0; j < TRANSACTION_SIZE; j++)
 		{
 			// All operations are pushes.
-			ops[j].type = Operation<int>::OpType::pushBack;
+			ops[j].type = Operation<VAL>::OpType::pushBack;
 			ops[j].val =
 				threadNum * NUM_TRANSACTIONS * TRANSACTION_SIZE +
 				i * TRANSACTION_SIZE +
 				j;
 		}
 		// Create a transaction containing the these operations.
-		Desc<int> *desc = new Desc<int>(TRANSACTION_SIZE, ops);
+		Desc<VAL> *desc = new Desc<VAL>(TRANSACTION_SIZE, ops);
 		// Execute the transaction.
 		transVector->executeTransaction(desc);
 	}
@@ -30,12 +30,12 @@ void readThread(int threadNum)
 	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
 	{
 		// A list of operations for the current thread.
-		Operation<int> *ops = new Operation<int>[TRANSACTION_SIZE];
+		Operation<VAL> *ops = new Operation<VAL>[TRANSACTION_SIZE];
 		// For each operation.
-		for (int j = 0; j < TRANSACTION_SIZE; j++)
+		for (size_t j = 0; j < TRANSACTION_SIZE; j++)
 		{
 			// All operations are reads.
-			ops[j].type = Operation<int>::OpType::read;
+			ops[j].type = Operation<VAL>::OpType::read;
 			// DEBUG: This will always be an invalid read. Test invalid writes too.
 			ops[j].index =
 				threadNum * NUM_TRANSACTIONS * TRANSACTION_SIZE +
@@ -43,7 +43,7 @@ void readThread(int threadNum)
 				j;
 		}
 		// Create a transaction containing the these operations.
-		Desc<int> *desc = new Desc<int>(TRANSACTION_SIZE, ops);
+		Desc<VAL> *desc = new Desc<VAL>(TRANSACTION_SIZE, ops);
 		// Execute the transaction.
 		transVector->executeTransaction(desc);
 	}
@@ -55,12 +55,12 @@ void writeThread(int threadNum)
 	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
 	{
 		// A list of operations for the current thread.
-		Operation<int> *ops = new Operation<int>[TRANSACTION_SIZE];
+		Operation<VAL> *ops = new Operation<VAL>[TRANSACTION_SIZE];
 		// For each operation.
-		for (int j = 0; j < TRANSACTION_SIZE; j++)
+		for (size_t j = 0; j < TRANSACTION_SIZE; j++)
 		{
 			// All operations are writes.
-			ops[j].type = Operation<int>::OpType::write;
+			ops[j].type = Operation<VAL>::OpType::write;
 			ops[j].val = 0;
 			ops[j].index =
 				threadNum * NUM_TRANSACTIONS * TRANSACTION_SIZE +
@@ -68,7 +68,7 @@ void writeThread(int threadNum)
 				j;
 		}
 		// Create a transaction containing the these operations.
-		Desc<int> *desc = new Desc<int>(TRANSACTION_SIZE, ops);
+		Desc<VAL> *desc = new Desc<VAL>(TRANSACTION_SIZE, ops);
 		// Execute the transaction.
 		transVector->executeTransaction(desc);
 	}
@@ -80,15 +80,15 @@ void popThread(int threadNum)
 	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
 	{
 		// A list of operations for the current thread.
-		Operation<int> *ops = new Operation<int>[TRANSACTION_SIZE];
+		Operation<VAL> *ops = new Operation<VAL>[TRANSACTION_SIZE];
 		// For each operation.
-		for (int j = 0; j < TRANSACTION_SIZE; j++)
+		for (size_t j = 0; j < TRANSACTION_SIZE; j++)
 		{
 			// All operations are pushes.
-			ops[j].type = Operation<int>::OpType::popBack;
+			ops[j].type = Operation<VAL>::OpType::popBack;
 		}
 		// Create a transaction containing the these operations.
-		Desc<int> *desc = new Desc<int>(TRANSACTION_SIZE, ops);
+		Desc<VAL> *desc = new Desc<VAL>(TRANSACTION_SIZE, ops);
 		// Execute the transaction.
 		transVector->executeTransaction(desc);
 	}
@@ -101,16 +101,16 @@ void randThread(int threadNum)
 	{
 		size_t transSize = (rand() % TRANSACTION_SIZE) + 1;
 		// A list of operations for the current thread.
-		Operation<int> *ops = new Operation<int>[transSize];
+		Operation<VAL> *ops = new Operation<VAL>[transSize];
 		// For each operation.
-		for (int j = 0; j < transSize; j++)
+		for (size_t j = 0; j < transSize; j++)
 		{
-			ops[j].type = Operation<int>::OpType(rand() % 6);
+			ops[j].type = Operation<VAL>::OpType(rand() % 6);
 			ops[j].index = rand() % 1000;
 			ops[j].val = rand() % 1000;
 		}
 		// Create a transaction containing the these operations.
-		Desc<int> *desc = new Desc<int>(transSize, ops);
+		Desc<VAL> *desc = new Desc<VAL>(transSize, ops);
 		// Execute the transaction.
 		transVector->executeTransaction(desc);
 	}
@@ -135,17 +135,17 @@ void threadRunner(thread *threads, void function(int threadNum))
 void predicatePreinsert(int threadNum)
 {
 	// A list of operations for the current thread.
-	Operation<int> *insertOps = new Operation<int>[NUM_TRANSACTIONS];
+	Operation<VAL> *insertOps = new Operation<VAL>[NUM_TRANSACTIONS];
 	// For each operation.
-	for (int j = 0; j < NUM_TRANSACTIONS; j++)
+	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 	{
 		// All operations are pushes.
-		insertOps[j].type = Operation<int>::OpType::pushBack;
+		insertOps[j].type = Operation<VAL>::OpType::pushBack;
 		// Push random values into the vector.
 		insertOps[j].val = rand() % INT32_MAX;
 	}
 	// Create a transaction containing the these operations.
-	Desc<int> *insertDesc = new Desc<int>(NUM_TRANSACTIONS, insertOps);
+	Desc<VAL> *insertDesc = new Desc<VAL>(NUM_TRANSACTIONS, insertOps);
 	// Execute the transaction.
 	transVector->executeTransaction(insertDesc);
 }
@@ -153,7 +153,7 @@ void predicatePreinsert(int threadNum)
 void predicateFind(int threadNum)
 {
 	// Get the transaction associated with the thread.
-	Desc<int> *desc = transactions[threadNum];
+	Desc<VAL> *desc = transactions[threadNum];
 	// Execute the transaction.
 	transVector->executeTransaction(desc);
 	// Get the results.
@@ -163,7 +163,7 @@ void predicateFind(int threadNum)
 		printf("Thread %d had to wait on returned values.\n", threadNum);
 		continue;
 	}
-	if (desc->status.load() != Desc<int>::TxStatus::committed)
+	if (desc->status.load() != Desc<VAL>::TxStatus::committed)
 	{
 		printf("Error on thread %d. Transaction failed.\n", threadNum);
 		return;
@@ -172,8 +172,7 @@ void predicateFind(int threadNum)
 	size_t matchCount = 0;
 	for (size_t i = 0; i < desc->size; i++)
 	{
-		// Out simple predicate: the value is even.
-		// TODO: Currently, all return values are 0 for the coarse-grained vector.
+		// Our simple predicate: the value is even.
 		if (desc->ops[i].ret % 2 == 0)
 		{
 			matchCount++;
@@ -199,15 +198,15 @@ void predicateSearch()
 	// Prepare read transactions for each thread.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
 	{
-		Operation<int> *ops = new Operation<int>[NUM_TRANSACTIONS];
+		Operation<VAL> *ops = new Operation<VAL>[NUM_TRANSACTIONS];
 		// Prepare to read the entire vector.
-		for (int j = 0; j < NUM_TRANSACTIONS; j++)
+		for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 		{
 			// Read all elements, split among threads.
-			ops[j].type = Operation<int>::OpType::read;
+			ops[j].type = Operation<VAL>::OpType::read;
 			ops[j].index = i * NUM_TRANSACTIONS + j;
 		}
-		Desc<int> *desc = new Desc<int>(NUM_TRANSACTIONS, ops);
+		Desc<VAL> *desc = new Desc<VAL>(NUM_TRANSACTIONS, ops);
 		transactions.push_back(desc);
 	}
 
@@ -239,13 +238,14 @@ int main(int argc, char *argv[])
 	// Seed the random number generator.
 	srand(time(NULL));
 
-	//transVector = new CoarseTransVector<int>();
-	transVector = new TransactionalVector<int>();
+	transVector = new TransactionalVector<VAL>();
+	//transVector = new CoarseTransVector<VAL>();
+	//transVector = new GCCSTMVector<VAL>();
 
-	printf("Largest page is %lu bytes.\n", sizeof(DeltaPage<int, int, SGMT_SIZE, SGMT_SIZE>));
+	printf("Largest page is %lu bytes.\n", sizeof(DeltaPage<VAL, VAL, SGMT_SIZE, SGMT_SIZE>));
 
-	predicateSearch();
-	return 0;
+	//predicateSearch();
+	//return 0;
 
 	// Create our threads.
 	thread threads[THREAD_COUNT];

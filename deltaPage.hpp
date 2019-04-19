@@ -12,8 +12,8 @@
 #define NEW_VAL 1
 #define OLD_VAL 0
 
-//#define POOL_SIZE 380000
-#define POOL_SIZE 10000000
+//#define POOL_SIZE 10000000
+#define POOL_SIZE 0
 
 // We can use bitsets of arbitrary size, so long as we decide at compile time.
 template <size_t size>

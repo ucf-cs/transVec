@@ -126,7 +126,7 @@ class CoarseTransVector
   public:
     void executeTransaction(Desc<T> *desc)
     {
-        bool run = true;
+        bool ret = true;
         mtx.lock();
         for (size_t i = 0; i < desc->size; i++)
         {
@@ -134,33 +134,33 @@ class CoarseTransVector
             switch (op->type)
             {
             case Operation<T>::OpType::read:
-                run = vector.read(op->index, op->ret);
+                ret = vector.read(op->index, op->ret);
                 break;
             case Operation<T>::OpType::write:
-                run = vector.write(op->index, op->val);
+                ret = vector.write(op->index, op->val);
                 break;
             case Operation<T>::OpType::pushBack:
-                run = vector.pushBack(op->val);
+                ret = vector.pushBack(op->val);
                 break;
             case Operation<T>::OpType::popBack:
-                run = vector.popBack(op->ret);
+                ret = vector.popBack(op->ret);
                 break;
             case Operation<T>::OpType::size:
                 op->ret = vector.getSize();
                 break;
             case Operation<T>::OpType::reserve:
-                run = vector.reserve(op->index);
+                ret = vector.reserve(op->index);
             default:
-                run = false;
+                ret = false;
                 break;
             }
 
-            if (!run)
+            if (!ret)
             {
                 break;
             }
         }
-        if (run)
+        if (ret)
         {
             desc->status.store(Desc<T>::TxStatus::committed);
             desc->returnedValues.store(true);
@@ -177,5 +177,70 @@ class CoarseTransVector
         mtx.lock();
         vector.printContents();
         mtx.unlock();
+    }
+};
+
+template <class T>
+class GCCSTMVector
+{
+  private:
+    Vector<T> vector;
+
+  public:
+    void executeTransaction(Desc<T> *desc)
+    {
+        bool ret = true;
+        __transaction_atomic
+        {
+            for (size_t i = 0; i < desc->size; i++)
+            {
+                Operation<T> *op = &desc->ops[i];
+                switch (op->type)
+                {
+                case Operation<T>::OpType::read:
+                    ret = vector.read(op->index, op->ret);
+                    break;
+                case Operation<T>::OpType::write:
+                    ret = vector.write(op->index, op->val);
+                    break;
+                case Operation<T>::OpType::pushBack:
+                    ret = vector.pushBack(op->val);
+                    break;
+                case Operation<T>::OpType::popBack:
+                    ret = vector.popBack(op->ret);
+                    break;
+                case Operation<T>::OpType::size:
+                    op->ret = vector.getSize();
+                    break;
+                case Operation<T>::OpType::reserve:
+                    ret = vector.reserve(op->index);
+                default:
+                    ret = false;
+                    break;
+                }
+
+                if (!ret)
+                {
+                    break;
+                }
+            }
+        }
+        if (ret)
+        {
+            desc->status.store(Desc<T>::TxStatus::committed);
+            desc->returnedValues.store(true);
+        }
+        else
+        {
+            desc->status.store(Desc<T>::TxStatus::aborted);
+        }
+        return;
+    }
+    void printContents()
+    {
+        __transaction_atomic
+        {
+            vector.printContents();
+        }
     }
 };
