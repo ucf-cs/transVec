@@ -32,12 +32,6 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, SGMT_SIZE> *pa
 	Page<T, T, SGMT_SIZE> *prevRoot = NULL;
 	while (true)
 	{
-		// Quit if the transaction is no longer active.
-		if (page->transaction->status.load() != Desc<T>::TxStatus::active)
-		{
-			return false;
-		}
-
 		// Get the head of the list of updates for this segment.
 		if (!array->read(index, rootPage))
 		{
@@ -45,6 +39,12 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, SGMT_SIZE> *pa
 			page->transaction->status.store(Desc<T>::TxStatus::aborted);
 			//printf("Aborted!\n");
 			// No need to even try anymore. The whole transaction failed.
+			return false;
+		}
+
+		// Quit if the transaction is no longer active.
+		if (page->transaction->status.load() != Desc<T>::TxStatus::active)
+		{
 			return false;
 		}
 
@@ -160,6 +160,7 @@ void TransactionalVector<T>::insertPages(std::map<size_t, Page<T, T, SGMT_SIZE> 
 	// Get the start of the map.
 	typename std::map<size_t, Page<T, T, SGMT_SIZE> *>::reverse_iterator iter = pages.rbegin();
 	// Advance part-way through.
+	// TODO: Rework this to go to a specific index instead of an offset.
 	if (startPage > 0)
 	{
 		std::advance(iter, startPage);
@@ -241,39 +242,41 @@ TransactionalVector<T>::TransactionalVector()
 	size.store(sizePage);
 }
 
-/*
-TODO: Helping scheme plan.
-Help on size conflicts:
-Set pointer should be stored atomically in transaction descriptor.
-Help on partial insertion:
-If the conflict isn't on size, then we can assume the transaction already has pages associated with it, so just use those.
-Run insertPages, starting at some specific page number.
-*/
-
 template <typename T>
-RWSet<T> *TransactionalVector<T>::prepareTransaction(Desc<T> *descriptor)
+void TransactionalVector<T>::prepareTransaction(Desc<T> *descriptor)
 {
-	// Initialize the RWSet object.
-	RWSet<T> *set = new RWSet<T>();
+	RWSet<T> *set = descriptor->set.load();
+	if (set == NULL)
+	{
+		// Initialize the RWSet object.
+		set = new RWSet<T>();
 
-	// Create the read/write set.
-	// TODO: Getting size may happen here. How do we deal with this for the helping scheme?
-	set->createSet(descriptor, this);
+		// Create the read/write set.
+		// NOTE: Getting size may happen here.
+		// Requires special consideration for the helping scheme.
+		// This will work because helpers will either insert size or find it already there.
+		set->createSet(descriptor, this);
+
+		RWSet<T> *nullVal = NULL;
+		descriptor->set.compare_exchange_strong(nullVal, set);
+	}
+	// Make sure we only work with the set that succeeded first.
+	set = descriptor->set.load();
 
 	// Ensure that we can fit all of the segments we plan to insert.
 	reserve(set->maxReserveAbsolute > set->size ? set->maxReserveAbsolute : set->size);
 
 	// Convert the set into pages.
-	// TODO: Share these pages somewhere to enable helping scheme. Perhaps in the descriptor.
 	set->setToPages(descriptor);
 
-	return set;
+	return;
 }
 
 template <typename T>
 bool TransactionalVector<T>::completeTransaction(Desc<T> *descriptor, size_t startPage, bool helping)
 {
 	// Insert the pages.
+	// TODO: This is not help-safe. Threads must duplicate the page before attempting to insert it. Otherwise, threads may overwrite old values acidentally.
 	insertPages(*descriptor->pages.load(), startPage);
 
 	auto active = Desc<T>::TxStatus::active;
@@ -299,14 +302,24 @@ template <typename T>
 void TransactionalVector<T>::executeTransaction(Desc<T> *descriptor)
 {
 	// Initialize the set for the descriptor.
-	RWSet<T> *set = prepareTransaction(descriptor);
+	prepareTransaction(descriptor);
 
 	// If the transaction committed.
 	if (completeTransaction(descriptor, 0))
 	{
 		// Set values for all operations that wanted to read from shared memory.
-		set->setOperationVals(descriptor, *descriptor->pages.load());
+		// This only occurs on one thread. Helpers don't bother with this.
+		descriptor->set.load()->setOperationVals(descriptor, *descriptor->pages.load());
 	}
+}
+
+template <typename T>
+void TransactionalVector<T>::sizeHelp(Desc<T> *descriptor)
+{
+	// Must actually start at the vwery beginning.
+	prepareTransaction(descriptor);
+	// Must help from the beginning of the list, since we didn't help part way through.
+	completeTransaction(descriptor, 0, true);
 }
 
 template <typename T>

@@ -11,6 +11,8 @@ Desc<T>::Desc(unsigned int size, Operation<T> *ops)
 	returnedValues.store(false);
 	// The page map always starts out empty.
 	pages.store(NULL);
+	// The RWSet always starts out empty.
+	set.store(NULL);
 	return;
 }
 

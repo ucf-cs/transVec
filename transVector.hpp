@@ -51,14 +51,14 @@ class TransactionalVector
 
 	// Create a RWSet for the transaction.
 	// Only used in helping on size conflict.
-	RWSet<T> *prepareTransaction(Desc<T> *descriptor);
-
+	void prepareTransaction(Desc<T> *descriptor);
 	// Finish the vector transaction.
 	// Used for helping.
 	bool completeTransaction(Desc<T> *descriptor, size_t startPage = 0, bool helping = false);
-
 	// Apply a transaction to a vector.
 	void executeTransaction(Desc<T> *descriptor);
+	// Called if a transaction is blocking on size.
+	void sizeHelp(Desc<T> *descriptor);
 
 	// Print out the values stored in the vector.
 	void printContents();

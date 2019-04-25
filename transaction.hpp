@@ -18,6 +18,9 @@ template <class T, class U, size_t S>
 class Page;
 
 template <class T>
+class RWSet;
+
+template <class T>
 // A standard, user-generated operation.
 // Works with values of type T.
 struct Operation
@@ -86,6 +89,7 @@ struct Desc
 	std::atomic<bool> returnedValues;
 	// A list of pages for the transaction to insert.
 	std::atomic<std::map<size_t, Page<T, T, SGMT_SIZE> *> *> pages;
+	std::atomic<RWSet<T> *> set;
 
 	// Create a descriptor object.
 	// ops:     An array of operations, passed by reference.

@@ -183,7 +183,9 @@ void RWSet<T>::setToPages(Desc<T> *descriptor)
 	}
 
 	// Store a pointer to the pages in the descriptor.
-	descriptor->pages.store(pages);
+	// Only the first thread to finish the job succeeds here.
+	std::map<size_t, Page<T, T, SGMT_SIZE> *> *nullVal = NULL;
+	descriptor->pages.compare_exchange_strong(nullVal, pages);
 
 	return;
 }
@@ -255,20 +257,27 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 	Page<size_t, T, 1> *rootPage = NULL;
 	do
 	{
+		// Get the current head.
+		rootPage = vector->size.load();
+
 		// Quit if the transaction is no longer active.
 		if (descriptor->status.load() != Desc<T>::TxStatus::active)
 		{
 			return 0;
 		}
 
-		// Get the current head.
-		rootPage = vector->size.load();
 		// If the root page does not exist.
 		// Root page should never be NULL, ever.
 		if (rootPage == NULL)
 		{
 			// Assume an initial size of 0.
 			sizeDesc->set(0, OLD_VAL, 0);
+		}
+		// If a helper got here first.
+		else if (rootPage->transaction == sizeDesc->transaction)
+		{
+			// Do not insert again.
+			break;
 		}
 		else
 		{
