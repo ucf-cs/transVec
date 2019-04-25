@@ -9,9 +9,13 @@ The actual vector will pre-process each of these transactions into a simpler rea
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <map>
 #include <string>
 
 #include "define.hpp"
+
+template <class T, class U, size_t S>
+class Page;
 
 template <class T>
 // A standard, user-generated operation.
@@ -80,6 +84,8 @@ struct Desc
 	// The status of the returned values.
 	// They are not safe to access until this is true.
 	std::atomic<bool> returnedValues;
+	// A list of pages for the transaction to insert.
+	std::atomic<std::map<size_t, Page<T, T, SGMT_SIZE> *> *> pages;
 
 	// Create a descriptor object.
 	// ops:     An array of operations, passed by reference.

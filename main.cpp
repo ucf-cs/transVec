@@ -116,12 +116,12 @@ void randThread(int threadNum)
 	}
 }
 
-void threadRunner(thread *threads, void function(int threadNum))
+void threadRunner(std::thread *threads, void function(int threadNum))
 {
 	// Start our threads.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
 	{
-		threads[i] = thread(function, i);
+		threads[i] = std::thread(function, i);
 	}
 
 	// Wait for all threads to complete.
@@ -190,7 +190,7 @@ void predicateSearch()
 	totalMatches.store(0);
 
 	// Create our threads.
-	thread threads[THREAD_COUNT];
+	std::thread threads[THREAD_COUNT];
 
 	// Pre-insertion step.
 	threadRunner(threads, predicatePreinsert);
@@ -213,18 +213,18 @@ void predicateSearch()
 	printf("Completed preinsertion!\n\n\n");
 
 	// Get the current time.
-	auto start = chrono::system_clock::now();
+	auto start = std::chrono::system_clock::now();
 
 	// Run the threads.
 	threadRunner(threads, predicateFind);
 
 	// Get total execution time.
-	auto total = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - start);
+	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
 
 	//transVector->printContents();
 
-	cout << "" << THREAD_COUNT << " threads and " << NUM_TRANSACTIONS << " locations per thread" << endl;
-	cout << total.count() << " milliseconds" << endl;
+	std::cout << "" << THREAD_COUNT << " threads and " << NUM_TRANSACTIONS << " locations per thread" << std::endl;
+	std::cout << total.count() << " milliseconds" << std::endl;
 
 	printf("Total: %lu matched out of %lu\n", totalMatches.load(), THREAD_COUNT * NUM_TRANSACTIONS);
 }
@@ -248,20 +248,20 @@ int main(int argc, char *argv[])
 	//return 0;
 
 	// Create our threads.
-	thread threads[THREAD_COUNT];
+	std::thread threads[THREAD_COUNT];
 
 	// Get the current time.
-	auto start = chrono::system_clock::now();
+	auto start = std::chrono::system_clock::now();
 
 	threadRunner(threads, randThread);
 
 	// Get total execution time.
-	auto total = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - start);
+	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
 
 	transVector->printContents();
 
-	cout << "" << THREAD_COUNT << " threads and " << TRANSACTION_SIZE << " operations per transaction" << endl;
-	cout << total.count() << " milliseconds" << endl;
+	std::cout << "" << THREAD_COUNT << " threads and " << TRANSACTION_SIZE << " operations per transaction" << std::endl;
+	std::cout << total.count() << " milliseconds" << std::endl;
 
 	return 0;
 }

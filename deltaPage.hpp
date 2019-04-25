@@ -30,8 +30,8 @@ struct Bitset
 // S: The full size of the given segment.
 template <class T, class U, size_t S>
 // A delta update page.
-// TODO: Alignment actually as a small negative impact on read-only performance.
-class alignas(64) Page
+// NOTE: Alignment actually has a small negative impact on read-only performance.
+class /*alignas(64)*/ Page
 {
   public:
 	// The number of elements represented by each segment.
@@ -52,7 +52,7 @@ class alignas(64) Page
 };
 
 template <class T, class U, size_t S, size_t V>
-class alignas(64) DeltaPage : public Page<T, U, S>
+class /*alignas(64)*/ DeltaPage : public Page<T, U, S>
 {
   private:
 	// A contiguous list of updated values.
@@ -64,7 +64,7 @@ class alignas(64) DeltaPage : public Page<T, U, S>
 	T *at(size_t index, bool newVals);
 
   public:
-  	// Pool manager.
+	// Pool manager.
 	static DeltaPage<T, U, S, V> **pool;
 	static std::atomic<size_t> poolCounter;
 	static void initPool();

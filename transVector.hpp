@@ -14,6 +14,9 @@ template <class T>
 class RWOperation;
 
 template <class T>
+class RWSet;
+
+template <class T>
 class TransactionalVector
 {
   private:
@@ -45,6 +48,14 @@ class TransactionalVector
 	void getSize(Desc<T> *descriptor);
 
 	Page<size_t, T, 1> *getSizePage(Desc<T> *descriptor);
+
+	// Create a RWSet for the transaction.
+	// Only used in helping on size conflict.
+	RWSet<T> *prepareTransaction(Desc<T> *descriptor);
+
+	// Finish the vector transaction.
+	// Used for helping.
+	bool completeTransaction(Desc<T> *descriptor, size_t startPage = 0, bool helping = false);
 
 	// Apply a transaction to a vector.
 	void executeTransaction(Desc<T> *descriptor);

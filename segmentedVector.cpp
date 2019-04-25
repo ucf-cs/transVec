@@ -127,7 +127,7 @@ SegmentedVector<T>::~SegmentedVector()
 				T element = bucket[j].load();
 				if (std::is_pointer<T>::value && element != NULL)
 				{
-					// Note: Element should have its own deconstructor, if needed.
+					// NOTE: Element should have its own deconstructor, if needed.
 					delete element;
 				}
 			}
@@ -165,18 +165,22 @@ bool SegmentedVector<T>::reserve(size_t size)
 }
 
 template <typename T>
+// Typically fails if an invalid read or write occurs.
 bool SegmentedVector<T>::read(size_t index, T &value)
 {
 	std::pair<size_t, size_t> indexes = access(index);
+	// Requested a bucket out of bounds.
 	if (indexes.first > buckets)
 	{
 		return false;
 	}
 	std::atomic<T> *bucket = bucketArray[indexes.first].load();
+	// Loaded a bucket that isn't allocated.
 	if (bucket == NULL)
 	{
 		return false;
 	}
+	// Requested an index out of range of the current bucket.
 	if (indexes.second > (1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
 	{
 		return false;

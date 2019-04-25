@@ -19,6 +19,8 @@ bool TransactionalVector<T>::reserve(size_t size)
 template <typename T>
 bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, SGMT_SIZE> *page)
 {
+	assert(page != NULL && "Invalid page passed in.");
+
 	// Create a bitset to keep track of all locations of interest.
 	std::bitset<Page<T, T, SGMT_SIZE>::SEG_SIZE> targetBits;
 	// Set all bits we want to read or write.
@@ -30,7 +32,6 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, SGMT_SIZE> *pa
 	Page<T, T, SGMT_SIZE> *prevRoot = NULL;
 	while (true)
 	{
-
 		// Quit if the transaction is no longer active.
 		if (page->transaction->status.load() != Desc<T>::TxStatus::active)
 		{
@@ -40,14 +41,20 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, SGMT_SIZE> *pa
 		// Get the head of the list of updates for this segment.
 		if (!array->read(index, rootPage))
 		{
+			// Failure means the transaction attempted an invalid read or write, as the vector wasn't allocated to this point.
+			page->transaction->status.store(Desc<T>::TxStatus::aborted);
+			//printf("Aborted!\n");
+			// No need to even try anymore. The whole transaction failed.
 			return false;
 		}
 
-		// Disallow prepending a page to itself.
+		// Disallow prepending a redundant page.
 		// May occur during helping.
-		if (rootPage == page)
+		if (rootPage != NULL && rootPage->transaction == page->transaction)
 		{
-			assert(false);
+			// DEBUG:
+			//printf("Attempted to prepend a page to itself.\n");
+
 			return false;
 		}
 
@@ -63,7 +70,8 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, SGMT_SIZE> *pa
 				currentPage = endPage;
 			}
 			// If we reach a page that we already traversed in a previous loop, then there's no reason to traverse again.
-			if(currentPage == prevRoot) {
+			if (currentPage == prevRoot)
+			{
 				break;
 			}
 			// Get the set of elements the current page has that we need.
@@ -82,6 +90,7 @@ bool TransactionalVector<T>::prependPage(size_t index, Page<T, T, SGMT_SIZE> *pa
 					while (currentPage->transaction->status.load() == Desc<T>::TxStatus::active)
 					{
 						continue;
+						//insertPages(currentPage->transaction->pages);
 					}
 					// Update our status to its final (committed or aborted) state.
 					status = currentPage->transaction->status.load();
@@ -232,8 +241,17 @@ TransactionalVector<T>::TransactionalVector()
 	size.store(sizePage);
 }
 
+/*
+TODO: Helping scheme plan.
+Help on size conflicts:
+Set pointer should be stored atomically in transaction descriptor.
+Help on partial insertion:
+If the conflict isn't on size, then we can assume the transaction already has pages associated with it, so just use those.
+Run insertPages, starting at some specific page number.
+*/
+
 template <typename T>
-void TransactionalVector<T>::executeTransaction(Desc<T> *descriptor)
+RWSet<T> *TransactionalVector<T>::prepareTransaction(Desc<T> *descriptor)
 {
 	// Initialize the RWSet object.
 	RWSet<T> *set = new RWSet<T>();
@@ -247,10 +265,16 @@ void TransactionalVector<T>::executeTransaction(Desc<T> *descriptor)
 
 	// Convert the set into pages.
 	// TODO: Share these pages somewhere to enable helping scheme. Perhaps in the descriptor.
-	std::map<size_t, Page<T, T, SGMT_SIZE> *> pages = set->setToPages(descriptor);
+	set->setToPages(descriptor);
 
+	return set;
+}
+
+template <typename T>
+bool TransactionalVector<T>::completeTransaction(Desc<T> *descriptor, size_t startPage, bool helping)
+{
 	// Insert the pages.
-	insertPages(pages);
+	insertPages(*descriptor->pages.load(), startPage);
 
 	auto active = Desc<T>::TxStatus::active;
 	auto committed = Desc<T>::TxStatus::committed;
@@ -258,19 +282,31 @@ void TransactionalVector<T>::executeTransaction(Desc<T> *descriptor)
 	// If this fails, either we aborted or some other transaction committed, so no need to retry.
 	if (!descriptor->status.compare_exchange_strong(active, committed))
 	{
+		// At this point, either we committed, or some other thread committed or aborted the transaction.
+
 		// If the transaction aborted.
 		if (descriptor->status.load() != Desc<T>::TxStatus::committed)
 		{
 			// Return immediately.
-			return;
+			return false;
 		}
 	}
+	// Commit succeeded.
+	return true;
+}
 
-	// Set values for all operations that wanted to read from shared memory.
-	// TODO: Make sure this operation is only performed by the thread that provided this descriptor.
-	set->setOperationVals(descriptor, &pages);
+template <typename T>
+void TransactionalVector<T>::executeTransaction(Desc<T> *descriptor)
+{
+	// Initialize the set for the descriptor.
+	RWSet<T> *set = prepareTransaction(descriptor);
 
-	return;
+	// If the transaction committed.
+	if (completeTransaction(descriptor, 0))
+	{
+		// Set values for all operations that wanted to read from shared memory.
+		set->setOperationVals(descriptor, *descriptor->pages.load());
+	}
 }
 
 template <typename T>

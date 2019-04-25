@@ -9,8 +9,6 @@
 
 #include "vector.hpp"
 
-using namespace std;
-
 // Change these to test different situations.
 // TUNE
 size_t THREAD_COUNT = 12;

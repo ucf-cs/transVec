@@ -1,3 +1,6 @@
+#ifndef VECTOR_H
+#define VECTOR_H
+
 #include <cstdlib>
 #include <mutex>
 
@@ -244,3 +247,5 @@ class GCCSTMVector
         }
     }
 };
+
+#endif

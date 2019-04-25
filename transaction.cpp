@@ -9,6 +9,8 @@ Desc<T>::Desc(unsigned int size, Operation<T> *ops)
 	status.store(active);
 	// Returned values are never safe to access until they have been explicitly set.
 	returnedValues.store(false);
+	// The page map always starts out empty.
+	pages.store(NULL);
 	return;
 }
 

@@ -2,6 +2,8 @@
 CC = g++
 CC_FLAGS = -std=c++11 -g -pthread -fgnu-tm
 OPTIMAL_FLAGS = -std=c++11 -march=native -Ofast -pthread -fgnu-tm
+#-fopt-info-vec-missed
+#-fopt-info
  
 # File names
 EXEC = transVec.out

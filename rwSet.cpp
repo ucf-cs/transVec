@@ -122,7 +122,7 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
 		case Operation<T>::OpType::size:
 			getSize(descriptor, vector);
 
-			// Note: Don't store in ret. Store in index, as a special case for size calls.
+			// NOTE: Don't store in ret. Store in index, as a special case for size calls.
 			descriptor->ops[i].index = size;
 			break;
 		case Operation<T>::OpType::reserve:
@@ -148,10 +148,10 @@ bool RWSet<T>::createSet(Desc<T> *descriptor, TransactionalVector<T> *vector)
 }
 
 template <typename T>
-std::map<size_t, Page<T, T, SGMT_SIZE> *> RWSet<T>::setToPages(Desc<T> *descriptor)
+void RWSet<T>::setToPages(Desc<T> *descriptor)
 {
 	// All of the pages we want to insert (except size), ordered from low to high.
-	std::map<size_t, Page<T, T, SGMT_SIZE> *> pages;
+	std::map<size_t, Page<T, T, SGMT_SIZE> *> *pages = new std::map<size_t, Page<T, T, SGMT_SIZE> *>();
 
 	// For each page to generate.
 	// These are all independent of shared memory.
@@ -179,14 +179,17 @@ std::map<size_t, Page<T, T, SGMT_SIZE> *> RWSet<T>::setToPages(Desc<T> *descript
 				page->set(index, NEW_VAL, j->second.lastWriteOp->val);
 			}
 		}
-		pages[i->first] = page;
+		(*pages)[i->first] = page;
 	}
 
-	return pages;
+	// Store a pointer to the pages in the descriptor.
+	descriptor->pages.store(pages);
+
+	return;
 }
 
 template <typename T>
-void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, SGMT_SIZE> *> *pages)
+void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, SGMT_SIZE> *> pages)
 {
 	// If the returned values have already been copied over, do no more.
 	if (descriptor->returnedValues.load() == true)
@@ -195,7 +198,7 @@ void RWSet<T>::setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T,
 	}
 
 	// For each page.
-	for (auto i = pages->begin(); i != pages->end(); ++i)
+	for (auto i = pages.begin(); i != pages.end(); ++i)
 	{
 		// Get the page.
 		Page<T, T, SGMT_SIZE> *page = i->second;
@@ -269,13 +272,13 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 		}
 		else
 		{
-			enum Desc<T>::TxStatus status;
-			do
+			enum Desc<T>::TxStatus status = rootPage->transaction->status.load();
+			// TODO: Use helping scheme here.
+			// Just busy wait for now.
+			while (status == Desc<T>::TxStatus::active)
 			{
 				status = rootPage->transaction->status.load();
-				// TODO: Use help scheme here.
-				// Just busy wait for now.
-			} while (status == Desc<T>::TxStatus::active);
+			}
 
 			// Store the root page's value as an old value in case we abort.
 			// Get the appropriate value from the root page depending on whether or not it succeeded.

@@ -69,10 +69,11 @@ class RWSet
 	bool createSet(Desc<T> *descriptor, TransactionalVector<T> *vector);
 
 	// Convert from a set of reads and writes to a list of pages.
-	std::map<size_t, Page<T, T, SGMT_SIZE> *> setToPages(Desc<T> *descriptor);
+	// A pointer to the pages is stored in the descriptor.
+	void setToPages(Desc<T> *descriptor);
 
 	// Set the values in a transaction to the retrived values.
-	void setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, SGMT_SIZE> *> *pages);
+	void setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, SGMT_SIZE> *> pages);
 
 	size_t getSize(Desc<T> *transaction, TransactionalVector<T> *sizeHead);
 };
