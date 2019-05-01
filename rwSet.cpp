@@ -160,7 +160,7 @@ void RWSet<T>::setToPages(Desc<T> *descriptor)
 		// Determine how many elements are in this page.
 		size_t elementCount = i->second.size();
 		// Create the initial page.
-		Page<T, T, SGMT_SIZE> *page = Page<T, T, SGMT_SIZE>::getNewPage(elementCount);
+		Page<T, T, SGMT_SIZE> *page = Allocator<T, T, SGMT_SIZE>::getNewPage(elementCount);
 		// Link the page to the transaction descriptor.
 		page->transaction = descriptor;
 
@@ -282,10 +282,11 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 		else
 		{
 			enum Desc<T>::TxStatus status = rootPage->transaction->status.load();
-			// TODO: Use helping scheme here.
-			// Just busy wait for now.
 			while (status == Desc<T>::TxStatus::active)
 			{
+				// Help the active transaction.
+				// TODO: Make sure this works as expected.
+				//vector->sizeHelp(rootPage->transaction);
 				status = rootPage->transaction->status.load();
 			}
 
@@ -309,7 +310,7 @@ size_t RWSet<T>::getSize(Desc<T> *descriptor, TransactionalVector<T> *vector)
 	while (!vector->size.compare_exchange_strong(rootPage, sizeDesc));
 
 	// Store the actual size locally.
-	sizeDesc->get(0, OLD_VAL, size);
+	vector->size.load()->get(0, OLD_VAL, size);
 
 	return size;
 }

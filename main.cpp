@@ -148,6 +148,7 @@ void predicatePreinsert(int threadNum)
 	Desc<VAL> *insertDesc = new Desc<VAL>(NUM_TRANSACTIONS, insertOps);
 	// Execute the transaction.
 	transVector->executeTransaction(insertDesc);
+	return;
 }
 
 void predicateFind(int threadNum)
@@ -156,17 +157,17 @@ void predicateFind(int threadNum)
 	Desc<VAL> *desc = transactions[threadNum];
 	// Execute the transaction.
 	transVector->executeTransaction(desc);
+	if (desc->status.load() != Desc<VAL>::TxStatus::committed)
+	{
+		printf("Error on thread %d. Transaction failed.\n", threadNum);
+		return;
+	}
 	// Get the results.
 	// Busy wait until they are ready. Should never happen, but we need to be safe.
 	while (desc->returnedValues.load() == false)
 	{
 		printf("Thread %d had to wait on returned values.\n", threadNum);
 		continue;
-	}
-	if (desc->status.load() != Desc<VAL>::TxStatus::committed)
-	{
-		printf("Error on thread %d. Transaction failed.\n", threadNum);
-		return;
 	}
 	// Check for predicate matches.
 	size_t matchCount = 0;

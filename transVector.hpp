@@ -1,10 +1,12 @@
 #ifndef TRANSVECTOR_H
 #define TRANSVECTOR_H
 
+#include <assert.h>
 #include <atomic>
 #include <cstddef>
 #include <map>
-#include <assert.h>
+
+#include "allocator.hpp"
 #include "deltaPage.hpp"
 #include "rwSet.hpp"
 #include "segmentedVector.hpp"
@@ -36,7 +38,7 @@ class TransactionalVector
 
 	// Takes in a set of pages and inserts them into our vector.
 	// startPage is used in the helping scheme to start inserting at later pages.
-	void insertPages(std::map<size_t, Page<T, T, SGMT_SIZE> *> pages, size_t startPage = 0);
+	void insertPages(std::map<size_t, Page<T, T, SGMT_SIZE> *> pages, bool helping = false, size_t startPage = SIZE_MAX);
 
   public:
 	// A page holding our shared size variable.
@@ -54,7 +56,7 @@ class TransactionalVector
 	void prepareTransaction(Desc<T> *descriptor);
 	// Finish the vector transaction.
 	// Used for helping.
-	bool completeTransaction(Desc<T> *descriptor, size_t startPage = 0, bool helping = false);
+	bool completeTransaction(Desc<T> *descriptor, bool helping = false, size_t startPage = SIZE_MAX);
 	// Apply a transaction to a vector.
 	void executeTransaction(Desc<T> *descriptor);
 	// Called if a transaction is blocking on size.
@@ -63,5 +65,11 @@ class TransactionalVector
 	// Print out the values stored in the vector.
 	void printContents();
 };
+
+template <class Iter>
+constexpr std::reverse_iterator<Iter> make_reverse_iterator(Iter i)
+{
+	return std::reverse_iterator<Iter>(i);
+}
 
 #endif

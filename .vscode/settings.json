@@ -44,6 +44,12 @@
         "cstring": "cpp",
         "mutex": "cpp",
         "condition_variable": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "iomanip": "cpp",
+        "cstdarg": "cpp",
+        "list": "cpp",
+        "numeric": "cpp",
+        "cinttypes": "cpp",
+        "typeindex": "cpp"
     }
 }
