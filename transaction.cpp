@@ -1,7 +1,6 @@
 #include "transaction.hpp"
 
-template <typename T>
-Desc<T>::Desc(unsigned int size, Operation<T> *ops)
+Desc::Desc(unsigned int size, Operation *ops)
 {
 	this->size = size;
 	this->ops = ops;
@@ -16,15 +15,13 @@ Desc<T>::Desc(unsigned int size, Operation<T> *ops)
 	return;
 }
 
-template <typename T>
-Desc<T>::~Desc()
+Desc::~Desc()
 {
 	//delete ops;
 	return;
 }
 
-template <typename T>
-T *Desc<T>::getResult(size_t index)
+VAL *Desc::getResult(size_t index)
 {
 	// If we request a result at an invalid operation index.
 	if (index >= size)
@@ -40,8 +37,7 @@ T *Desc<T>::getResult(size_t index)
 	return &(ops[index].ret);
 }
 
-template <typename T>
-void Desc<T>::print()
+void Desc::print()
 {
 	const char *statusStrList[] = {"active", "committed", "aborted"};
 	size_t statusStrIndex = 0;
@@ -67,8 +63,7 @@ void Desc<T>::print()
 	}
 }
 
-template <typename T>
-void Operation<T>::print()
+void Operation::print()
 {
 	const char *typeStrList[] = {"pushBack", "popBack", "reserve", "read", "write", "size"};
 	size_t typeStrIndex = 0;
@@ -96,8 +91,6 @@ void Operation<T>::print()
 	printf("Type:\t%s\n", typeStrList[typeStrIndex]);
 
 	printf("index:\t%lu\n", index);
-	printf("value:\t%dl\n", val);
-	printf("return:\t%dl\n", ret);
+	printf("value:\t%lu\n", val);
+	printf("return:\t%lu\n", ret);
 }
-
-template struct Desc<VAL>;

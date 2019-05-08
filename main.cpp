@@ -1,121 +1,5 @@
 #include "main.hpp"
 
-void pushThread(int threadNum)
-{
-	// For each transaction.
-	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
-	{
-		// A list of operations for the current thread.
-		Operation<VAL> *ops = new Operation<VAL>[TRANSACTION_SIZE];
-		// For each operation.
-		for (size_t j = 0; j < TRANSACTION_SIZE; j++)
-		{
-			// All operations are pushes.
-			ops[j].type = Operation<VAL>::OpType::pushBack;
-			ops[j].val =
-				threadNum * NUM_TRANSACTIONS * TRANSACTION_SIZE +
-				i * TRANSACTION_SIZE +
-				j;
-		}
-		// Create a transaction containing the these operations.
-		Desc<VAL> *desc = new Desc<VAL>(TRANSACTION_SIZE, ops);
-		// Execute the transaction.
-		transVector->executeTransaction(desc);
-	}
-}
-
-void readThread(int threadNum)
-{
-	// For each transaction.
-	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
-	{
-		// A list of operations for the current thread.
-		Operation<VAL> *ops = new Operation<VAL>[TRANSACTION_SIZE];
-		// For each operation.
-		for (size_t j = 0; j < TRANSACTION_SIZE; j++)
-		{
-			// All operations are reads.
-			ops[j].type = Operation<VAL>::OpType::read;
-			// DEBUG: This will always be an invalid read. Test invalid writes too.
-			ops[j].index =
-				threadNum * NUM_TRANSACTIONS * TRANSACTION_SIZE +
-				i * TRANSACTION_SIZE +
-				j;
-		}
-		// Create a transaction containing the these operations.
-		Desc<VAL> *desc = new Desc<VAL>(TRANSACTION_SIZE, ops);
-		// Execute the transaction.
-		transVector->executeTransaction(desc);
-	}
-}
-
-void writeThread(int threadNum)
-{
-	// For each transaction.
-	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
-	{
-		// A list of operations for the current thread.
-		Operation<VAL> *ops = new Operation<VAL>[TRANSACTION_SIZE];
-		// For each operation.
-		for (size_t j = 0; j < TRANSACTION_SIZE; j++)
-		{
-			// All operations are writes.
-			ops[j].type = Operation<VAL>::OpType::write;
-			ops[j].val = 0;
-			ops[j].index =
-				threadNum * NUM_TRANSACTIONS * TRANSACTION_SIZE +
-				i * TRANSACTION_SIZE +
-				j;
-		}
-		// Create a transaction containing the these operations.
-		Desc<VAL> *desc = new Desc<VAL>(TRANSACTION_SIZE, ops);
-		// Execute the transaction.
-		transVector->executeTransaction(desc);
-	}
-}
-
-void popThread(int threadNum)
-{
-	// For each transaction.
-	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
-	{
-		// A list of operations for the current thread.
-		Operation<VAL> *ops = new Operation<VAL>[TRANSACTION_SIZE];
-		// For each operation.
-		for (size_t j = 0; j < TRANSACTION_SIZE; j++)
-		{
-			// All operations are pushes.
-			ops[j].type = Operation<VAL>::OpType::popBack;
-		}
-		// Create a transaction containing the these operations.
-		Desc<VAL> *desc = new Desc<VAL>(TRANSACTION_SIZE, ops);
-		// Execute the transaction.
-		transVector->executeTransaction(desc);
-	}
-}
-
-void randThread(int threadNum)
-{
-	// For each transaction.
-	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
-	{
-		size_t transSize = (rand() % TRANSACTION_SIZE) + 1;
-		// A list of operations for the current thread.
-		Operation<VAL> *ops = new Operation<VAL>[transSize];
-		// For each operation.
-		for (size_t j = 0; j < transSize; j++)
-		{
-			ops[j].type = Operation<VAL>::OpType(rand() % 6);
-			ops[j].index = rand() % 1000;
-			ops[j].val = rand() % 1000;
-		}
-		// Create a transaction containing the these operations.
-		Desc<VAL> *desc = new Desc<VAL>(transSize, ops);
-		// Execute the transaction.
-		transVector->executeTransaction(desc);
-	}
-}
-
 void threadRunner(std::thread *threads, void function(int threadNum))
 {
 	// Start our threads.
@@ -132,20 +16,154 @@ void threadRunner(std::thread *threads, void function(int threadNum))
 	return;
 }
 
+void pushThread(int threadNum)
+{
+	// Initialize the allocators.
+	Allocator<Page>::threadInit(threadNum);
+	Allocator<RWOperation>::threadInit(threadNum);
+	// For each transaction.
+	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
+	{
+		// A list of operations for the current thread.
+		Operation *ops = new Operation[TRANSACTION_SIZE];
+		// For each operation.
+		for (size_t j = 0; j < TRANSACTION_SIZE; j++)
+		{
+			// All operations are pushes.
+			ops[j].type = Operation::OpType::pushBack;
+			ops[j].val =
+				threadNum * NUM_TRANSACTIONS * TRANSACTION_SIZE +
+				i * TRANSACTION_SIZE +
+				j;
+		}
+		// Create a transaction containing the these operations.
+		Desc *desc = new Desc(TRANSACTION_SIZE, ops);
+		// Execute the transaction.
+		transVector->executeTransaction(desc);
+	}
+}
+
+void readThread(int threadNum)
+{
+	// Initialize the allocators.
+	Allocator<Page>::threadInit(threadNum);
+	Allocator<RWOperation>::threadInit(threadNum);
+	// For each transaction.
+	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
+	{
+		// A list of operations for the current thread.
+		Operation *ops = new Operation[TRANSACTION_SIZE];
+		// For each operation.
+		for (size_t j = 0; j < TRANSACTION_SIZE; j++)
+		{
+			// All operations are reads.
+			ops[j].type = Operation::OpType::read;
+			// DEBUG: This will always be an invalid read. Test invalid writes too.
+			ops[j].index =
+				threadNum * NUM_TRANSACTIONS * TRANSACTION_SIZE +
+				i * TRANSACTION_SIZE +
+				j;
+		}
+		// Create a transaction containing the these operations.
+		Desc *desc = new Desc(TRANSACTION_SIZE, ops);
+		// Execute the transaction.
+		transVector->executeTransaction(desc);
+	}
+}
+
+void writeThread(int threadNum)
+{
+	// Initialize the allocators.
+	Allocator<Page>::threadInit(threadNum);
+	Allocator<RWOperation>::threadInit(threadNum);
+	// For each transaction.
+	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
+	{
+		// A list of operations for the current thread.
+		Operation *ops = new Operation[TRANSACTION_SIZE];
+		// For each operation.
+		for (size_t j = 0; j < TRANSACTION_SIZE; j++)
+		{
+			// All operations are writes.
+			ops[j].type = Operation::OpType::write;
+			ops[j].val = 0;
+			ops[j].index =
+				threadNum * NUM_TRANSACTIONS * TRANSACTION_SIZE +
+				i * TRANSACTION_SIZE +
+				j;
+		}
+		// Create a transaction containing the these operations.
+		Desc *desc = new Desc(TRANSACTION_SIZE, ops);
+		// Execute the transaction.
+		transVector->executeTransaction(desc);
+	}
+}
+
+void popThread(int threadNum)
+{
+	// Initialize the allocators.
+	Allocator<Page>::threadInit(threadNum);
+	Allocator<RWOperation>::threadInit(threadNum);
+	// For each transaction.
+	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
+	{
+		// A list of operations for the current thread.
+		Operation *ops = new Operation[TRANSACTION_SIZE];
+		// For each operation.
+		for (size_t j = 0; j < TRANSACTION_SIZE; j++)
+		{
+			// All operations are pushes.
+			ops[j].type = Operation::OpType::popBack;
+		}
+		// Create a transaction containing the these operations.
+		Desc *desc = new Desc(TRANSACTION_SIZE, ops);
+		// Execute the transaction.
+		transVector->executeTransaction(desc);
+	}
+}
+
+void randThread(int threadNum)
+{
+	// Initialize the allocators.
+	Allocator<Page>::threadInit(threadNum);
+	Allocator<RWOperation>::threadInit(threadNum);
+	// For each transaction.
+	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
+	{
+		size_t transSize = (rand() % TRANSACTION_SIZE) + 1;
+		// A list of operations for the current thread.
+		Operation *ops = new Operation[transSize];
+		// For each operation.
+		for (size_t j = 0; j < transSize; j++)
+		{
+			ops[j].type = Operation::OpType(rand() % 6);
+			ops[j].index = rand() % 1000;
+			ops[j].val = rand() % 1000;
+		}
+		// Create a transaction containing the these operations.
+		Desc *desc = new Desc(transSize, ops);
+		// Execute the transaction.
+		transVector->executeTransaction(desc);
+	}
+}
+
 void predicatePreinsert(int threadNum)
 {
+	// Initialize the allocators.
+	Allocator<Page>::threadInit(threadNum);
+	Allocator<RWOperation>::threadInit(threadNum);
 	// A list of operations for the current thread.
-	Operation<VAL> *insertOps = new Operation<VAL>[NUM_TRANSACTIONS];
+	Operation *insertOps = new Operation[NUM_TRANSACTIONS];
 	// For each operation.
 	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 	{
 		// All operations are pushes.
-		insertOps[j].type = Operation<VAL>::OpType::pushBack;
+		insertOps[j].type = Operation::OpType::pushBack;
 		// Push random values into the vector.
 		insertOps[j].val = rand() % INT32_MAX;
 	}
 	// Create a transaction containing the these operations.
-	Desc<VAL> *insertDesc = new Desc<VAL>(NUM_TRANSACTIONS, insertOps);
+	Desc *insertDesc = new Desc(NUM_TRANSACTIONS, insertOps);
 	// Execute the transaction.
 	transVector->executeTransaction(insertDesc);
 	return;
@@ -153,11 +171,14 @@ void predicatePreinsert(int threadNum)
 
 void predicateFind(int threadNum)
 {
+	// Initialize the allocators.
+	Allocator<Page>::threadInit(threadNum);
+	Allocator<RWOperation>::threadInit(threadNum);
 	// Get the transaction associated with the thread.
-	Desc<VAL> *desc = transactions[threadNum];
+	Desc *desc = transactions[threadNum];
 	// Execute the transaction.
 	transVector->executeTransaction(desc);
-	if (desc->status.load() != Desc<VAL>::TxStatus::committed)
+	if (desc->status.load() != Desc::TxStatus::committed)
 	{
 		printf("Error on thread %d. Transaction failed.\n", threadNum);
 		return;
@@ -199,15 +220,15 @@ void predicateSearch()
 	// Prepare read transactions for each thread.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
 	{
-		Operation<VAL> *ops = new Operation<VAL>[NUM_TRANSACTIONS];
+		Operation *ops = new Operation[NUM_TRANSACTIONS];
 		// Prepare to read the entire vector.
 		for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 		{
 			// Read all elements, split among threads.
-			ops[j].type = Operation<VAL>::OpType::read;
+			ops[j].type = Operation::OpType::read;
 			ops[j].index = i * NUM_TRANSACTIONS + j;
 		}
-		Desc<VAL> *desc = new Desc<VAL>(NUM_TRANSACTIONS, ops);
+		Desc *desc = new Desc(NUM_TRANSACTIONS, ops);
 		transactions.push_back(desc);
 	}
 
@@ -232,21 +253,22 @@ void predicateSearch()
 
 int main(int argc, char *argv[])
 {
-	// Use command line arguments to quickly test the vector in a variety of scenarios.
-	THREAD_COUNT = atol(argv[1]);
-	NUM_TRANSACTIONS = atol(argv[2]);
-
 	// Seed the random number generator.
 	srand(time(NULL));
 
-	transVector = new TransactionalVector<VAL>();
-	//transVector = new CoarseTransVector<VAL>();
-	//transVector = new GCCSTMVector<VAL>();
+	// Preallocate the pages.
+	Allocator<Page>::init(1000000);
+	// Preallocate the RWSet elements.
+	Allocator<RWOperation>::init(10000000);
 
-	printf("Largest page is %lu bytes.\n", sizeof(DeltaPage<VAL, VAL, SGMT_SIZE, SGMT_SIZE>));
+	transVector = new TransactionalVector();
+	//transVector = new CoarseTransVector();
+	//transVector = new GCCSTMVector();
 
-	//predicateSearch();
-	//return 0;
+	printf("Pages are %lu bytes.\n", sizeof(Page));
+
+	predicateSearch();
+	return 0;
 
 	// Create our threads.
 	std::thread threads[THREAD_COUNT];

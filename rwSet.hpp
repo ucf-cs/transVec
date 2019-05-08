@@ -3,19 +3,23 @@
 
 #include <atomic>
 #include <cstddef>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "define.hpp"
 #include "deltaPage.hpp"
+#include "memAllocator.hpp"
 #include "transaction.hpp"
 #include "transVector.hpp"
 
-template <class T>
 class TransactionalVector;
+class RWOperation;
+
+typedef MemAllocator<std::pair<size_t, Page *>> MyPageAllocator;
+typedef MemAllocator<std::pair<size_t, RWOperation *>> MySecondRWOpAllocator;
+typedef MemAllocator<std::pair<size_t, std::map<size_t, RWOperation *, std::less<size_t>, MySecondRWOpAllocator>>> MyRWOpAllocator;
 
 // An individual operation on a single element location.
-template <class T>
 class RWOperation
 {
   public:
@@ -33,30 +37,38 @@ class RWOperation
 
 	// Keep track of the last write operation to handle internally matching pops and reads from this location.
 	// If this isn't NULL, we can infer a write for our page's bitset.
-	Operation<T> *lastWriteOp = NULL;
+	Operation *lastWriteOp = NULL;
 	// Keep a list of operations that want to read the old value.
 	// If this isn't empty, we can infer a read for our page's bitset.
-	std::vector<Operation<T> *> readList;
+	std::vector<Operation *, MemAllocator<Operation *>> readList;
 };
 
 // All transactions are converted into a read/write set before modifying the vector.
-template <class T>
 class RWSet
 {
   public:
 	// Map vector locations to read/write operations.
 	// Used for absolute reads/writes.
-	std::map<size_t, std::map<size_t, RWOperation<T>>> operations;
+	std::unordered_map<size_t,
+					   std::array<RWOperation *, SGMT_SIZE>,
+					   std::hash<size_t>,
+					   std::equal_to<size_t>,
+					   MemAllocator<std::pair<const size_t, std::array<RWOperation *, SGMT_SIZE>>>>
+		operations;
+	// Old map of maps approach.
+	//std::map<size_t, std::map<size_t, RWOperation *, std::less<size_t>, MySecondRWOpAllocator>, std::less<size_t>, MyRWOpAllocator> operations;
+
 	// An absolute reserve position.
 	size_t maxReserveAbsolute = 0;
 	// Our size descriptor. After reading size, we use this to write a new size value later.
-	Page<size_t, T, 1> *sizeDesc = NULL;
+	Page *sizeDesc = NULL;
 	// Set this if size changes.
-	size_t size = 0;
+	// TODO: Make size a size_t instead.
+	VAL size = 0;
 
 	// Map vector operations to pushes and pops relative to size.
 	// Read size, then they can be resolved to absolute indexes.
-	//RWOperation<T> *operationsList;
+	//RWOperation *operationsList;
 	// A relative reserve position.
 	//signed long int maxReserveRelative = 0;
 
@@ -66,16 +78,19 @@ class RWSet
 	std::pair<size_t, size_t> access(size_t pos);
 
 	// Converts a transaction descriptor into a read/write set.
-	bool createSet(Desc<T> *descriptor, TransactionalVector<T> *vector);
+	bool createSet(Desc *descriptor, TransactionalVector *vector);
 
 	// Convert from a set of reads and writes to a list of pages.
 	// A pointer to the pages is stored in the descriptor.
-	void setToPages(Desc<T> *descriptor);
+	void setToPages(Desc *descriptor);
 
 	// Set the values in a transaction to the retrived values.
-	void setOperationVals(Desc<T> *descriptor, std::map<size_t, Page<T, T, SGMT_SIZE> *> pages);
+	void setOperationVals(Desc *descriptor, std::map<size_t, Page *, std::less<size_t>, MyPageAllocator> pages);
 
-	size_t getSize(Desc<T> *transaction, TransactionalVector<T> *sizeHead);
+	size_t getSize(Desc *transaction, TransactionalVector *sizeHead);
+
+	// Get an op node from a map. Allocate it if it doesn't already exist.
+	void getOp(RWOperation *&op, std::pair<size_t, size_t> indexes);
 };
 
 #endif

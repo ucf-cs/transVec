@@ -6,13 +6,12 @@
 
 #include "transaction.hpp"
 
-template <class T>
 class Vector
 {
   private:
     size_t size = 0;
     size_t capacity = 0;
-    T *array = NULL;
+    VAL *array = NULL;
 
     size_t highestBit(size_t val)
     {
@@ -46,7 +45,7 @@ class Vector
         reserve(capacity);
         return;
     }
-    bool pushBack(T val)
+    bool pushBack(VAL val)
     {
         if (size + 1 > capacity)
         {
@@ -58,7 +57,7 @@ class Vector
         array[size++] = val;
         return true;
     }
-    bool popBack(T &val)
+    bool popBack(VAL &val)
     {
         if (size - 1 < 0)
         {
@@ -67,7 +66,7 @@ class Vector
         val = array[--size];
         return true;
     }
-    bool read(size_t index, T &val)
+    bool read(size_t index, VAL &val)
     {
         if (index > size)
         {
@@ -76,7 +75,7 @@ class Vector
         val = array[index];
         return true;
     }
-    bool write(size_t index, T val)
+    bool write(size_t index, VAL val)
     {
         if (index > size)
         {
@@ -92,7 +91,7 @@ class Vector
     bool reserve(size_t size, bool lock = true)
     {
         size_t reserveSize = 1 << (highestBit(size) + 1);
-        T *newArray = (T *)malloc(reserveSize * sizeof(T));
+        VAL *newArray = (VAL *)malloc(reserveSize * sizeof(VAL));
         if (newArray == NULL)
         {
             return false;
@@ -113,45 +112,45 @@ class Vector
     {
         for (size_t i = 0; i < size; i++)
         {
-            printf("%ul\n", array[size]);
+            printf("%lu\n", array[size]);
         }
         return;
     }
 };
 
-template <class T>
 class CoarseTransVector
 {
   private:
-    Vector<T> vector;
+    Vector vector;
     std::mutex mtx;
 
   public:
-    void executeTransaction(Desc<T> *desc)
+    void executeTransaction(Desc *desc)
     {
         bool ret = true;
         mtx.lock();
+        //printf("%lu got lock.\n", std::hash<std::thread::id>()(std::this_thread::get_id()));
         for (size_t i = 0; i < desc->size; i++)
         {
-            Operation<T> *op = &desc->ops[i];
+            Operation *op = &desc->ops[i];
             switch (op->type)
             {
-            case Operation<T>::OpType::read:
+            case Operation::OpType::read:
                 ret = vector.read(op->index, op->ret);
                 break;
-            case Operation<T>::OpType::write:
+            case Operation::OpType::write:
                 ret = vector.write(op->index, op->val);
                 break;
-            case Operation<T>::OpType::pushBack:
+            case Operation::OpType::pushBack:
                 ret = vector.pushBack(op->val);
                 break;
-            case Operation<T>::OpType::popBack:
+            case Operation::OpType::popBack:
                 ret = vector.popBack(op->ret);
                 break;
-            case Operation<T>::OpType::size:
+            case Operation::OpType::size:
                 op->ret = vector.getSize();
                 break;
-            case Operation<T>::OpType::reserve:
+            case Operation::OpType::reserve:
                 ret = vector.reserve(op->index);
             default:
                 ret = false;
@@ -165,13 +164,14 @@ class CoarseTransVector
         }
         if (ret)
         {
-            desc->status.store(Desc<T>::TxStatus::committed);
+            desc->status.store(Desc::TxStatus::committed);
             desc->returnedValues.store(true);
         }
         else
         {
-            desc->status.store(Desc<T>::TxStatus::aborted);
+            desc->status.store(Desc::TxStatus::aborted);
         }
+        //printf("%lu releasing lock.\n", std::hash<std::thread::id>()(std::this_thread::get_id()));
         mtx.unlock();
         return;
     }
@@ -183,39 +183,38 @@ class CoarseTransVector
     }
 };
 
-template <class T>
 class GCCSTMVector
 {
   private:
-    Vector<T> vector;
+    Vector vector;
 
   public:
-    void executeTransaction(Desc<T> *desc)
+    void executeTransaction(Desc *desc)
     {
         bool ret = true;
         __transaction_atomic
         {
             for (size_t i = 0; i < desc->size; i++)
             {
-                Operation<T> *op = &desc->ops[i];
+                Operation *op = &desc->ops[i];
                 switch (op->type)
                 {
-                case Operation<T>::OpType::read:
+                case Operation::OpType::read:
                     ret = vector.read(op->index, op->ret);
                     break;
-                case Operation<T>::OpType::write:
+                case Operation::OpType::write:
                     ret = vector.write(op->index, op->val);
                     break;
-                case Operation<T>::OpType::pushBack:
+                case Operation::OpType::pushBack:
                     ret = vector.pushBack(op->val);
                     break;
-                case Operation<T>::OpType::popBack:
+                case Operation::OpType::popBack:
                     ret = vector.popBack(op->ret);
                     break;
-                case Operation<T>::OpType::size:
+                case Operation::OpType::size:
                     op->ret = vector.getSize();
                     break;
-                case Operation<T>::OpType::reserve:
+                case Operation::OpType::reserve:
                     ret = vector.reserve(op->index);
                 default:
                     ret = false;
@@ -230,12 +229,12 @@ class GCCSTMVector
         }
         if (ret)
         {
-            desc->status.store(Desc<T>::TxStatus::committed);
+            desc->status.store(Desc::TxStatus::committed);
             desc->returnedValues.store(true);
         }
         else
         {
-            desc->status.store(Desc<T>::TxStatus::aborted);
+            desc->status.store(Desc::TxStatus::aborted);
         }
         return;
     }

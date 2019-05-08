@@ -12,64 +12,65 @@
 #include "segmentedVector.hpp"
 #include "transaction.hpp"
 
-template <class T>
 class RWOperation;
-
-template <class T>
 class RWSet;
 
-template <class T>
+template <typename T>
+class SegmentedVector;
+
 class TransactionalVector
 {
-  private:
+private:
 	// An array of page pointers.
-	SegmentedVector<Page<T, T, SGMT_SIZE> *> *array = NULL;
+	SegmentedVector<Page *> *array = NULL;
 
 	// A generic ending page, used to get values.
-	Page<T, T, SGMT_SIZE> *endPage = NULL;
+	Page *endPage = NULL;
 	// A generic committed transaction.
-	Desc<T> *endTransaction = NULL;
+	Desc *endTransaction = NULL;
 
 	bool reserve(size_t size);
 
 	// Prepends a delta update on an existing page.
 	// Only sets oldVal values and the next pointer here.
-	bool prependPage(size_t index, Page<T, T, SGMT_SIZE> *page);
+	bool prependPage(size_t index, Page *page);
 
 	// Takes in a set of pages and inserts them into our vector.
 	// startPage is used in the helping scheme to start inserting at later pages.
-	void insertPages(std::map<size_t, Page<T, T, SGMT_SIZE> *> pages, bool helping = false, size_t startPage = SIZE_MAX);
+	void insertPages(std::map<size_t, Page *, std::less<size_t>, MemAllocator<std::pair<size_t, Page *>>> pages, bool helping = false, size_t startPage = SIZE_MAX);
 
-  public:
+public:
 	// A page holding our shared size variable.
 	// Access is public because the RWSet must be able to change it.
-	std::atomic<Page<size_t, T, 1> *> size;
+	std::atomic<Page *> size;
 
 	TransactionalVector();
 
-	void getSize(Desc<T> *descriptor);
+	void getSize(Desc *descriptor);
 
-	Page<size_t, T, 1> *getSizePage(Desc<T> *descriptor);
+	Page *getSizePage(Desc *descriptor);
 
 	// Create a RWSet for the transaction.
 	// Only used in helping on size conflict.
-	void prepareTransaction(Desc<T> *descriptor);
+	void prepareTransaction(Desc *descriptor);
 	// Finish the vector transaction.
 	// Used for helping.
-	bool completeTransaction(Desc<T> *descriptor, bool helping = false, size_t startPage = SIZE_MAX);
+	bool completeTransaction(Desc *descriptor, bool helping = false, size_t startPage = SIZE_MAX);
 	// Apply a transaction to a vector.
-	void executeTransaction(Desc<T> *descriptor);
+	void executeTransaction(Desc *descriptor);
 	// Called if a transaction is blocking on size.
-	void sizeHelp(Desc<T> *descriptor);
+	void sizeHelp(Desc *descriptor);
 
 	// Print out the values stored in the vector.
 	void printContents();
 };
 
-template <class Iter>
-constexpr std::reverse_iterator<Iter> make_reverse_iterator(Iter i)
+/*
+template< class Iter >
+constexpr std::reverse_iterator<Iter> make_reverse_iterator( Iter i )
 {
-	return std::reverse_iterator<Iter>(i);
+    return std::reverse_iterator<Iter>(i);
 }
+*/
 
 #endif

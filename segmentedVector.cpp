@@ -4,7 +4,7 @@ template <typename T>
 size_t SegmentedVector<T>::highestBit(size_t val)
 {
 	// Subtract 1 so the rightmost position is 0 instead of 1.
-	//return (sizeof(val) * 8) - __builtin_clz(val | 1) - 1;
+	return (sizeof(val) * 8) - __builtin_clz(val | 1) - 1;
 
 	// Slower alternate approach.
 	size_t onePos = 0;
@@ -251,5 +251,4 @@ void SegmentedVector<T>::printBuckets()
 	return;
 }
 
-template class SegmentedVector<Page<size_t, VAL, 1> *>;
-template class SegmentedVector<Page<VAL, VAL, SGMT_SIZE> *>;
+template class SegmentedVector<Page *>;

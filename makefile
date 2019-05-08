@@ -1,8 +1,8 @@
 # Declaration of variables
 CC = g++
 
-DEBUG_FLAGS = -std=c++11 -g -pthread -fgnu-tm
-OPTIMAL_FLAGS = -std=c++11 -march=native -Ofast -pthread -fgnu-tm
+DEBUG_FLAGS = -std=c++14 -g -pthread -fgnu-tm
+OPTIMAL_FLAGS = -std=c++14 -march=native -Ofast -pthread -fgnu-tm
 #-fopt-info-vec-missed
 #-fopt-info
 CC_FLAGS = $(DEBUG_FLAGS)
