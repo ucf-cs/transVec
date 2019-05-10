@@ -158,23 +158,11 @@ void RWSet::setToPages(Desc *descriptor)
 		// Link the page to the transaction descriptor.
 		page->transaction = descriptor;
 
-		size_t index = 0;
+		/*
+		Old, map of maps implementation.
 		// For each element to place in the given page.
 		for (auto j = i->second.begin(); j != i->second.end(); ++j)
 		{
-			// Infer a read based on the read list size.
-			page->bitset.read[index] = ((*j)->readList.size() > 0);
-			// Infer a write based on the write op pointer.
-			page->bitset.write[index] = ((*j)->lastWriteOp != NULL);
-			page->bitset.checkBounds[index] = ((*j)->checkBounds == RWOperation::Assigned::yes) ? true : false;
-			// If a write occured, place the appropriate new value from it.
-			if ((*j)->lastWriteOp != NULL)
-			{
-				page->set(index, NEW_VAL, (*j)->lastWriteOp->val);
-			}
-			index++;
-			/*
-			Old, map of maps implementation.
 			size_t index = j->first;
 			// Infer a read based on the read list size.
 			page->bitset.read[index] = (j->second->readList.size() > 0);
@@ -186,7 +174,27 @@ void RWSet::setToPages(Desc *descriptor)
 			{
 				page->set(index, NEW_VAL, j->second->lastWriteOp->val);
 			}
-			*/
+		}
+		*/
+		for (size_t j = 0; j < SGMT_SIZE; j++)
+		{
+			RWOperation *op = i->second[j];
+			// Ignore NULL elements in the array.
+			if (op == NULL)
+			{
+				continue;
+			}
+			// Infer a read based on the read list size.
+			page->bitset.read[j] = (op->readList.size() > 0);
+			// Infer a write based on the write op pointer.
+			page->bitset.write[j] = (op->lastWriteOp != NULL);
+			// Check bounds only if the first operation on this element needed to.
+			page->bitset.checkBounds[j] = (op->checkBounds == RWOperation::Assigned::yes) ? true : false;
+			// If a write occured, place the appropriate new value from it.
+			if (op->lastWriteOp != NULL)
+			{
+				page->set(j, NEW_VAL, op->lastWriteOp->val);
+			}
 		}
 		(*pages)[i->first] = page;
 	}
@@ -229,6 +237,7 @@ void RWSet::setOperationVals(Desc *descriptor, std::map<size_t, Page *, std::les
 
 			// Get the read list for the current element.
 			std::vector<Operation *, MemAllocator<Operation *>> readList = operations.at(i->first).at(j)->readList;
+
 			// For each operation attempting to read the element.
 			for (size_t k = 0; k < readList.size(); k++)
 			{
@@ -293,7 +302,7 @@ size_t RWSet::getSize(Desc *descriptor, TransactionalVector *vector)
 			{
 				// Help the active transaction.
 				// TODO: Make sure this works as expected.
-				//vector->sizeHelp(rootPage->transaction);
+				vector->sizeHelp(rootPage->transaction);
 				status = rootPage->transaction->status.load();
 			}
 
@@ -328,7 +337,22 @@ void RWSet::getOp(RWOperation *&op, std::pair<size_t, size_t> indexes)
 	if (op == NULL)
 	{
 		op = Allocator<RWOperation>::alloc();
+		assert(op != NULL);
 		operations[indexes.first][indexes.second] = op;
+	}
+	return;
+}
+
+void RWSet::printOps()
+{
+	for (auto it = operations.begin(); it != operations.end(); ++it)
+	{
+		printf("Page %lu:\n", it->first);
+		for (int i = SGMT_SIZE - 1; i >= 0; i--)
+		{
+			printf("%2d ", it->second[i] == NULL ? SGMT_SIZE + 1 : i);
+		}
+		printf("\n");
 	}
 	return;
 }

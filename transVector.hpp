@@ -37,7 +37,7 @@ private:
 
 	// Takes in a set of pages and inserts them into our vector.
 	// startPage is used in the helping scheme to start inserting at later pages.
-	void insertPages(std::map<size_t, Page *, std::less<size_t>, MemAllocator<std::pair<size_t, Page *>>> pages, bool helping = false, size_t startPage = SIZE_MAX);
+	void insertPages(std::map<size_t, Page *, std::less<size_t>, MemAllocator<std::pair<size_t, Page *>>> *pages, bool helping = false, size_t startPage = SIZE_MAX);
 
 public:
 	// A page holding our shared size variable.

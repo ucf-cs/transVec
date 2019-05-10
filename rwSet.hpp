@@ -91,6 +91,9 @@ class RWSet
 
 	// Get an op node from a map. Allocate it if it doesn't already exist.
 	void getOp(RWOperation *&op, std::pair<size_t, size_t> indexes);
+
+	// Print out a list of all locations with operations associated with them.
+	void printOps();
 };
 
 #endif

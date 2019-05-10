@@ -62,14 +62,6 @@ bool Page::set(size_t index, bool newVals, VAL val)
 
 bool Page::copyFrom(Page *page)
 {
-	// DEBUG:
-	//printf("\nOld page:\n");
-	//this->print();
-
-	// DEBUG:
-	//printf("\nTarget page:\n");
-	//page->print();
-
 	this->bitset.read = page->bitset.read;
 	this->bitset.write = page->bitset.write;
 	this->bitset.checkBounds = page->bitset.checkBounds;
@@ -82,10 +74,6 @@ bool Page::copyFrom(Page *page)
 		// This will be set later. No need to copy it.
 		//this->oldVal[i] = page->oldVal[i];
 	}
-
-	// DEBUG:
-	//printf("\nUpdated page:\n");
-	//this->print();
 }
 
 void Page::print()

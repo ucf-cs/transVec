@@ -35,8 +35,6 @@ void Allocator<DataType>::init(size_t poolSize)
 template <typename DataType>
 void Allocator<DataType>::threadInit(int threadNum)
 {
-    // Make sure the counter is properly initialized.
-    count = 0;
     if (threadNum > pool.size() || threadNum < 0)
     {
         printf("Requested pool %d when %lu pools are allocated.\n", threadNum, pool.size());
@@ -52,8 +50,6 @@ void Allocator<DataType>::threadInit(int threadNum)
 template <typename DataType>
 DataType *Allocator<DataType>::alloc()
 {
-    count++;
-
     if (threadNum == SIZE_MAX)
     {
         printf("A thread that did not initialize with the allocator has requested an object.\n");
@@ -68,7 +64,7 @@ DataType *Allocator<DataType>::alloc()
     }
     else
     {
-        printf("Pool for thread %lu ran out of elements on call %lu.\n", threadNum, count);
+        printf("Pool for thread %lu ran out of elements of size %lu.\n", threadNum, sizeof(DataType));
         object = new DataType();
     }
     if (object == NULL)
@@ -81,8 +77,14 @@ DataType *Allocator<DataType>::alloc()
 template <typename DataType>
 void Allocator<DataType>::dealloc(DataType *object)
 {
-    // Deallocate the object.
-    delete object;
+    // Reset the object.
+    ::new (object) DataType();
+    // Return the object to the pool.
+    pool[threadNum]->push_back(object);
+    return;
+
+    // Old: Deallocate the object.
+    //delete object;
 }
 
 template <typename DataType>
@@ -93,9 +95,6 @@ thread_local size_t Allocator<DataType>::threadNum = SIZE_MAX;
 
 template <typename DataType>
 std::vector<std::vector<DataType *> *> Allocator<DataType>::pool;
-
-template <typename DataType>
-thread_local size_t Allocator<DataType>::count = 0;
 
 template class Allocator<Page>;
 template class Allocator<RWOperation>;

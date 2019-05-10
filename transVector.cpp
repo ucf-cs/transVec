@@ -26,8 +26,9 @@ bool TransactionalVector::prependPage(size_t index, Page *page)
 
 	// The head of the linkedlist of updates.
 	Page *rootPage = NULL;
-	// The previous head. The new page has been updated up to this point.
+	// The previous head. The new page has been updated to consider everything after this point.
 	Page *prevRoot = NULL;
+	// Keep looping until page insertion suceeds or the transaction fails.
 	while (true)
 	{
 		// Get the head of the list of updates for this segment.
@@ -35,39 +36,43 @@ bool TransactionalVector::prependPage(size_t index, Page *page)
 		{
 			// Failure means the transaction attempted an invalid read or write, as the vector wasn't allocated to this point.
 			page->transaction->status.store(Desc::TxStatus::aborted);
+			// DEBUG:
 			//printf("Aborted!\n");
 			// No need to even try anymore. The whole transaction failed.
 			return false;
 		}
 
 		// Quit if the transaction is no longer active.
+		// Can happen if another thread helped the transaction complete.
 		if (page->transaction->status.load() != Desc::TxStatus::active)
 		{
 			return false;
 		}
 
-		// Disallow prepending a redundant page.
+		// Disallow prepending a redundant (duplicate) page.
 		// May occur during helping.
 		if (rootPage != NULL && rootPage->transaction == page->transaction)
 		{
 			// DEBUG:
 			//printf("Attempted to prepend a page to itself.\n");
 
-			return false;
+			// Insertion failed, but the transaction is incomplete, so keep trying.
+			return true;
 		}
 
-		// Initialize the current page along the linked list of updates.
+		// Initialize the current page at the start of the linked list of updates.
 		Page *currentPage = rootPage;
 		// Traverse down the existing delta updates, collecting old values as we go.
-		// We stop when we no longer need any more elements or when there are no pages left.
+		// We stop when we have found all target elements or when there are no pages left.
 		while (!targetBits.none())
 		{
 			// If we reach the end before identifying all values, use a generic initializer page instead.
+			// In this page, all values are write UNSET, for proper abort handling.
 			if (currentPage == NULL)
 			{
 				currentPage = endPage;
 			}
-			// If we reach a page that we already traversed in a previous loop, then there's no reason to traverse again.
+			// If we reach a page that we already traversed in a previous loop, then there's no reason to traverse any further.
 			if (currentPage == prevRoot)
 			{
 				break;
@@ -87,7 +92,7 @@ bool TransactionalVector::prependPage(size_t index, Page *page)
 					// TODO: make sure this works as expected.
 					while (currentPage->transaction->status.load() == Desc::TxStatus::active)
 					{
-						//completeTransaction(currentPage->transaction, true, index);
+						completeTransaction(currentPage->transaction, true, index);
 					}
 					// Update our status to its final (committed or aborted) state.
 					status = currentPage->transaction->status.load();
@@ -96,40 +101,40 @@ bool TransactionalVector::prependPage(size_t index, Page *page)
 				for (size_t i = 0; i < Page::SEG_SIZE; i++)
 				{
 					// We only care about the possessed bits.
-					if (posessedBits[i])
+					if (!posessedBits[i])
 					{
-						// We only get the new value if it was write comitted.
-						if (status == Desc::TxStatus::committed && currentPage->bitset.write[i])
-						{
-							VAL val = UNSET;
-							currentPage->get(i, NEW_VAL, val);
-							page->set(i, OLD_VAL, val);
-						}
-						// Transaction was aborted or operation was a read.
-						// Grab the old page's old value.
-						else
-						{
-							VAL val = UNSET;
-							currentPage->get(i, OLD_VAL, val);
-							page->set(i, OLD_VAL, val);
-						}
-						VAL val = UNSET;
-						// Abort if the operation fails our bounds check or we fail to get a value.
-						if (!page->get(i, OLD_VAL, val) || (page->bitset.checkBounds[i] && val == UNSET))
-						{
-							// DEBUG:
-							//page->print();
+						continue;
+					}
+					// Used to pass a value around by reference.
+					VAL val = UNSET;
+					// We only get the new value if it was write comitted.
+					if (status == Desc::TxStatus::committed && currentPage->bitset.write[i])
+					{
+						currentPage->get(i, NEW_VAL, val);
+					}
+					// Transaction was aborted or operation was a read.
+					// Grab the old page's old value.
+					else
+					{
+						currentPage->get(i, OLD_VAL, val);
+					}
+					// Set the old value for the page we want to insert, using the val pulled from the current page.
+					page->set(i, OLD_VAL, val);
 
-							page->transaction->status.store(Desc::TxStatus::aborted);
-							//printf("Aborted!\n");
-							// No need to even try anymore. The whole transaction failed.
-							return false;
-						}
+					// Abort if the operation fails our bounds check.
+					if (page->bitset.checkBounds[i] && val == UNSET)
+					{
+						// DEBUG:
+						//printf("Aborted!\n");
+
+						page->transaction->status.store(Desc::TxStatus::aborted);
+						// No need to even try anymore. The whole transaction failed.
+						return false;
 					}
 				}
 			}
 			// Update our set of target bits.
-			// We don't care about the elements we've just found anymore.
+			// No longer look for elements associated with bits we've already found.
 			targetBits &= posessedBits.flip();
 			// Move on to the next delta update.
 			currentPage = currentPage->next;
@@ -147,6 +152,7 @@ bool TransactionalVector::prependPage(size_t index, Page *page)
 		else
 		{
 			// Retry on failure.
+			// Keep track of the previous root to reduce redundant lookups.
 			prevRoot = rootPage;
 		}
 	}
@@ -154,17 +160,18 @@ bool TransactionalVector::prependPage(size_t index, Page *page)
 	return true;
 }
 
-void TransactionalVector::insertPages(std::map<size_t, Page *, std::less<size_t>, MemAllocator<std::pair<size_t, Page *>>> pages, bool helping, size_t startPage)
+void TransactionalVector::insertPages(std::map<size_t, Page *, std::less<size_t>, MemAllocator<std::pair<size_t, Page *>>> *pages, bool helping, size_t startPage)
 {
+	assert(pages != NULL);
 	// Get the start of the map.
-	typename std::map<size_t, Page *, std::less<size_t>, MemAllocator<std::pair<size_t, Page *>>>::reverse_iterator iter = pages.rbegin();
+	typename std::map<size_t, Page *, std::less<size_t>, MemAllocator<std::pair<size_t, Page *>>>::reverse_iterator iter = pages->rbegin();
 	// Advance to a specific index, if specified.
 	if (startPage < SIZE_MAX)
 	{
 		// Attempt to find a page at the target index.
-		auto foundIter = pages.find(startPage);
+		auto foundIter = pages->find(startPage);
 		// If we found it.
-		if (foundIter != pages.end())
+		if (foundIter != pages->end())
 		{
 			// Reposition our iterator.
 			//iter = make_reverse_iterator(foundIter);
@@ -176,7 +183,7 @@ void TransactionalVector::insertPages(std::map<size_t, Page *, std::less<size_t>
 			printf("Specified page %lu does not exist. Starting from the beginning.\n", startPage);
 		}
 	}
-	for (auto i = iter; i != pages.rend(); ++i)
+	for (auto i = iter; i != pages->rend(); ++i)
 	{
 		// If some prepend produced a failure, don't insert any more pages for this transaction.
 		if (i->second->transaction->status.load() == Desc::TxStatus::aborted)
@@ -198,7 +205,7 @@ void TransactionalVector::insertPages(std::map<size_t, Page *, std::less<size_t>
 		}
 
 		// Prepend the page.
-		// Returns false if it caused an abort.
+		// Returns false if the transaction is no longer active.
 		if (!prependPage(index, page))
 		{
 			break;
@@ -282,7 +289,7 @@ void TransactionalVector::prepareTransaction(Desc *descriptor)
 bool TransactionalVector::completeTransaction(Desc *descriptor, bool helping, size_t startPage)
 {
 	// Insert the pages.
-	insertPages(*descriptor->pages.load(), helping, startPage);
+	insertPages(descriptor->pages.load(), helping, startPage);
 
 	auto active = Desc::TxStatus::active;
 	auto committed = Desc::TxStatus::committed;

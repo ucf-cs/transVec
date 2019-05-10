@@ -127,6 +127,9 @@ void randThread(int threadNum)
 	// Initialize the allocators.
 	Allocator<Page>::threadInit(threadNum);
 	Allocator<RWOperation>::threadInit(threadNum);
+
+	RandomNumberPool *numPool = new RandomNumberPool(NUM_TRANSACTIONS * (1 + (3 * TRANSACTION_SIZE)));
+
 	// For each transaction.
 	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
 	{
@@ -216,6 +219,7 @@ void predicateSearch()
 
 	// Pre-insertion step.
 	threadRunner(threads, predicatePreinsert);
+	printf("Completed preinsertion!\n\n\n");
 
 	// Prepare read transactions for each thread.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
@@ -231,8 +235,6 @@ void predicateSearch()
 		Desc *desc = new Desc(NUM_TRANSACTIONS, ops);
 		transactions.push_back(desc);
 	}
-
-	printf("Completed preinsertion!\n\n\n");
 
 	// Get the current time.
 	auto start = std::chrono::system_clock::now();
@@ -257,9 +259,9 @@ int main(int argc, char *argv[])
 	srand(time(NULL));
 
 	// Preallocate the pages.
-	Allocator<Page>::init(1000000);
+	Allocator<Page>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE);
 	// Preallocate the RWSet elements.
-	Allocator<RWOperation>::init(10000000);
+	Allocator<RWOperation>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE*2);
 
 	transVector = new TransactionalVector();
 	//transVector = new CoarseTransVector();
@@ -267,11 +269,15 @@ int main(int argc, char *argv[])
 
 	printf("Pages are %lu bytes.\n", sizeof(Page));
 
-	predicateSearch();
-	return 0;
+	//predicateSearch();
+	//return 0;
 
 	// Create our threads.
 	std::thread threads[THREAD_COUNT];
+
+	// Pre-insertion step.
+	threadRunner(threads, predicatePreinsert);
+	printf("Completed preinsertion!\n\n\n");
 
 	// Get the current time.
 	auto start = std::chrono::system_clock::now();
@@ -281,7 +287,7 @@ int main(int argc, char *argv[])
 	// Get total execution time.
 	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
 
-	transVector->printContents();
+	//transVector->printContents();
 
 	std::cout << "" << THREAD_COUNT << " threads and " << TRANSACTION_SIZE << " operations per transaction" << std::endl;
 	std::cout << total.count() << " milliseconds" << std::endl;

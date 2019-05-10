@@ -6,6 +6,7 @@
 #include <iostream>
 #include <thread>
 
+#include "randomPool.hpp"
 #include "transVector.hpp"
 #include "vector.hpp"
 

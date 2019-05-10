@@ -26,9 +26,6 @@ public:
   thread_local static size_t threadNum;
   // The pool of objects.
   static std::vector<std::vector<DataType *> *> pool;
-  // DEBUG: Remove this when all is well.
-  // Used to keep track of how many elements the thread has pulled from the allocator.
-  thread_local static size_t count;
 
   // Initialize the allocator.
   static void init(size_t poolSize = 0);

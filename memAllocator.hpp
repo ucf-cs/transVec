@@ -10,7 +10,8 @@
 #include "define.hpp"
 
 // TUNE
-#define POOL_SIZE 9000000
+// TODO: Cannot make this higher than around 15000000 it seems or may fail to compute return address.
+#define POOL_SIZE 12000000//NUM_TRANSACTIONS * TRANSACTION_SIZE * 3
 
 template <class T>
 class MemAllocator
@@ -98,10 +99,11 @@ public:
 
     void deallocate(value_type *p, std::size_t n) noexcept // Use pointer if pointer is not a value_type*
     {
-        // Do nothing. Don't really need to worry about this just for performance testing.
+        // Do nothing. Difficult to deallocate with this setup, so just don't do it.
 
-        //freeIndex<T> -= n;
+        //freeIndex -= n;
         //assert(freeIndex<T> > base);
+        //memccpy(freeIndex, p, n);
     }
 
     value_type *allocate(std::size_t n, const_void_pointer)
