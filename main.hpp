@@ -14,9 +14,11 @@ TransactionalVector *transVector;
 //CoarseTransVector *transVector;
 //GCCSTMVector *transVector;
 
-std::vector<Desc *> transactions;
+std::vector<std::vector<Desc *>> transactions;
 
 std::atomic<size_t> totalMatches;
+
+RandomNumberPool *numPool;
 
 int main(int argc, char *argv[]);
 

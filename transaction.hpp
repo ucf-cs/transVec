@@ -10,12 +10,16 @@ The actual vector will pre-process each of these transactions into a simpler rea
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <ostream>
 #include <string>
 
 #include "define.hpp"
+#include "deltaPage.hpp"
 #include "memAllocator.hpp"
 
+template <class T, size_t S>
 class Page;
+
 class RWSet;
 
 // A standard, user-generated operation.
@@ -84,7 +88,7 @@ struct Desc
 	// They are not safe to access until this is true.
 	std::atomic<bool> returnedValues;
 	// A list of pages for the transaction to insert.
-	std::atomic<std::map<size_t, Page *, std::less<size_t>, MemAllocator<std::pair<size_t, Page *>>> *> pages;
+	std::atomic<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *> pages;
 	std::atomic<RWSet *> set;
 
 	// Create a descriptor object.

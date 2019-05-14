@@ -5,9 +5,9 @@ bool TransactionalVector::reserve(size_t size)
 	// Since we hold multiple elements per page, convert from a request for more elements to a request for more pages.
 
 	// Reserve a page per SEG_SIZE elements.
-	size_t reserveSize = size / Page::SEG_SIZE;
+	size_t reserveSize = size / Page<VAL, SGMT_SIZE>::SEG_SIZE;
 	// Since integer division always rounds down, add one more page to handle the remainder.
-	if (size % Page::SEG_SIZE != 0)
+	if (size % Page<VAL, SGMT_SIZE>::SEG_SIZE != 0)
 	{
 		reserveSize++;
 	}
@@ -15,19 +15,19 @@ bool TransactionalVector::reserve(size_t size)
 	return array->reserve(reserveSize);
 }
 
-bool TransactionalVector::prependPage(size_t index, Page *page)
+bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 {
 	assert(page != NULL && "Invalid page passed in.");
 
 	// Create a bitset to keep track of all locations of interest.
-	std::bitset<Page::SEG_SIZE> targetBits;
+	std::bitset<Page<VAL, SGMT_SIZE>::SEG_SIZE> targetBits;
 	// Set all bits we want to read or write.
 	targetBits = page->bitset.read | page->bitset.write;
 
 	// The head of the linkedlist of updates.
-	Page *rootPage = NULL;
+	Page<VAL, SGMT_SIZE> *rootPage = NULL;
 	// The previous head. The new page has been updated to consider everything after this point.
-	Page *prevRoot = NULL;
+	Page<VAL, SGMT_SIZE> *prevRoot = NULL;
 	// Keep looping until page insertion suceeds or the transaction fails.
 	while (true)
 	{
@@ -61,7 +61,7 @@ bool TransactionalVector::prependPage(size_t index, Page *page)
 		}
 
 		// Initialize the current page at the start of the linked list of updates.
-		Page *currentPage = rootPage;
+		Page<VAL, SGMT_SIZE> *currentPage = rootPage;
 		// Traverse down the existing delta updates, collecting old values as we go.
 		// We stop when we have found all target elements or when there are no pages left.
 		while (!targetBits.none())
@@ -78,7 +78,7 @@ bool TransactionalVector::prependPage(size_t index, Page *page)
 				break;
 			}
 			// Get the set of elements the current page has that we need.
-			std::bitset<Page::SEG_SIZE> posessedBits = targetBits & (currentPage->bitset.read | currentPage->bitset.write);
+			std::bitset<SGMT_SIZE> posessedBits = targetBits & (currentPage->bitset.read | currentPage->bitset.write);
 			// If this page has said elements.
 			if (!posessedBits.none())
 			{
@@ -98,7 +98,7 @@ bool TransactionalVector::prependPage(size_t index, Page *page)
 					status = currentPage->transaction->status.load();
 				}
 				// Go through the bits.
-				for (size_t i = 0; i < Page::SEG_SIZE; i++)
+				for (size_t i = 0; i < Page<VAL, SGMT_SIZE>::SEG_SIZE; i++)
 				{
 					// We only care about the possessed bits.
 					if (!posessedBits[i])
@@ -160,11 +160,11 @@ bool TransactionalVector::prependPage(size_t index, Page *page)
 	return true;
 }
 
-void TransactionalVector::insertPages(std::map<size_t, Page *, std::less<size_t>, MemAllocator<std::pair<size_t, Page *>>> *pages, bool helping, size_t startPage)
+void TransactionalVector::insertPages(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *pages, bool helping, size_t startPage)
 {
 	assert(pages != NULL);
 	// Get the start of the map.
-	typename std::map<size_t, Page *, std::less<size_t>, MemAllocator<std::pair<size_t, Page *>>>::reverse_iterator iter = pages->rbegin();
+	typename std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>>::reverse_iterator iter = pages->rbegin();
 	// Advance to a specific index, if specified.
 	if (startPage < SIZE_MAX)
 	{
@@ -175,7 +175,7 @@ void TransactionalVector::insertPages(std::map<size_t, Page *, std::less<size_t>
 		{
 			// Reposition our iterator.
 			//iter = make_reverse_iterator(foundIter);
-			iter = std::reverse_iterator<std::_Rb_tree_iterator<std::pair<const size_t, Page *>>>(foundIter);
+			iter = std::reverse_iterator<std::_Rb_tree_iterator<std::pair<const size_t, Page<VAL, SGMT_SIZE> *>>>(foundIter);
 		}
 		// If the page is invalid, which should never happen.
 		else
@@ -192,7 +192,7 @@ void TransactionalVector::insertPages(std::map<size_t, Page *, std::less<size_t>
 		}
 
 		size_t index = i->first;
-		Page *page;
+		Page<VAL, SGMT_SIZE> *page;
 		if (!helping)
 		{
 			page = i->second;
@@ -200,7 +200,7 @@ void TransactionalVector::insertPages(std::map<size_t, Page *, std::less<size_t>
 		// If we are helping, get a page from our allocator and copy over the relevant data.
 		else
 		{
-			page = Allocator<Page>::alloc();
+			page = Allocator<Page<VAL, SGMT_SIZE>>::alloc();
 			page->copyFrom(i->second);
 		}
 
@@ -216,7 +216,7 @@ void TransactionalVector::insertPages(std::map<size_t, Page *, std::less<size_t>
 TransactionalVector::TransactionalVector()
 {
 	// Initialize our internal segmented array.
-	array = new SegmentedVector<Page *>();
+	array = new SegmentedVector<Page<VAL, SGMT_SIZE> *>();
 	// Allocate a size descriptor.
 	// Keep it seperated to avoid needless contention between it and low-indexed elements.
 	// It also needs to hold a different type of element than the others, a size.
@@ -232,7 +232,7 @@ TransactionalVector::TransactionalVector()
 	// Allocate an end page, if it hasn't been already.
 	if (endPage == NULL)
 	{
-		endPage = new Page();
+		endPage = new Page<VAL, SGMT_SIZE>();
 		endPage->bitset.read.set();
 		endPage->bitset.write.set();
 		endPage->bitset.checkBounds.reset();
@@ -241,7 +241,7 @@ TransactionalVector::TransactionalVector()
 	}
 
 	// Initialize the first size page.
-	Page *sizePage = new Page();
+	Page<size_t, 1> *sizePage = new Page<size_t, 1>();
 	// To ensure we never try to go past the initial size page, claim all values have been set here.
 	sizePage->bitset.read.set();
 	sizePage->bitset.write.set();
@@ -260,7 +260,7 @@ void TransactionalVector::prepareTransaction(Desc *descriptor)
 	if (set == NULL)
 	{
 		// Initialize the RWSet object.
-		set = new RWSet();
+		set = Allocator<RWSet>::alloc();
 
 		// Create the read/write set.
 		// NOTE: Getting size may happen here.
@@ -336,7 +336,7 @@ void TransactionalVector::printContents()
 {
 	for (size_t i = 0;; i++)
 	{
-		Page *rootPage = NULL;
+		Page<VAL, SGMT_SIZE> *rootPage = NULL;
 		if (!array->read(i, rootPage))
 		{
 			break;
@@ -346,11 +346,11 @@ void TransactionalVector::printContents()
 			break;
 		}
 		// Initialize the current page along the linked list of updates.
-		Page *currentPage = rootPage;
-		VAL oldElements[Page::SEG_SIZE];
-		VAL newElements[Page::SEG_SIZE];
+		Page<VAL, SGMT_SIZE> *currentPage = rootPage;
+		VAL oldElements[SGMT_SIZE];
+		VAL newElements[SGMT_SIZE];
 		bool newElement = false;
-		std::bitset<Page::SEG_SIZE> targetBits;
+		std::bitset<SGMT_SIZE> targetBits;
 		targetBits.set();
 		// Traverse down the existing delta updates, collecting old values as we go.
 		// We stop when we no longer need any more elements or when there are no pages left.
@@ -362,7 +362,7 @@ void TransactionalVector::printContents()
 				currentPage = endPage;
 			}
 			// Get the set of elements the current page has that we need.
-			std::bitset<Page::SEG_SIZE> posessedBits = targetBits & (currentPage->bitset.read | currentPage->bitset.write);
+			std::bitset<SGMT_SIZE> posessedBits = targetBits & (currentPage->bitset.read | currentPage->bitset.write);
 			// If this page has said elements.
 			if (!posessedBits.none())
 			{
@@ -378,7 +378,7 @@ void TransactionalVector::printContents()
 					}
 				}
 				// Go through the bits.
-				for (size_t j = 0; j < Page::SEG_SIZE; j++)
+				for (size_t j = 0; j < SGMT_SIZE; j++)
 				{
 					// We only care about the possessed bits.
 					if (posessedBits[j])
@@ -406,9 +406,11 @@ void TransactionalVector::printContents()
 			// Move on to the next delta update.
 			currentPage = currentPage->next;
 		}
-		for (size_t j = 0; j < Page::SEG_SIZE; j++)
+		for (size_t j = 0; j < SGMT_SIZE; j++)
 		{
-			printf("%lu:\t%lu\t%lu\n", i * Page::SEG_SIZE + j, oldElements[j], newElements[j]);
+			std::cout << i * SGMT_SIZE + j << "\t"
+					  << oldElements[j] << "\t"
+					  << newElements[j] << std::endl;
 		}
 	}
 	printf("\n");

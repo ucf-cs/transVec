@@ -5,7 +5,7 @@ DEBUG_FLAGS = -std=c++14 -g -pthread -fgnu-tm
 OPTIMAL_FLAGS = -std=c++14 -march=native -Ofast -pthread -fgnu-tm
 #-fopt-info-vec-missed
 #-fopt-info
-CC_FLAGS = $(DEBUG_FLAGS)
+CC_FLAGS = $(OPTIMAL_FLAGS)
 
 # File names
 EXEC = transVec.out

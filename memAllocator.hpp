@@ -6,12 +6,9 @@
 #include <malloc.h>
 #include <mutex>
 #include <stdlib.h>
+#include <typeinfo>
 
 #include "define.hpp"
-
-// TUNE
-// TODO: Cannot make this higher than around 15000000 it seems or may fail to compute return address.
-#define POOL_SIZE 12000000//NUM_TRANSACTIONS * TRANSACTION_SIZE * 3
 
 template <class T>
 class MemAllocator
@@ -21,6 +18,15 @@ private:
     static std::atomic<char *> pool;
     // An atomic ticket counter to keep track of what spot the next thread should claim.
     static std::atomic<size_t> ticket;
+    // The number of thread pools generated.
+    static size_t NUM_POOLS;
+    // The size of the pool for this template.
+    static size_t POOL_SIZE;
+    // Used to determine if we missed any pools.
+    static bool isInit;
+    // DEBUG:
+    // A counter used to keep track of allocations. Use this to tune allocation sizes.
+    static std::atomic<size_t> count;
 
     // Offset in the pool for this thread's access.
     thread_local static char *base;
@@ -51,27 +57,31 @@ public:
     // Preallocate the pool.
     MemAllocator() noexcept
     {
+        // Used to make sure we are initializing all memory allocator instances.
+        // Prints this error once per uninitialized object type.
+        if (!isInit)
+        {
+            isInit = true;
+            printf("Allocating an uninitialized object of type %s. ", typeid(T).name());
+            printf("Will use default pool size or use malloc as a fallback.\n");
+        }
+
+        NUM_POOLS = THREAD_COUNT * 2;
+
         // Only initialize the pool once.
-        if (pool.load() == NULL)
+        char *newPool = NULL;
+        while (pool.load() == NULL)
         {
             size_t objectSize = sizeof(T);
             // *2 to ensure we have pools for our two rounds of threads.
-            size_t poolSize = sizeof(T) * THREAD_COUNT * 2 * POOL_SIZE;
-            char *newPool = (char *)memalign(objectSize, poolSize);
+            size_t poolSize = sizeof(T) * NUM_POOLS * POOL_SIZE;
+            newPool = (char *)memalign(objectSize, poolSize);
             char *nullVal = NULL;
+            // If newPool is NULL, while loop will retry.
             if (!pool.compare_exchange_strong(nullVal, newPool))
             {
                 ::operator delete(newPool);
             }
-        }
-
-        if (!hasTicket)
-        {
-            threadId = ticket.fetch_add(1);
-            assert(threadId < THREAD_COUNT * 2);
-            hasTicket = true;
-            base = pool.load() + threadId * sizeof(T) * POOL_SIZE;
-            freeIndex = 0;
         }
         return;
     }
@@ -82,28 +92,67 @@ public:
     // Use pointer if pointer is not a value_type*
     value_type *allocate(std::size_t n)
     {
+        // DEBUG:
+        count.fetch_add(n);
+
         // Ensure everything needed is allocated.
         MemAllocator();
 
-        value_type *ret = (value_type *)(base + freeIndex);
-        assert(ret != NULL && "Failed to compute a return address.");
-
-        freeIndex += n * sizeof(value_type);
-        if (freeIndex > (sizeof(T) * POOL_SIZE))
+        // Ensure each thread is properly initialized.
+        if (!hasTicket)
         {
-            printf("freeIndex=%lu\tmax=%lu\n", freeIndex, (size_t)(sizeof(T) * POOL_SIZE));
-            assert(false && "Out of capacity.");
+            threadId = ticket.fetch_add(1);
+            if (threadId >= NUM_POOLS)
+            {
+                assert(threadId < NUM_POOLS);
+            }
+            hasTicket = true;
+            base = pool.load() + threadId * sizeof(T) * POOL_SIZE;
+            freeIndex = 0;
+
+            // DEBUG:
+            //printf("pool.load()=%p\tthreadNum=%lu\tbase=%p\tsizeof(T)=%lu\t\n", pool.load(), threadId, base, sizeof(T));
+        }
+
+        value_type *ret = (value_type *)(base + freeIndex);
+        freeIndex += n * sizeof(value_type);
+        if (ret == NULL || freeIndex >= (sizeof(T) * POOL_SIZE))
+        {
+            // Can use malloc as a fallback.
+            ret = (T *)malloc(sizeof(T) * n);
+            assert(ret != NULL && "Failed to malloc.");
         }
         return ret;
     }
 
-    void deallocate(value_type *p, std::size_t n) noexcept // Use pointer if pointer is not a value_type*
+    void
+    deallocate(value_type *p, std::size_t n) noexcept // Use pointer if pointer is not a value_type*
     {
         // Do nothing. Difficult to deallocate with this setup, so just don't do it.
 
         //freeIndex -= n;
         //assert(freeIndex<T> > base);
         //memccpy(freeIndex, p, n);
+    }
+
+    // Initialize the memory pool.
+    // TUNE
+    static void init(size_t size = 22000000)
+    {
+        // Set a per-template instance pool size.
+        POOL_SIZE = size;
+        // Indicate that the pool has been properly initialized.
+        isInit = true;
+        // Allocate the pool.
+        MemAllocator();
+        return;
+    }
+
+    // Print out allocator usage statistics.
+    static void report()
+    {
+        printf("Used %lu allocations for %lu pools.\n", count.load(), NUM_POOLS);
+        return;
     }
 
     value_type *allocate(std::size_t n, const_void_pointer)
@@ -156,6 +205,19 @@ std::atomic<char *> MemAllocator<T>::pool(NULL);
 
 template <typename T>
 std::atomic<size_t> MemAllocator<T>::ticket(0);
+
+template <typename T>
+size_t MemAllocator<T>::NUM_POOLS;
+
+// NOTE: This size is used if the pool is never explicitly initialized.
+template <typename T>
+size_t MemAllocator<T>::POOL_SIZE(22000000);
+
+template <typename T>
+bool MemAllocator<T>::isInit(false);
+
+template <typename T>
+std::atomic<size_t> MemAllocator<T>::count(0);
 
 template <typename T>
 thread_local char *MemAllocator<T>::base(NULL);

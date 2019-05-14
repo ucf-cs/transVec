@@ -88,9 +88,8 @@ void Operation::print()
 		typeStrIndex = 5;
 		break;
 	}
-	printf("Type:\t%s\n", typeStrList[typeStrIndex]);
-
-	printf("index:\t%lu\n", index);
-	printf("value:\t%lu\n", val);
-	printf("return:\t%lu\n", ret);
+	std::cout << "Type:\t" << typeStrList[typeStrIndex] << std::endl;
+	std::cout << "index:\t" << index << std::endl;
+	std::cout << "val:\t" << val << std::endl;
+	std::cout << "ret:\t" << ret << std::endl;
 }

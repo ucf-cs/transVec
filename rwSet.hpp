@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <cstddef>
+#include <ostream>
 #include <unordered_map>
 #include <vector>
 
@@ -14,8 +15,10 @@
 
 class TransactionalVector;
 class RWOperation;
+class Operation;
+class Desc;
 
-typedef MemAllocator<std::pair<size_t, Page *>> MyPageAllocator;
+typedef MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>> MyPageAllocator;
 typedef MemAllocator<std::pair<size_t, RWOperation *>> MySecondRWOpAllocator;
 typedef MemAllocator<std::pair<size_t, std::map<size_t, RWOperation *, std::less<size_t>, MySecondRWOpAllocator>>> MyRWOpAllocator;
 
@@ -61,10 +64,10 @@ class RWSet
 	// An absolute reserve position.
 	size_t maxReserveAbsolute = 0;
 	// Our size descriptor. After reading size, we use this to write a new size value later.
-	Page *sizeDesc = NULL;
+	Page<size_t, 1> *sizeDesc = NULL;
 	// Set this if size changes.
 	// TODO: Make size a size_t instead.
-	VAL size = 0;
+	size_t size = 0;
 
 	// Map vector operations to pushes and pops relative to size.
 	// Read size, then they can be resolved to absolute indexes.
@@ -85,7 +88,7 @@ class RWSet
 	void setToPages(Desc *descriptor);
 
 	// Set the values in a transaction to the retrived values.
-	void setOperationVals(Desc *descriptor, std::map<size_t, Page *, std::less<size_t>, MyPageAllocator> pages);
+	void setOperationVals(Desc *descriptor, std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator> pages);
 
 	size_t getSize(Desc *transaction, TransactionalVector *sizeHead);
 

@@ -1,6 +1,7 @@
 #ifndef RANDOM_POOL_H
 #define RANDOM_POOL_H
 
+#include <atomic>
 #include <random>
 #include <vector>
 
@@ -10,32 +11,50 @@
 class RandomNumberPool
 {
 private:
-    std::vector<size_t> elements;
+    std::vector<std::vector<size_t>> pools;
+    std::atomic<size_t> count;
 
 public:
-    RandomNumberPool(size_t numElements = 0)
+    RandomNumberPool(size_t numThreads = 1, size_t numElements = 0)
     {
+        count.store(0);
+
+        pools.reserve(numThreads);
+
         std::random_device rd;
         std::mt19937_64 e2(rd());
         std::uniform_int_distribution<size_t> dist(0, RANGE);
-        for (size_t i = 0; i < numElements; i++)
+
+        for (size_t i = 0; i < numThreads; i++)
         {
-            elements.push_back(dist(e2));
+            std::vector<size_t> elements;
+            elements.reserve(numElements);
+            for (size_t j = 0; j < numElements; j++)
+            {
+                elements.push_back(dist(e2));
+            }
+            pools.push_back(elements);
         }
         return;
     }
-    size_t getNum()
+    size_t getNum(size_t threadNum)
     {
-        if (elements.size() <= 0)
+        size_t ret;
+        if (pools[threadNum].size() > 0)
+        {
+            ret = pools[threadNum].back();
+            pools[threadNum].pop_back();
+        }
+        else
         {
             printf("Random number generator ran out of numbers.\n");
+            printf("Generated %lu more numbers\n", count.fetch_add(1));
             std::random_device rd;
             std::mt19937_64 e2(rd());
             std::uniform_int_distribution<size_t> dist(0, RANGE);
-            return dist(e2);
+            ret = dist(e2);
         }
-        size_t ret = elements.back();
-        elements.pop_back();
+        return ret;
     }
 };
 

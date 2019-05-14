@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include <mutex>
+#include <ostream>
 
 #include "transaction.hpp"
 
@@ -112,7 +113,7 @@ class Vector
     {
         for (size_t i = 0; i < size; i++)
         {
-            printf("%lu\n", array[size]);
+            std::cout<<array[size]<<std::endl;
         }
         return;
     }
