@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/transVec.out",
             // Does nothing for now.
-            "args": ["12", "5000000"],
+            "args": ["10000", "3", "12"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

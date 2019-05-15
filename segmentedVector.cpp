@@ -97,6 +97,8 @@ SegmentedVector<T>::SegmentedVector()
 	bucketArray = new std::atomic<std::atomic<T> *>[buckets]();
 	// Initialize the first segment in the second level.
 	reserve(1);
+	// Ensure that the objects in this vector are actually lock-free.
+	assert(bucketArray[0].load()[0].is_lock_free());
 	return;
 }
 

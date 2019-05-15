@@ -1,5 +1,5 @@
-#ifndef MEM_ALLOC_H
-#define MEM_ALLOC_H
+#ifndef MEM_ALLOC_HPP
+#define MEM_ALLOC_HPP
 
 #include <assert.h>
 #include <atomic>

@@ -1,5 +1,5 @@
-#ifndef ALLOCATOR_H
-#define ALLOCATOR_H
+#ifndef ALLOCATOR_HPP
+#define ALLOCATOR_HPP
 
 #include <assert.h>
 #include <atomic>

@@ -1,5 +1,5 @@
-#ifndef TRANSVECTOR_H
-#define TRANSVECTOR_H
+#ifndef TRANSVECTOR_HPP
+#define TRANSVECTOR_HPP
 
 #include <assert.h>
 #include <atomic>
@@ -48,13 +48,8 @@ public:
 	// A page holding our shared size variable.
 	// Access is public because the RWSet must be able to change it.
 	std::atomic<Page<size_t, 1> *> size;
-
+	// Default contructor.
 	TransactionalVector();
-
-	void getSize(Desc *descriptor);
-
-	Page<size_t, 1> *getSizePage(Desc *descriptor);
-
 	// Create a RWSet for the transaction.
 	// Only used in helping on size conflict.
 	void prepareTransaction(Desc *descriptor);
@@ -65,7 +60,6 @@ public:
 	void executeTransaction(Desc *descriptor);
 	// Called if a transaction is blocking on size.
 	void sizeHelp(Desc *descriptor);
-
 	// Print out the values stored in the vector.
 	void printContents();
 };
@@ -73,10 +67,10 @@ public:
 // Only needed if running C++ 2011 or older.
 // Should not use on C++ 2014 or later, since it will conflict with a built-in function.
 #if __cplusplus < 201402L
-template< class Iter >
-constexpr std::reverse_iterator<Iter> make_reverse_iterator( Iter i )
+template <class Iter>
+constexpr std::reverse_iterator<Iter> make_reverse_iterator(Iter i)
 {
-    return std::reverse_iterator<Iter>(i);
+	return std::reverse_iterator<Iter>(i);
 }
 #endif
 

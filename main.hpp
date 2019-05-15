@@ -1,5 +1,5 @@
-#ifndef TRANSVEC_H
-#define TRANSVEC_H
+#ifndef TRANSVEC_HPP
+#define TRANSVEC_HPP
 
 #include <chrono>
 #include <cstdlib>

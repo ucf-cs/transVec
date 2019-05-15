@@ -309,6 +309,31 @@ int main(int argc, char *argv[])
 	// Seed the random number generator.
 	srand(time(NULL));
 
+	/*
+	// TODO: This doesn't work. Some alignment error message?
+	// Pull optional command-line arguments.
+	for (int i = 1; i < argc; i++)
+	{
+		switch (i)
+		{
+		case 1: // NUM_TRANSACTIONS
+			sscanf(argv[i], "%zu", &NUM_TRANSACTIONS);
+				//NUM_TRANSACTIONS = atoi(argv[i]);
+			break;
+		case 2: // TRANSACTION_SIZE
+			sscanf(argv[i], "%zu", &TRANSACTION_SIZE);
+			//TRANSACTION_SIZE = atoi(argv[i]);
+			break;
+		case 3: // THREAD_COUNT
+			sscanf(argv[i], "%zu", &THREAD_COUNT);
+			//THREAD_COUNT = atoi(argv[i]);
+			break;
+		default:
+			break;
+		}
+	}
+	*/
+
 	printf("Initializing the memory allocators.\n");
 	printf("Operation* allocator.\n");
 	MemAllocator<Operation *>::init();
@@ -382,15 +407,17 @@ int main(int argc, char *argv[])
 	MemAllocator<std::pair<size_t, RWOperation *>>::report();
 	MemAllocator<std::pair<size_t, std::map<size_t, RWOperation *, std::less<size_t>, MySecondRWOpAllocator>>>::report();
 
+	// Report object allocator usage.
 	Allocator<Page<VAL, SGMT_SIZE>>::report();
 	Allocator<RWOperation>::report();
 	Allocator<Page<size_t, 1>>::report();
 	Allocator<RWSet>::report();
 	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::report();
 
+	// Print the final state of the vector.
 	//transVector->printContents();
 
-	std::cout << "" << THREAD_COUNT << " threads and " << TRANSACTION_SIZE << " operations per transaction" << std::endl;
+	std::cout << NUM_TRANSACTIONS << " operations per thread with " << THREAD_COUNT << " threads and " << TRANSACTION_SIZE << " operations per transaction" << std::endl;
 	std::cout << total.count() << " milliseconds" << std::endl;
 
 	return 0;

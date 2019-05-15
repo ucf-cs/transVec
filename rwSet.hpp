@@ -1,5 +1,5 @@
-#ifndef RWSET_H
-#define RWSET_H
+#ifndef RWSET_HPP
+#define RWSET_HPP
 
 #include <atomic>
 #include <cstddef>

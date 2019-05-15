@@ -1,5 +1,5 @@
-#ifndef DELTAPAGE_H
-#define DELTAPAGE_H
+#ifndef DELTAPAGE_HPP
+#define DELTAPAGE_HPP
 
 #include <atomic>
 #include <bitset>

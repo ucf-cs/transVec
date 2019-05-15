@@ -1,5 +1,5 @@
-#ifndef RANDOM_POOL_H
-#define RANDOM_POOL_H
+#ifndef RANDOM_POOL_HPP
+#define RANDOM_POOL_HPP
 
 #include <atomic>
 #include <random>

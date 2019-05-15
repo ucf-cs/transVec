@@ -2,8 +2,8 @@
 This file holds definitions of transactions and operations that can be executed.
 The actual vector will pre-process each of these transactions into a simpler read/write set.
 */
-#ifndef TRANSACTION_H
-#define TRANSACTION_H
+#ifndef TRANSACTION_HPP
+#define TRANSACTION_HPP
 
 #include <atomic>
 #include <cstddef>

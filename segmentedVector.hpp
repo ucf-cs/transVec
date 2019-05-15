@@ -5,8 +5,8 @@ This implementation, by itself, is a lock-free vector, but it doesn't support pu
 It also has no support for transactions.
 We build off of this implementation to add support for those things.
 */
-#ifndef SEGMENTEDVECTOR_H
-#define SEGMENTEDVECTOR_H
+#ifndef SEGMENTEDVECTOR_HPP
+#define SEGMENTEDVECTOR_HPP
 
 #include <atomic>
 #include <cstddef>
