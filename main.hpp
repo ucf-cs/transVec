@@ -11,6 +11,8 @@
 #include "vector.hpp"
 
 TransactionalVector *transVector;
+// TODO: Make the compact vector functional.
+//CompactVector *transVector;
 //CoarseTransVector *transVector;
 //GCCSTMVector *transVector;
 

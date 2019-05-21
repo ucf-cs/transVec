@@ -89,7 +89,6 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 				if (status == Desc::TxStatus::active && (posessedBits & currentPage->bitset.write) != 0)
 				{
 					// Help the active transaction.
-					// TODO: make sure this works as expected.
 					while (currentPage->transaction->status.load() == Desc::TxStatus::active)
 					{
 						completeTransaction(currentPage->transaction, true, index);
@@ -107,7 +106,7 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 					}
 					// Used to pass a value around by reference.
 					VAL val = UNSET;
-					// We only get the new value if it was write comitted.
+					// We only get the new value if it was write committed.
 					if (status == Desc::TxStatus::committed && currentPage->bitset.write[i])
 					{
 						currentPage->get(i, NEW_VAL, val);
@@ -211,6 +210,7 @@ void TransactionalVector::insertPages(std::map<size_t, Page<VAL, SGMT_SIZE> *, s
 			break;
 		}
 	}
+	return;
 }
 
 TransactionalVector::TransactionalVector()
@@ -386,7 +386,7 @@ void TransactionalVector::printContents()
 						currentPage->get(j, OLD_VAL, oldElements[j]);
 						currentPage->get(j, NEW_VAL, newElements[j]);
 
-						// We only get the new value if it was write comitted.
+						// We only get the new value if it was write committed.
 						if (status == Desc::TxStatus::committed && currentPage->bitset.write[j])
 						{
 							newElement = true;

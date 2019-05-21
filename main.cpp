@@ -310,7 +310,7 @@ int main(int argc, char *argv[])
 	srand(time(NULL));
 
 	/*
-	// TODO: This doesn't work. Some alignment error message?
+	// TODO: This doesn't work.
 	// Pull optional command-line arguments.
 	for (int i = 1; i < argc; i++)
 	{
@@ -337,14 +337,9 @@ int main(int argc, char *argv[])
 	printf("Initializing the memory allocators.\n");
 	printf("Operation* allocator.\n");
 	MemAllocator<Operation *>::init();
-	printf("std::pair<size_t, Page<VAL, SGMT_SIZE> *> allocator.\n");
-	MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>::init();
-	printf("std::pair<size_t, Page<size_t, 1> *> allocator.\n");
-	MemAllocator<std::pair<size_t, Page<size_t, 1> *>>::init();
-	printf("std::pair<size_t, RWOperation *> allocator.\n");
-	MemAllocator<std::pair<size_t, RWOperation *>>::init();
-	printf("Map of maps allocator.\n");
-	MemAllocator<std::pair<size_t, std::map<size_t, RWOperation *, std::less<size_t>, MySecondRWOpAllocator>>>::init();
+	// NOTE: Other MemAllocators are implicitly initialized.
+	// Would be better to initialize them in advance for performance.
+	// It's not a big deal if we pre-fill the vector first.
 	printf("Finished initializing the memory allocators.\n\n");
 
 	// Preallocate the pages.
@@ -371,6 +366,7 @@ int main(int argc, char *argv[])
 	transactions.reserve(THREAD_COUNT);
 
 	transVector = new TransactionalVector();
+	//transVector = new CompactVector();
 	//transVector = new CoarseTransVector();
 	//transVector = new GCCSTMVector();
 
@@ -400,12 +396,6 @@ int main(int argc, char *argv[])
 
 	// Report memory allocator usage.
 	MemAllocator<Operation *>::report();
-	// TODO: These allocators are never actually used.
-	// Need to figure out what objects ARE used (RB tree nodes, etc.)
-	MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>::report();
-	MemAllocator<std::pair<size_t, Page<size_t, 1> *>>::report();
-	MemAllocator<std::pair<size_t, RWOperation *>>::report();
-	MemAllocator<std::pair<size_t, std::map<size_t, RWOperation *, std::less<size_t>, MySecondRWOpAllocator>>>::report();
 
 	// Report object allocator usage.
 	Allocator<Page<VAL, SGMT_SIZE>>::report();

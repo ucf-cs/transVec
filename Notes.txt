@@ -1,0 +1,6 @@
+Objects created by the allocator:
+
+PNSt8__detail15_Hash_node_baseE
+NSt8__detail10_Hash_nodeISt4pairIKmSt5arrayIP11RWOperationLm16EEELb0EEE
+St13_Rb_tree_nodeISt4pairIKmP4PageEE
+P9Operation

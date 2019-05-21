@@ -23,9 +23,8 @@ typedef MemAllocator<std::pair<size_t, RWOperation *>> MySecondRWOpAllocator;
 typedef MemAllocator<std::pair<size_t, std::map<size_t, RWOperation *, std::less<size_t>, MySecondRWOpAllocator>>> MyRWOpAllocator;
 
 // An individual operation on a single element location.
-class RWOperation
+struct RWOperation
 {
-  public:
 	typedef enum Assigned
 	{
 		yes,
@@ -49,7 +48,7 @@ class RWOperation
 // All transactions are converted into a read/write set before modifying the vector.
 class RWSet
 {
-  public:
+public:
 	// Map vector locations to read/write operations.
 	// Used for absolute reads/writes.
 	std::unordered_map<size_t,
@@ -66,7 +65,6 @@ class RWSet
 	// Our size descriptor. After reading size, we use this to write a new size value later.
 	Page<size_t, 1> *sizeDesc = NULL;
 	// Set this if size changes.
-	// TODO: Make size a size_t instead.
 	size_t size = 0;
 
 	// Map vector operations to pushes and pops relative to size.

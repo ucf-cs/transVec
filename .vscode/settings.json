@@ -50,6 +50,7 @@
         "list": "cpp",
         "numeric": "cpp",
         "cinttypes": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "map": "cpp"
     }
 }

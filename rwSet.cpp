@@ -301,7 +301,6 @@ size_t RWSet::getSize(Desc *descriptor, TransactionalVector *vector)
             while (status == Desc::TxStatus::active)
             {
                 // Help the active transaction.
-                // TODO: Make sure this works as expected.
                 vector->sizeHelp(rootPage->transaction);
                 status = rootPage->transaction->status.load();
             }

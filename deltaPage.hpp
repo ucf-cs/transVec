@@ -129,6 +129,7 @@ public:
 			// This will be set later. No need to copy it.
 			//this->oldVal[i] = page->oldVal[i];
 		}
+		return true;
 	}
 
 	// Print out the data stored in the page.
