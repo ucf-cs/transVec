@@ -80,7 +80,7 @@ public:
   static DataType *alloc()
   {
     // DEBUG:
-    //Allocator<DataType>::count.fetch_add(1);
+    Allocator<DataType>::count.fetch_add(1);
 
     if (threadNum == SIZE_MAX)
     {
@@ -96,7 +96,8 @@ public:
     }
     else
     {
-      printf("Pool for thread %lu ran out of elements of size %lu.\n", threadNum, sizeof(DataType));
+      // DEBUG: TODO: Uncomment this when done testing.
+      //printf("Pool for thread %lu ran out of elements of size %lu.\n", threadNum, sizeof(DataType));
       object = new DataType();
     }
     if (object == NULL)

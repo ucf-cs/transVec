@@ -31,7 +31,11 @@ struct Bitset
 // A delta update page.
 template <typename T, size_t S>
 // NOTE: Alignment actually has a small negative impact on read-only performance.
-class /*alignas(64)*/ Page
+class
+#ifdef ALIGNED
+	alignas(64)
+#endif
+		Page
 {
 private:
 	// A contiguous list of updated values.

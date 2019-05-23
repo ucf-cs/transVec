@@ -1,5 +1,7 @@
 #include "transVector.hpp"
 
+#ifdef SEGMENTVEC
+
 bool TransactionalVector::reserve(size_t size)
 {
 	// Since we hold multiple elements per page, convert from a request for more elements to a request for more pages.
@@ -416,3 +418,5 @@ void TransactionalVector::printContents()
 	printf("\n");
 	return;
 }
+
+#endif

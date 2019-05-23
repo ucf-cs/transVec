@@ -16,14 +16,28 @@ void threadRunner(std::thread *threads, void function(int threadNum))
 	return;
 }
 
+// Initialize per-thread allocators.
+void inline threadAllocatorInit(int threadNum)
+{
+#ifdef SEGMENTVEC
+	Allocator<Page<VAL, SGMT_SIZE>>::threadInit(threadNum);
+	Allocator<Page<size_t, 1>>::threadInit(threadNum);
+	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::threadInit(threadNum);
+#endif
+#ifdef COMPACTVEC
+	Allocator<CompactElement>::threadInit(threadNum);
+#endif
+#if defined(SEGMENTVEC) || defined(COMPACTVEC)
+	Allocator<RWOperation>::threadInit(threadNum);
+	Allocator<RWSet>::threadInit(threadNum);
+#endif
+	return;
+}
+
 void pushThread(int threadNum)
 {
 	// Initialize the allocators.
-	Allocator<Page<VAL, SGMT_SIZE>>::threadInit(threadNum);
-	Allocator<Page<size_t, 1>>::threadInit(threadNum);
-	Allocator<RWOperation>::threadInit(threadNum);
-	Allocator<RWSet>::threadInit(threadNum);
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::threadInit(threadNum);
+	threadAllocatorInit(threadNum);
 
 	// For each transaction.
 	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
@@ -50,11 +64,7 @@ void pushThread(int threadNum)
 void readThread(int threadNum)
 {
 	// Initialize the allocators.
-	Allocator<Page<VAL, SGMT_SIZE>>::threadInit(threadNum);
-	Allocator<Page<size_t, 1>>::threadInit(threadNum);
-	Allocator<RWOperation>::threadInit(threadNum);
-	Allocator<RWSet>::threadInit(threadNum);
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::threadInit(threadNum);
+	threadAllocatorInit(threadNum);
 
 	// For each transaction.
 	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
@@ -82,11 +92,7 @@ void readThread(int threadNum)
 void writeThread(int threadNum)
 {
 	// Initialize the allocators.
-	Allocator<Page<VAL, SGMT_SIZE>>::threadInit(threadNum);
-	Allocator<Page<size_t, 1>>::threadInit(threadNum);
-	Allocator<RWOperation>::threadInit(threadNum);
-	Allocator<RWSet>::threadInit(threadNum);
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::threadInit(threadNum);
+	threadAllocatorInit(threadNum);
 
 	// For each transaction.
 	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
@@ -114,11 +120,7 @@ void writeThread(int threadNum)
 void popThread(int threadNum)
 {
 	// Initialize the allocators.
-	Allocator<Page<VAL, SGMT_SIZE>>::threadInit(threadNum);
-	Allocator<Page<size_t, 1>>::threadInit(threadNum);
-	Allocator<RWOperation>::threadInit(threadNum);
-	Allocator<RWSet>::threadInit(threadNum);
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::threadInit(threadNum);
+	threadAllocatorInit(threadNum);
 
 	// For each transaction.
 	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
@@ -141,11 +143,7 @@ void popThread(int threadNum)
 void randThreadInit(int threadNum)
 {
 	// Initialize the allocators.
-	Allocator<Page<VAL, SGMT_SIZE>>::threadInit(threadNum);
-	Allocator<Page<size_t, 1>>::threadInit(threadNum);
-	Allocator<RWOperation>::threadInit(threadNum);
-	Allocator<RWSet>::threadInit(threadNum);
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::threadInit(threadNum);
+	threadAllocatorInit(threadNum);
 
 	// A vector containing all of a thread's transactions.
 	std::vector<Desc *> threadTransactions;
@@ -176,11 +174,7 @@ void randThreadInit(int threadNum)
 void randThread(int threadNum)
 {
 	// Initialize the allocators.
-	Allocator<Page<VAL, SGMT_SIZE>>::threadInit(threadNum);
-	Allocator<Page<size_t, 1>>::threadInit(threadNum);
-	Allocator<RWOperation>::threadInit(threadNum);
-	Allocator<RWSet>::threadInit(threadNum);
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::threadInit(threadNum);
+	threadAllocatorInit(threadNum);
 
 	// For each transaction.
 	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
@@ -194,11 +188,7 @@ void randThread(int threadNum)
 void predicatePreinsert(int threadNum)
 {
 	// Initialize the allocators.
-	Allocator<Page<VAL, SGMT_SIZE>>::threadInit(threadNum);
-	Allocator<Page<size_t, 1>>::threadInit(threadNum);
-	Allocator<RWOperation>::threadInit(threadNum);
-	Allocator<RWSet>::threadInit(threadNum);
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::threadInit(threadNum);
+	threadAllocatorInit(threadNum);
 
 	// A list of operations for the current thread.
 	Operation *insertOps = new Operation[NUM_TRANSACTIONS];
@@ -208,7 +198,8 @@ void predicatePreinsert(int threadNum)
 		// All operations are pushes.
 		insertOps[j].type = Operation::OpType::pushBack;
 		// Push random values into the vector.
-		insertOps[j].val = numPool->getNum(threadNum) % INT32_MAX;
+		// TODO: This assumes UNSET is always the max value.
+		insertOps[j].val = numPool->getNum(threadNum) % UNSET;
 	}
 	// Create a transaction containing the these operations.
 	Desc *insertDesc = new Desc(NUM_TRANSACTIONS, insertOps);
@@ -220,11 +211,7 @@ void predicatePreinsert(int threadNum)
 void predicateFind(int threadNum)
 {
 	// Initialize the allocators.
-	Allocator<Page<VAL, SGMT_SIZE>>::threadInit(threadNum);
-	Allocator<Page<size_t, 1>>::threadInit(threadNum);
-	Allocator<RWOperation>::threadInit(threadNum);
-	Allocator<RWSet>::threadInit(threadNum);
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::threadInit(threadNum);
+	threadAllocatorInit(threadNum);
 
 	// Get the transaction associated with the thread.
 	Desc *desc = transactions[threadNum][0];
@@ -301,7 +288,97 @@ void predicateSearch()
 	std::cout << "" << THREAD_COUNT << " threads and " << NUM_TRANSACTIONS << " locations per thread" << std::endl;
 	std::cout << total.count() << " milliseconds" << std::endl;
 
-	printf("Total: %lu matched out of %lu\n", totalMatches.load(), THREAD_COUNT * NUM_TRANSACTIONS);
+	printf("Total: %lu matched out of %lu\n", totalMatches.load(), (size_t)THREAD_COUNT * NUM_TRANSACTIONS);
+}
+
+// Perform several random operations.
+void randomRun()
+{
+	// Create our threads.
+	std::thread threads[THREAD_COUNT];
+
+	// Pre-insertion step.
+	printf("Preinserting.\n");
+	threadRunner(threads, predicatePreinsert);
+
+	// Generate all of the random transactions.
+	printf("Generating transactions.\n");
+	threadRunner(threads, randThreadInit);
+
+	printf("Done!\n");
+
+	// Get the current time.
+	auto start = std::chrono::system_clock::now();
+
+	threadRunner(threads, randThread);
+
+	// Get total execution time.
+	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
+
+	std::cout << NUM_TRANSACTIONS << " operations per thread with "
+			  << THREAD_COUNT << " threads and "
+			  << TRANSACTION_SIZE << " operations per transaction"
+			  << std::endl;
+	std::cout << total.count() << " milliseconds" << std::endl;
+}
+
+void allocatorInit()
+{
+	printf("Initializing the memory allocators.\n");
+	printf("Operation* allocator.\n");
+	MemAllocator<Operation *>::init();
+	// NOTE: Other MemAllocators are implicitly initialized.
+	// Would be better to initialize them in advance for performance.
+	// It's not a big deal if we pre-fill the vector first.
+	printf("Finished initializing the memory allocators.\n\n");
+
+#ifdef SEGMENTVEC
+	// Preallocate the pages.
+	printf("sizeof(Page<VAL, SGMT_SIZE>)=%lu\n", sizeof(Page<VAL, SGMT_SIZE>));
+	Allocator<Page<VAL, SGMT_SIZE>>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
+	// Preallocate the size pages.
+	printf("sizeof(Page<VAL, SGMT_SIZE>)=%lu\n", sizeof(Page<size_t, 1>));
+	Allocator<Page<size_t, 1>>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
+	// Preallocate page maps.
+	printf("sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>)=%lu\n", sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>));
+	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
+#endif
+#ifdef COMPACTVEC
+	// Preallocate compact elements.
+	printf("sizeof(CompactElement)=%lu\n", sizeof(CompactElement));
+	Allocator<CompactElement>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
+#endif
+#ifdef COMPACTVEC
+	// Preallocate the RWOperation elements.
+	printf("sizeof(RWOperation)=%lu\n", sizeof(RWOperation));
+	Allocator<RWOperation>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT * THREAD_COUNT);
+#elif defined(SEGMENTVEC)
+	Allocator<RWOperation>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
+#endif
+#if defined(SEGMENTVEC) || defined(COMPACTVEC)
+	// Preallocate the RWSet elements.
+	printf("sizeof(RWSet)=%lu\n", sizeof(RWSet));
+	Allocator<RWSet>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
+#endif
+	return;
+}
+
+void allocatorReport()
+{
+	// Report memory allocator usage.
+	MemAllocator<Operation *>::report();
+
+// Report object allocator usage.
+#ifdef SEGMENTVEC
+	Allocator<Page<VAL, SGMT_SIZE>>::report();
+	Allocator<Page<size_t, 1>>::report();
+	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::report();
+#endif
+#if defined(SEGMENTVEC) || defined(COMPACTVEC)
+	Allocator<RWOperation>::report();
+	Allocator<RWSet>::report();
+#endif
+	return;
 }
 
 int main(int argc, char *argv[])
@@ -334,29 +411,8 @@ int main(int argc, char *argv[])
 	}
 	*/
 
-	printf("Initializing the memory allocators.\n");
-	printf("Operation* allocator.\n");
-	MemAllocator<Operation *>::init();
-	// NOTE: Other MemAllocators are implicitly initialized.
-	// Would be better to initialize them in advance for performance.
-	// It's not a big deal if we pre-fill the vector first.
-	printf("Finished initializing the memory allocators.\n\n");
-
-	// Preallocate the pages.
-	printf("sizeof(Page<VAL, SGMT_SIZE>)=%lu\n", sizeof(Page<VAL, SGMT_SIZE>));
-	Allocator<Page<VAL, SGMT_SIZE>>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
-	// Preallocate the RWOperation elements.
-	printf("sizeof(RWOperation)=%lu\n", sizeof(RWOperation));
-	Allocator<RWOperation>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
-	// Preallocate the size pages.
-	printf("sizeof(Page<VAL, SGMT_SIZE>)=%lu\n", sizeof(Page<size_t, 1>));
-	Allocator<Page<size_t, 1>>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
-	// Preallocate the RWSet elements.
-	printf("sizeof(RWSet)=%lu\n", sizeof(RWSet));
-	Allocator<RWSet>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
-	// Preallocate page maps.
-	printf("sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>)=%lu\n", sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>));
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
+	// Pre-fill the allocators.
+	allocatorInit();
 
 	// Preallocate the random number generator.
 	printf("Generating random numbers.\n");
@@ -365,50 +421,31 @@ int main(int argc, char *argv[])
 	// Reserve the transaction vector, for minor performance gains.
 	transactions.reserve(THREAD_COUNT);
 
+#ifdef SEGMENTVEC
 	transVector = new TransactionalVector();
-	//transVector = new CompactVector();
-	//transVector = new CoarseTransVector();
-	//transVector = new GCCSTMVector();
+#endif
+#ifdef COMPACTVEC
+	transVector = new CompactVector();
+#endif
+#ifdef COARSEVEC
+	transVector = new CoarseTransVector();
+#endif
+#ifdef STMVEC
+	transVector = new GCCSTMVector();
+#endif
 
-	//predicateSearch();
-	//return 0;
+#ifdef PREDICATE_SEARCH
+	predicateSearch();
+#endif
+#ifdef RANDOM_RUN
+	randomRun();
+#endif
 
-	// Create our threads.
-	std::thread threads[THREAD_COUNT];
-
-	// Pre-insertion step.
-	printf("Preinserting.\n");
-	threadRunner(threads, predicatePreinsert);
-
-	// Generate all of the random transactions.
-	printf("Generating transactions.\n");
-	threadRunner(threads, randThreadInit);
-
-	printf("Done!\n");
-
-	// Get the current time.
-	auto start = std::chrono::system_clock::now();
-
-	threadRunner(threads, randThread);
-
-	// Get total execution time.
-	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
-
-	// Report memory allocator usage.
-	MemAllocator<Operation *>::report();
-
-	// Report object allocator usage.
-	Allocator<Page<VAL, SGMT_SIZE>>::report();
-	Allocator<RWOperation>::report();
-	Allocator<Page<size_t, 1>>::report();
-	Allocator<RWSet>::report();
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::report();
+	// Report allocator usage.
+	allocatorReport();
 
 	// Print the final state of the vector.
 	//transVector->printContents();
-
-	std::cout << NUM_TRANSACTIONS << " operations per thread with " << THREAD_COUNT << " threads and " << TRANSACTION_SIZE << " operations per transaction" << std::endl;
-	std::cout << total.count() << " milliseconds" << std::endl;
 
 	return 0;
 }

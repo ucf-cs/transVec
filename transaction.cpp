@@ -8,8 +8,10 @@ Desc::Desc(unsigned int size, Operation *ops)
 	status.store(active);
 	// Returned values are never safe to access until they have been explicitly set.
 	returnedValues.store(false);
+#ifdef SEGMENTVEC
 	// The page map always starts out empty.
 	pages.store(NULL);
+#endif
 	// The RWSet always starts out empty.
 	set.store(NULL);
 	return;

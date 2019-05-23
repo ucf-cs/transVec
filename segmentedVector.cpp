@@ -54,11 +54,14 @@ bool SegmentedVector<T>::allocBucket(size_t bucket)
 	size_t bucketSize = 1 << (highestBit(firstBucketSize) * (bucket + 1));
 	// Allocate the new segment.
 	std::atomic<T> *mem = new std::atomic<T>[bucketSize]();
+	// Only do this if T is a pointer type.
+	#ifdef SEGMENTVEC
 	// Ensure the segment is initialized to NULL.
 	for (size_t i = 0; i < bucketSize; i++)
 	{
 		mem[i].store(NULL);
 	}
+	#endif
 	// We need to initialize the NULL pointer if we want to CAS.
 	std::atomic<T> *null = NULL;
 	// Attempt to place the segment in shared memory.
@@ -109,35 +112,6 @@ SegmentedVector<T>::SegmentedVector(size_t capacity)
 	firstBucketSize = 1 << (highestBit(capacity) + 1);
 	SegmentedVector();
 	return;
-}
-
-template <typename T>
-SegmentedVector<T>::~SegmentedVector()
-{
-	// Deallocate every bucket.
-	for (size_t i = 0; i < buckets; i++)
-	{
-		// Determine the number of elements in this bucket.
-		size_t bucketSize = 1 << (highestBit(firstBucketSize) * (i + 1));
-		// Determine whether or not this bucket is initialized.
-		std::atomic<T> *bucket = bucketArray[i].load();
-		if (bucket != NULL)
-		{
-			// Deallocate every element in the bucket.
-			for (size_t j = 0; j < bucketSize; j++)
-			{
-				T element = bucket[j].load();
-				if (std::is_pointer<T>::value && element != NULL)
-				{
-					// NOTE: Element should have its own deconstructor, if needed.
-					delete element;
-				}
-			}
-			delete[] bucket;
-		}
-	}
-	// Deallocate the first level of the array itself.
-	delete[] bucketArray;
 }
 
 template <typename T>
@@ -246,11 +220,21 @@ void SegmentedVector<T>::printBuckets()
 		size_t bucketSize = 1 << (highestBit(firstBucketSize) * (i + 1));
 		for (size_t j = 0; j < bucketSize; j++)
 		{
+			#ifdef SEGMENTVEC
 			printf("%p\n", bucketArray[i].load()[j].load());
+			#endif
+			#ifdef COMPACTVEC
+			bucketArray[i].load()[j].load().print();
+			#endif
 		}
 	}
 	printf("\n");
 	return;
 }
 
+#ifdef SEGMENTVEC
 template class SegmentedVector<Page<VAL, SGMT_SIZE> *>;
+#endif
+#ifdef COMPACTVEC
+template class SegmentedVector<CompactElement>;
+#endif

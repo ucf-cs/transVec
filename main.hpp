@@ -6,15 +6,29 @@
 #include <iostream>
 #include <thread>
 
+#include "define.hpp"
 #include "randomPool.hpp"
-#include "transVector.hpp"
-#include "vector.hpp"
+#include "transaction.hpp"
 
+#ifdef SEGMENTVEC
+#include "transVector.hpp"
 TransactionalVector *transVector;
-// TODO: Make the compact vector functional.
-//CompactVector *transVector;
-//CoarseTransVector *transVector;
-//GCCSTMVector *transVector;
+#endif
+
+#ifdef STMVEC
+#include "vector.hpp"
+GCCSTMVector *transVector;
+#endif
+
+#ifdef COARSEVEC
+#include "vector.hpp"
+CoarseTransVector *transVector;
+#endif
+
+#ifdef COMPACTVEC
+#include "compactVector.hpp"
+CompactVector *transVector;
+#endif
 
 std::vector<std::vector<Desc *>> transactions;
 

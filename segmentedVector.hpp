@@ -50,8 +50,6 @@ class SegmentedVector
   public:
 	SegmentedVector();
 	SegmentedVector(size_t capacity);
-	// Should only be performed by a single thread once all other threads are done with the vector.
-	~SegmentedVector();
 	// Initializes array segments as needed to meet capacity demands.
 	// Must be safe to execute in a lock-free manner.
 	// Pass in the highest index required for the operation and everything else will be properly allocated.

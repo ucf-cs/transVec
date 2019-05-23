@@ -14,9 +14,10 @@
 #include "segmentedVector.hpp"
 #include "transaction.hpp"
 
+#ifdef SEGMENTVEC
+
 class RWOperation;
 class RWSet;
-
 template <class T, size_t S>
 class Page;
 template <typename T>
@@ -72,6 +73,8 @@ constexpr std::reverse_iterator<Iter> make_reverse_iterator(Iter i)
 {
 	return std::reverse_iterator<Iter>(i);
 }
+#endif
+
 #endif
 
 #endif

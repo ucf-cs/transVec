@@ -9,7 +9,7 @@
 
 class Vector
 {
-  private:
+private:
     size_t size = 0;
     size_t capacity = 0;
     VAL *array = NULL;
@@ -40,7 +40,7 @@ class Vector
         return onePos;
     }
 
-  public:
+public:
     Vector(size_t capacity = 1)
     {
         reserve(capacity);
@@ -50,7 +50,7 @@ class Vector
     {
         if (size + 1 > capacity)
         {
-            if (!reserve(size + 1, true))
+            if (!reserve(size + 1))
             {
                 return false;
             }
@@ -89,31 +89,45 @@ class Vector
     {
         return size;
     }
-    bool reserve(size_t size, bool lock = true)
+    bool reserve(size_t capacity)
     {
-        size_t reserveSize = 1 << (highestBit(size) + 1);
-        VAL *newArray = (VAL *)malloc(reserveSize * sizeof(VAL));
+        // No need to do anything if our capacity is already sufficient.
+        if (capacity <= this->capacity)
+        {
+            return true;
+        }
+        // Compute the smallest power of 2 >= to the requested capacity.
+        size_t reserveCapacity = 1 << (highestBit(capacity) + 1);
+        // Allocate an array with a sufficient capacity.
+        VAL *newArray = (VAL *)malloc(reserveCapacity * sizeof(VAL));
+        // If we failed to allocate, then this reserve call fails.
         if (newArray == NULL)
         {
             return false;
         }
+        // If an old array had been allocated.
         if (array != NULL)
         {
+            // Copy over the relevant old values.
             for (size_t i = 0; i < size; i++)
             {
-                newArray[i] = array[i];
+                VAL tmp = array[i];
+                newArray[i] = tmp;
             }
+            // Free the old array. Otherwise, we have a memory leak.
             free(array);
         }
+        // Replace the old array.
         array = newArray;
-        capacity = reserveSize;
+        // Update our new capacity.
+        this->capacity = reserveCapacity;
         return true;
     }
     void printContents()
     {
         for (size_t i = 0; i < size; i++)
         {
-            std::cout<<array[size]<<std::endl;
+            std::cout << array[size] << std::endl;
         }
         return;
     }
@@ -121,11 +135,11 @@ class Vector
 
 class CoarseTransVector
 {
-  private:
+private:
     Vector vector;
     std::mutex mtx;
 
-  public:
+public:
     void executeTransaction(Desc *desc)
     {
         bool ret = true;
@@ -186,10 +200,10 @@ class CoarseTransVector
 
 class GCCSTMVector
 {
-  private:
+private:
     Vector vector;
 
-  public:
+public:
     void executeTransaction(Desc *desc)
     {
         bool ret = true;
