@@ -381,35 +381,10 @@ void allocatorReport()
 	return;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	// Seed the random number generator.
 	srand(time(NULL));
-
-	/*
-	// TODO: This doesn't work.
-	// Pull optional command-line arguments.
-	for (int i = 1; i < argc; i++)
-	{
-		switch (i)
-		{
-		case 1: // NUM_TRANSACTIONS
-			sscanf(argv[i], "%zu", &NUM_TRANSACTIONS);
-				//NUM_TRANSACTIONS = atoi(argv[i]);
-			break;
-		case 2: // TRANSACTION_SIZE
-			sscanf(argv[i], "%zu", &TRANSACTION_SIZE);
-			//TRANSACTION_SIZE = atoi(argv[i]);
-			break;
-		case 3: // THREAD_COUNT
-			sscanf(argv[i], "%zu", &THREAD_COUNT);
-			//THREAD_COUNT = atoi(argv[i]);
-			break;
-		default:
-			break;
-		}
-	}
-	*/
 
 	// Pre-fill the allocators.
 	allocatorInit();
