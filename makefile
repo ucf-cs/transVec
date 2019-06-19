@@ -28,7 +28,7 @@ $(EXEC): $(OBJECTS)
 
 # To obtain object files
 %.o: %.cpp
-	$(CC) -c $(CC_FLAGS) $(subst |, -D ,$(DEFINES)) -flto $< -o $@ 
+	@$(CC) -c $(CC_FLAGS) $(subst |, -D ,$(DEFINES)) -flto $< -o $@ 
 
 # To remove generated files
 clean:

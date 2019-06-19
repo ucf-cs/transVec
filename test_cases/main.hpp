@@ -9,6 +9,7 @@
 #include "../define.hpp"
 #include "../randomPool.hpp"
 #include "../transaction.hpp"
+#include "../allocator.hpp"
 
 #ifdef SEGMENTVEC
 #include "../transVector.hpp"
@@ -30,12 +31,12 @@ CoarseTransVector *transVector;
 CompactVector *transVector;
 #endif
 
-std::vector<std::vector<Desc *>> transactions;
+std::vector<Desc *> transactions;
 
 std::atomic<size_t> totalMatches;
 
 RandomNumberPool *numPool;
 
-int main(void);
+std::atomic<int> counter;
 
 #endif

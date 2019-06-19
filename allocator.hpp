@@ -139,4 +139,10 @@ std::vector<std::vector<DataType *> *> Allocator<DataType>::pool;
 template <typename DataType>
 std::atomic<size_t> Allocator<DataType>::count(0);
 
+void threadAllocatorInit(int threadNum);
+
+void allocatorInit();
+
+void allocatorReport();
+
 #endif
