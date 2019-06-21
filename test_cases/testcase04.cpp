@@ -86,7 +86,7 @@ void predicateFind(int threadNum)
 }
 
 // Insert random elements into the vector and count the number of elements that satisfy the predicate.
-void predicateSearch()
+void randomReads()
 {
 	// Ensure we start with no matches.
 	totalMatches.store(0);
@@ -165,7 +165,7 @@ int main(void)
 	transVector = new GCCSTMVector();
 #endif
 
-	predicateSearch();
+	randomReads();
 
 	// Report allocator usage.
 	allocatorReport();

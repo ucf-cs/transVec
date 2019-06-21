@@ -96,14 +96,14 @@ MODEL=$(echo "$MODEL" | sed -r 's/\s\s\s\s\s\s\s\s\s//g')
 touch reports/$REPORT_NAME
 
 # Output a bunch of housekeeping information
-echo "=====================================================" >> reports/$REPORT_NAME
-echo "  T R A N S A C T I O N A L   V E C T O R   T E S T  " >> reports/$REPORT_NAME
-echo "=====================================================" >> reports/$REPORT_NAME
-echo                                                         >> reports/$REPORT_NAME
-echo "Test preformed on $DATE."                              >> reports/$REPORT_NAME
-echo "Tested on a computer with $NUM_CORES cores."           >> reports/$REPORT_NAME
-echo "$MODEL"                                                >> reports/$REPORT_NAME
-echo                                                         >> reports/$REPORT_NAME
+echo "====================================================="         >> reports/$REPORT_NAME
+echo "  T R A N S A C T I O N A L   V E C T O R   T E S T  "         >> reports/$REPORT_NAME
+echo "====================================================="         >> reports/$REPORT_NAME
+echo                                                                 >> reports/$REPORT_NAME
+echo "Test preformed on $DATE."                                      >> reports/$REPORT_NAME
+echo "Tested on a computer with $NUM_CORES cores."                   >> reports/$REPORT_NAME
+echo "$MODEL"                                                        >> reports/$REPORT_NAME
+echo                                                                 >> reports/$REPORT_NAME
 
 # Replace spaces with '|' to be able to pass it as one variable, we'll then put
 # back the spaces in the makefile
@@ -119,8 +119,8 @@ do
     for (( j=1; k<=5; k++))
     do
         echo "=====================================================" >> reports/$REPORT_NAME
-        echo "Currently testing for $i for THREAD_COUNT and $j for " >> reports/$REPORT_NAME
-        echo "NUM_TRANSACTIONS."                                     >> reports/$REPORT_NAME
+        echo "Currently testing for THREAD_COUNT = $i and          " >> reports/$REPORT_NAME
+        echo "NUM_TRANSACTIONS = $j."                                >> reports/$REPORT_NAME
         echo "=====================================================" >> reports/$REPORT_NAME
 
         # For loop to go through the test cases
@@ -138,11 +138,13 @@ do
             echo
             echo "-- Running the testcase."
             echo 
-            
-            ./transVec.out
+            ./transVec.out                                           >> reports/$REPORT_NAME
 
             # remove the old main to make space for the new main
-            echo 
+            echo                                                     >> reports/$REPORT_NAME
+            echo -e "~~ END OF TESTCASE #$k ~~"                      >> reports/$REPORT_NAME
+            echo
+            echo -e "\e[33m~~ END OF TESTCASE #$k ~~\e[0m"
             echo "-- Cleaning up old object files to prepare for the next testcase."
             make clean
             echo

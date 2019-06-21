@@ -1,0 +1,77 @@
+=====================================================
+  T R A N S A C T I O N A L   V E C T O R   T E S T  
+=====================================================
+
+Test preformed on Wed Jun 19 14:08:50 DST 2019.
+Tested on a computer with 4 cores.
+Processor Model name: Intel(R) Core(TM) i5-7300HQ CPU @ 2.50GHz
+
+=====================================================
+Currently testing for THREAD_COUNT = 1 and          
+NUM_TRANSACTIONS = 1.
+=====================================================
+~~ RUNNING TESTCASE #1 ~~
+
+Initializing the memory allocators.
+Operation* allocator.
+Finished initializing the memory allocators.
+
+sizeof(Page<VAL, SGMT_SIZE>)=104
+sizeof(Page<VAL, SGMT_SIZE>)=56
+sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>)=48
+Allocating an uninitialized object of type St13_Rb_tree_nodeISt4pairIKmP4PageIsLm16EEEE. Will use default pool size or use malloc as a fallback.
+sizeof(RWSet)=80
+Allocating an uninitialized object of type NSt8__detail10_Hash_nodeISt4pairIKmSt5arrayIP11RWO
+~~ END OF TESTCASE #1 ~~
+~~ RUNNING TESTCASE #2 ~~
+
+Initializing the memory allocators.
+Operation* allocator.
+Finished initializing the memory allocators.
+
+sizeof(Page<VAL, SGMT_SIZE>)=104
+sizeof(Page<VAL, SGMT_SIZE>)=56
+sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>)=48
+Allocating an uninitialized object of type St13_Rb_tree_nodeISt4pairIKmP4PageIsLm16EEEE. Will use default pool size or use malloc as a fallback.
+sizeof(RWSet)=80
+Allocating an uninitialized object of type NSt8__detail10_Hash_nodeISt4pairIKmSt5arrayIP11RWO
+~~ END OF TESTCASE #2 ~~
+~~ RUNNING TESTCASE #3 ~~
+
+Initializing the memory allocators.
+Operation* allocator.
+Finished initializing the memory allocators.
+
+sizeof(Page<VAL, SGMT_SIZE>)=104
+sizeof(Page<VAL, SGMT_SIZE>)=56
+sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>)=48
+Allocating an uninitialized object of type St13_Rb_tree_nodeISt4pairIKmP4PageIsLm16EEEE. Will use default pool size or use malloc as a fallback.
+sizeof(RWSet)=80
+Allocating an uninitialized object of type NSt8__detail10_Hash_nodeISt4pairIKmSt5arrayIP11RWO
+~~ END OF TESTCASE #3 ~~
+~~ RUNNING TESTCASE #4 ~~
+
+Initializing the memory allocators.
+Operation* allocator.
+Finished initializing the memory allocators.
+
+sizeof(Page<VAL, SGMT_SIZE>)=104
+sizeof(Page<VAL, SGMT_SIZE>)=56
+sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>)=48
+Allocating an uninitialized object of type St13_Rb_tree_nodeISt4pairIKmP4PageIsLm16EEEE. Will use default pool size or use malloc as a fallback.
+sizeof(RWSet)=80
+Allocating an uninitialized object of type NSt8__detail10_Hash_nodeISt4pairIKmSt5arrayIP11RWO
+~~ END OF TESTCASE #4 ~~
+~~ RUNNING TESTCASE #5 ~~
+
+Initializing the memory allocators.
+Operation* allocator.
+Finished initializing the memory allocators.
+
+sizeof(Page<VAL, SGMT_SIZE>)=104
+sizeof(Page<VAL, SGMT_SIZE>)=56
+sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>)=48
+Allocating an uninitialized object of type St13_Rb_tree_nodeISt4pairIKmP4PageIsLm16EEEE. Will use default pool size or use malloc as a fallback.
+sizeof(RWSet)=80
+Allocating an uninitialized object of type NSt8__detail10_Hash_nodeISt4pairIKmSt5arrayIP11RWO
+~~ END OF TESTCASE #5 ~~

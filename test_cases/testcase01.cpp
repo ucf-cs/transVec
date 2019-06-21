@@ -4,7 +4,6 @@
 
 #include "main.hpp"
 
-
 void threadRunner(std::thread *threads, void function(int threadNum))
 {
 	// Start our threads.
