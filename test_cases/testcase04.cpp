@@ -1,4 +1,4 @@
-// FIRST TESTCASE - RANDOM READS (predicateFind)
+// FOURTH TESTCASE - RANDOM READS (predicateFind)
 // This test case inserts a bunch of random elements and then reads then reads the entire
 // vector and counts for even numbers.
 
@@ -110,8 +110,8 @@ void randomReads()
 			for (size_t k = 0; k < TRANSACTION_SIZE; k++)
 			{
 				// Read all elements, split among threads.
-				ops[j].type = Operation::OpType::read;
-				ops[j].index = rand() % NUM_TRANSACTIONS;
+				ops[k].type = Operation::OpType::read;
+				ops[k].index = rand() % NUM_TRANSACTIONS;
 			}
 
 			Desc *desc = new Desc(TRANSACTION_SIZE, ops);

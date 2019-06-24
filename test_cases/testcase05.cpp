@@ -60,6 +60,7 @@ void writeThread(int threadNum)
 		// Execute the transaction.
 		transVector->executeTransaction(transactions.at(temp));
 		temp = counter++;
+		printf("%d\n", temp);
 	}
 }
 
@@ -85,9 +86,9 @@ void writeTest()
 			for (size_t k = 0; k < TRANSACTION_SIZE; k++)
 			{
 				// All operations are writes.
-				ops[j].type  = Operation::OpType::write;
-				ops[j].val   = 0;
-				ops[j].index = rand() % NUM_TRANSACTIONS;
+				ops[k].type  = Operation::OpType::write;
+				ops[k].val   = 0;
+				ops[k].index = rand() % NUM_TRANSACTIONS;
 			}
 
 			Desc *desc = new Desc(NUM_TRANSACTIONS, ops);

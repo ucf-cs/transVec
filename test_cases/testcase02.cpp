@@ -85,9 +85,9 @@ void writeTest()
 			for (size_t k = 0; k < TRANSACTION_SIZE; k++)
 			{
 				// All operations are writes.
-				ops[j].type  = Operation::OpType::write;
-				ops[j].val   = 0;
-				ops[j].index = i * NUM_TRANSACTIONS + j + k;
+				ops[k].type  = Operation::OpType::write;
+				ops[k].val   = 0;
+				ops[k].index = i * NUM_TRANSACTIONS + j + k;
 			}
 		
 			// Insert the newly created ops array into a descriptor

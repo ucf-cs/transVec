@@ -72,7 +72,7 @@ void randomTransactions()
 	// Prepare read transactions for each thread.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
 	{
-		for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
+		for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 		{
 			// The transaction size is between 1 and TRANSACTION_SIZE, chosen at random.
 			size_t txnSize = (rand() % TRANSACTION_SIZE) + 1;
@@ -81,11 +81,11 @@ void randomTransactions()
 			Operation *ops = new Operation[txnSize];
 
 			// For each operation.
-			for (size_t j = 0; j < txnSize; j++)
+			for (size_t k = 0; k < txnSize; k++)
 			{
-				ops[j].type = Operation::OpType(rand() % 6);
-				ops[j].index = rand() % 1000;
-				ops[j].val = rand() % 1000;
+				ops[k].type = Operation::OpType(rand() % 6);
+				ops[k].index = rand() % 1000;
+				ops[k].val = rand() % 1000;
 			}
 
 			// Create a transaction containing the these operations.
