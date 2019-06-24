@@ -15,6 +15,7 @@ NUM_TEST_CASES=5
 NUM_PARAMETERS=$(grep "// #define" define.hpp | wc -l)
 PARAMETERS=$(grep "// #define" define.hpp)
 PARAMETERS=$(echo "$PARAMETERS" | sed -r 's/[a-z0-9/#\s]*//g')
+MAIN=testcase01.cpp
 
 # Store tokens in an array
 for word in $PARAMETERS
@@ -112,50 +113,56 @@ then
     TO_BE_PASSED="|$(echo "$@" | sed -r 's/\s/|/g')"
 fi
 
-# Test for THREAD_COUNT up to NUM_CORES*2
-for (( i=1; i<=$NUM_CORES*2; i++ ))
-do
-    # Test for TRANSACTION_SIZE from 1 - 5
-    for (( j=1; k<=5; k++))
+# If we want to test for one specific case instead of all testcases
+if [ -z "$MAIN" ]
+then
+    # Test for THREAD_COUNT up to NUM_CORES*2
+    for (( i=1; i<=$NUM_CORES*2; i++ ))
     do
-        echo "=====================================================" >> reports/$REPORT_NAME
-        echo "Currently testing for THREAD_COUNT = $i and          " >> reports/$REPORT_NAME
-        echo "NUM_TRANSACTIONS = $j."                                >> reports/$REPORT_NAME
-        echo "=====================================================" >> reports/$REPORT_NAME
-
-        # For loop to go through the test cases
-        for (( k=1; k<=$NUM_TEST_CASES; k++ ))
+        # Test for TRANSACTION_SIZE from 1 - 5
+        for (( j=1; j<=5; j++))
         do
-            echo -e "~~ RUNNING TESTCASE #$k ~~"                     >> reports/$REPORT_NAME
-            echo                                                     >> reports/$REPORT_NAME
-            echo -e "\e[33m~~ RUNNING TESTCASE #$k ~~\e[0m"
-            echo "-- Building executable file."
-            echo 
+            echo "=====================================================" >> reports/$REPORT_NAME
+            echo "Currently testing for THREAD_COUNT = $i and          " >> reports/$REPORT_NAME
+            echo "NUM_TRANSACTIONS = $j."                                >> reports/$REPORT_NAME
+            echo "=====================================================" >> reports/$REPORT_NAME
 
-            # Make the executable file with a different main file everytime
-            make MAIN=test_cases/testcase0$k.cpp DEFINES=$TO_BE_PASSED -j8
+            # For loop to go through the test cases
+            for (( k=1; k<=$NUM_TEST_CASES; k++ ))
+            do
+                echo -e "~~ RUNNING TESTCASE #$k ~~"                     >> reports/$REPORT_NAME
+                echo                                                     >> reports/$REPORT_NAME
+                echo -e "\e[33m~~ RUNNING TESTCASE #$k ~~\e[0m"
+                echo "-- Building executable file."
+                echo 
 
-            echo
-            echo "-- Running the testcase."
-            echo 
-            ./transVec.out                                           >> reports/$REPORT_NAME
+                # Make the executable file with a different main file everytime
+                make MAIN=test_cases/testcase0$k.cpp DEFINES=$TO_BE_PASSED -j8
 
-            # remove the old main to make space for the new main
-            echo                                                     >> reports/$REPORT_NAME
-            echo -e "~~ END OF TESTCASE #$k ~~"                      >> reports/$REPORT_NAME
-            echo
-            echo -e "\e[33m~~ END OF TESTCASE #$k ~~\e[0m"
-            echo "-- Cleaning up old object files to prepare for the next testcase."
-            make clean
-            echo
+                echo
+                echo "-- Running the testcase."
+                echo 
+                ./transVec.out                                           >> reports/$REPORT_NAME
+
+                # remove the old main to make space for the new main
+                echo                                                     >> reports/$REPORT_NAME
+                echo -e "~~ END OF TESTCASE #$k ~~"                      >> reports/$REPORT_NAME
+                echo
+                echo -e "\e[33m~~ END OF TESTCASE #$k ~~\e[0m"
+                echo "-- Cleaning up old object files to prepare for the next testcase."
+                make clean
+                echo
+            done
         done
     done
-done
+else
+    make MAIN=test_cases/$MAIN DEFINES=$TO_BE_PASSED -j8
+fi
 
 # Clean up after yo self
-echo 
-echo "===================================="
-echo "Cleaning up the mess that we made..."
-echo "===================================="
-make clean
-echo 
+# echo 
+# echo "===================================="
+# echo "Cleaning up the mess that we made..."
+# echo "===================================="
+# make clean
+# echo 

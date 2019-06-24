@@ -166,7 +166,7 @@ int main(void)
 	predicateSearch();
 
 	// Report allocator usage.
-	allocatorReport();
+	// allocatorReport();
 
 	return 0;
 }

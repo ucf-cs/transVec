@@ -1,0 +1,18 @@
+=====================================================
+  T R A N S A C T I O N A L   V E C T O R   T E S T  
+=====================================================
+
+Test preformed on Mon Jun 24 13:00:35 DST 2019.
+Tested on a computer with 4 cores.
+Processor Model name: Intel(R) Core(TM) i5-7300HQ CPU @ 2.50GHz
+
+=====================================================
+Currently testing for THREAD_COUNT = 1 and          
+NUM_TRANSACTIONS = 1.
+=====================================================
+~~ RUNNING TESTCASE #1 ~~
+
+
+~~ END OF TESTCASE #1 ~~
+~~ RUNNING TESTCASE #2 ~~
+
