@@ -45,8 +45,6 @@ void createTransactions()
 
 	std::cout << "" << THREAD_COUNT << " threads and " << NUM_TRANSACTIONS << " locations per thread" << std::endl;
 	std::cout << total.count() << " milliseconds" << std::endl;
-
-	printf("Total: %lu matched out of %lu\n", totalMatches.load(), (size_t)THREAD_COUNT * NUM_TRANSACTIONS);
 }
 
 

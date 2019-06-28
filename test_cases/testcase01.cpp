@@ -4,17 +4,16 @@
 
 #include "main.hpp"
 
-// Insert random elements into the vector and count the number of elements that satisfy the predicate.
-void createTransactions()
+// Insert random elements into the vector then preforms a bunch of reads
+void createTransactions(TransactionalVector *transVector,
+						std::vector<Desc *> transactions,
+						RandomNumberPool *numPool)
 {
-	// Ensure we start with no matches.
-	totalMatches.store(0);
-
 	// Create our threads.
 	std::thread threads[THREAD_COUNT];
 
 	// Pre-insertion step.
-	threadRunner(threads, preinsert);
+	threadRunner(threads, preinsert, transVector, transactions, numPool);
 	printf("Completed preinsertion!\n\n");
 
 	// Total number of transactions
@@ -41,7 +40,7 @@ void createTransactions()
 	auto start = std::chrono::system_clock::now();
 
 	// Run the threads.
-	threadRunner(threads, executeTransactions);
+	threadRunner(threads, executeTransactions, transVector, transactions, numPool);
 
 	// Get total execution time.
 	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
@@ -49,7 +48,6 @@ void createTransactions()
 	std::cout << "" << THREAD_COUNT << " threads and " << NUM_TRANSACTIONS << " locations per thread" << std::endl;
 	std::cout << total.count() << " milliseconds" << std::endl;
 
-	printf("Total: %lu matched out of %lu\n", totalMatches.load(), (size_t)THREAD_COUNT * NUM_TRANSACTIONS);
 }
 
 int main(void)
@@ -62,13 +60,15 @@ int main(void)
 
 	// Preallocate the random number generator.
 	printf("Generating random numbers.\n");
+	RandomNumberPool *numPool;
 	numPool = new RandomNumberPool(THREAD_COUNT, NUM_TRANSACTIONS * (2 + 3 * TRANSACTION_SIZE));
 
 	// Reserve the transaction vector, for minor performance gains.
+	std::vector<Desc *> transactions;
 	transactions.reserve(THREAD_COUNT);
 
 #ifdef SEGMENTVEC
-	transVector = new TransactionalVector();
+	TransactionalVector *transVector = new TransactionalVector();
 #endif
 #ifdef COMPACTVEC
 	transVector = new CompactVector();
@@ -80,7 +80,7 @@ int main(void)
 	transVector = new GCCSTMVector();
 #endif
 
-	createTransactions();
+	createTransactions(transVector, transactions, numPool);
 
 	return 0;
 }

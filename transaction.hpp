@@ -16,7 +16,6 @@ The actual vector will pre-process each of these transactions into a simpler rea
 #include "define.hpp"
 #include "deltaPage.hpp"
 #include "memAllocator.hpp"
-#include "test_cases/main.hpp"
 
 template <class T, size_t S>
 class Page;

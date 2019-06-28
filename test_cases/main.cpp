@@ -2,13 +2,21 @@
 
 #include "main.hpp"
 
-// Input: Array of threads that will execute a certain fucntion.
-//        A function pointer to that function.
-void threadRunner(std::thread *threads, void function(int threadNum))
+// Input: 1- Array of threads that will execute a fucntion.
+//        2- A function pointer to that function. The fn ptr takes 4 inputs
+//        The last three inputs are the inputs to the fn ptr.
+void threadRunner(std::thread *threads,
+				  void function(int threadNum,
+						        TransactionalVector *transVector,
+						        std::vector<Desc *> transactions,
+						        RandomNumberPool *numPool),
+				  TransactionalVector *transVector,
+				  std::vector<Desc *> transactions,
+				  RandomNumberPool *numPool)
 {
 	// Start our threads.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
-		threads[i] = std::thread(function, i);
+		threads[i] = std::thread(function, i, transVector, transactions, numPool);
 
 	// Wait for all threads to complete.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
@@ -18,7 +26,10 @@ void threadRunner(std::thread *threads, void function(int threadNum))
 }
 
 // Goes through the vector of transactions and executes them.
-void executeTransactions(int threadNum)
+void executeTransactions(int threadNum,
+						 TransactionalVector *transVector,
+						 std::vector<Desc *> transactions,
+						 RandomNumberPool *numPool)
 {
 	// Initialize the allocators.
 	threadAllocatorInit(threadNum);
@@ -48,7 +59,10 @@ void executeTransactions(int threadNum)
 }
 
 // Preinserts a bunch of objects into the vector
-void preinsert(int threadNum)
+void preinsert(int threadNum,
+			   TransactionalVector *transVector,
+			   std::vector<Desc *> transactions,
+			   RandomNumberPool *numPool)
 {
 	// Initialize the allocators.
 	threadAllocatorInit(threadNum);

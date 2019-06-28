@@ -1,5 +1,5 @@
-#ifndef TRANSVEC_HPP
-#define TRANSVEC_HPP
+#ifndef __MAIN_HEADER__
+#define __MAIN_HEADER__
 
 #include <chrono>
 #include <cstdlib>
@@ -11,39 +11,43 @@
 #include "../transaction.hpp"
 #include "../allocator.hpp"
 
-#ifdef SEGMENTVEC
-#include "../transVector.hpp"
-TransactionalVector *transVector;
-#endif
+// #ifdef SEGMENTVEC
+// #include "../transVector.hpp"
+//     extern TransactionalVector *transVector;
+// #endif
 
-#ifdef STMVEC
-#include "../vector.hpp"
-GCCSTMVector *transVector;
-#endif
+// #ifdef STMVEC
+// #include "../vector.hpp"
+// GCCSTMVector *transVector;
+// #endif
 
-#ifdef COARSEVEC
-#include "../vector.hpp"
-CoarseTransVector *transVector;
-#endif
+// #ifdef COARSEVEC
+// #include "../vector.hpp"
+// CoarseTransVector *transVector;
+// #endif
 
-#ifdef COMPACTVEC
-#include "../compactVector.hpp"
-CompactVector *transVector;
-#endif
+// #ifdef COMPACTVEC
+// #include "../compactVector.hpp"
+// CompactVector *transVector;
+// #endif
 
-void executeTransactions(int threadNum);
+void executeTransactions(int threadNum,
+						 TransactionalVector *transVector,
+						 std::vector<Desc *> transactions,
+						 RandomNumberPool *numPool);
 
-void threadRunner(std::thread *threads, void function(int threadNum));
+void threadRunner(std::thread *threads,
+                  void function(int threadNum,
+						        TransactionalVector *transVector,
+						        std::vector<Desc *> transactions,
+						        RandomNumberPool *numPool),
+				  TransactionalVector *transVector,
+				  std::vector<Desc *> transactions,
+				  RandomNumberPool *numPool);
 
-void preinsert(int threadNum);
-
-std::vector<Desc *> transactions;
-
-std::atomic<size_t> totalMatches;
-
-std::atomic<size_t> aborts;
-
-RandomNumberPool *numPool;
-
+void preinsert(int threadNum,
+			   TransactionalVector *transVector,
+			   std::vector<Desc *> transactions,
+			   RandomNumberPool *numPool);
 
 #endif
