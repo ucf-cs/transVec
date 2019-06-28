@@ -1,106 +1,42 @@
-// FIRST TESTCASE - RANGED WRITES (predicateFind)
+// SECOND TESTCASE - RANGED WRITES (predicateFind)
 // Preallocate a bunch of nodes and then preform a ranged series of writes
 // See transaction.cpp for more detail on "write"
+
 #include "main.hpp"
 
-
-void threadRunner(std::thread *threads, void function(int threadNum))
-{
-	// Start our threads.
-	for (size_t i = 0; i < THREAD_COUNT; i++)
-	{
-		threads[i] = std::thread(function, i);
-	}
-
-	// Wait for all threads to complete.
-	for (size_t i = 0; i < THREAD_COUNT; i++)
-	{
-		threads[i].join();
-	}
-	return;
-}
-
-void predicatePreinsert(int threadNum)
-{
-	// Initialize the allocators.
-	threadAllocatorInit(threadNum);
-
-	// A list of operations for the current thread.
-	Operation *insertOps = new Operation[NUM_TRANSACTIONS];
-	
-	// For each operation.
-	for (size_t j = 0; j < NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT; j++)
-	{
-		// All operations are pushes.
-		insertOps[j].type = Operation::OpType::pushBack;
-		// Push random values into the vector.
-		// TODO: This assumes UNSET is always the max value.
-		insertOps[j].val = numPool->getNum(threadNum) % UNSET;
-	}
-
-	// Create a transaction containing the these operations.
-	Desc *insertDesc = new Desc(NUM_TRANSACTIONS, insertOps);
-
-	// Execute the transaction.
-	transVector->executeTransaction(insertDesc);
-	
-	return;
-}
-
-void writeThread(int threadNum)
-{
-	// Initialize the allocators.
-	threadAllocatorInit(threadNum);
-
-	int temp = counter++;
-
-	// For each transaction.
-	while (temp < (NUM_TRANSACTIONS * THREAD_COUNT))
-	{
-		// Execute the transaction.
-		transVector->executeTransaction(transactions.at(temp));
-		temp = counter++;
-	}
-}
-
-
 // Insert random elements into the vector and count the number of elements that satisfy the predicate.
-void writeTest()
+void createTransactions()
 {
 	// Create our threads.
 	std::thread threads[THREAD_COUNT];
 
 	// Pre-insertion step.
-	threadRunner(threads, predicatePreinsert);
+	threadRunner(threads, preinsert);
 	printf("Completed preinsertion!\n\n");
 
-	// Prepare write transactions for each thread.
-	for (size_t i = 0; i < THREAD_COUNT; i++)
+	// Prepare to read the entire vector.
+	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 	{
-		// Prepare to read the entire vector.
-		for (size_t j = 0; j < NUM_TRANSACTIONS; j += TRANSACTION_SIZE)
-		{
-			Operation *ops = new Operation[TRANSACTION_SIZE];
+		Operation *ops = new Operation[TRANSACTION_SIZE];
 
-			for (size_t k = 0; k < TRANSACTION_SIZE; k++)
-			{
-				// All operations are writes.
-				ops[k].type  = Operation::OpType::write;
-				ops[k].val   = 0;
-				ops[k].index = i * NUM_TRANSACTIONS + j + k;
-			}
-		
-			// Insert the newly created ops array into a descriptor
-			Desc *desc = new Desc(NUM_TRANSACTIONS, ops);
-			transactions.push_back(desc);
+		for (size_t k = 0; k < TRANSACTION_SIZE; k++)
+		{
+			// All operations are writes.
+			ops[k].type  = Operation::OpType::write;
+			ops[k].val   = 0;
+			ops[k].index = (j + k) % NUM_TRANSACTIONS;
 		}
+	
+		// Insert the newly created ops array into a descriptor
+		Desc *desc = new Desc(NUM_TRANSACTIONS, ops);
+		transactions.push_back(desc);
 	}
 
 	// Get the current time.
 	auto start = std::chrono::system_clock::now();
 
 	// Run the threads.
-	threadRunner(threads, writeThread);
+	threadRunner(threads, executeTransactions);
 
 	// Get total execution time.
 	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
@@ -122,9 +58,6 @@ int main(void)
 	// Pre-fill the allocators.
 	allocatorInit();
 
-	// Initialize atomic counter
-	counter = 0;
-
 	// Preallocate the random number generator.
 	printf("Generating random numbers.\n");
 	numPool = new RandomNumberPool(THREAD_COUNT, NUM_TRANSACTIONS * (2 + 3 * TRANSACTION_SIZE));
@@ -145,7 +78,7 @@ int main(void)
 	transVector = new GCCSTMVector();
 #endif
 
-	writeTest();
+	createTransactions();
 
 	// Report allocator usage.
 	allocatorReport();

@@ -52,7 +52,7 @@ void writeThread(int threadNum)
 	// Initialize the allocators.
 	threadAllocatorInit(threadNum);
 
-	int temp = counter++;
+	int temp = counter.fetch_add(1);
 
 	// For each transaction.
 	while (temp < (NUM_TRANSACTIONS * THREAD_COUNT))
@@ -60,7 +60,6 @@ void writeThread(int threadNum)
 		// Execute the transaction.
 		transVector->executeTransaction(transactions.at(temp));
 		temp = counter++;
-		printf("%d\n", temp);
 	}
 }
 

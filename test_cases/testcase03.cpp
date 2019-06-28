@@ -1,106 +1,46 @@
 // THIRD TESTCASE - RANDOM TRANSACTION SIZE WITH RANDOM OPERATIONS
+
 #include "main.hpp"
 
-void threadRunner(std::thread *threads, void function(int threadNum))
-{
-	// Start our threads.
-	for (size_t i = 0; i < THREAD_COUNT; i++)
-		threads[i] = std::thread(function, i);
-
-	// Wait for all threads to complete.
-	for (size_t i = 0; i < THREAD_COUNT; i++)
-		threads[i].join();
-
-	return;
-}
-
-void predicatePreinsert(int threadNum)
-{
-	// Initialize the allocators.
-	threadAllocatorInit(threadNum);
-
-	// A list of operations for the current thread.
-	Operation *insertOps = new Operation[NUM_TRANSACTIONS];
-
-	// For each operation.
-	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
-	{
-		// All operations are pushes.
-		insertOps[j].type = Operation::OpType::pushBack;
-		// Push random values into the vector.
-		// TODO: This assumes UNSET is always the max value.
-		insertOps[j].val = numPool->getNum(threadNum) % UNSET;
-	}
-
-	// Create a transaction containing the these operations.
-	Desc *insertDesc = new Desc(NUM_TRANSACTIONS, insertOps);
-
-	// Execute the transaction.
-	transVector->executeTransaction(insertDesc);
-
-	return;
-}
-
-void randThread(int threadNum)
-{
-	// Initialize the allocators.
-	threadAllocatorInit(threadNum);
-
-	int temp = counter++;
-
-	// For each transaction.
-	while (temp <= (NUM_TRANSACTIONS * THREAD_COUNT))
-	{
-		// Execute the transaction.
-		transVector->executeTransaction(transactions.at(temp));
-		temp = counter++;
-	}
-
-	return;
-}
-
 // Insert random elements into the vector and count the number of elements that satisfy the predicate.
-void randomTransactions()
+void createTransactions()
 {
 	// Create our threads.
 	std::thread threads[THREAD_COUNT];
 
 	// Pre-insertion step.
-	threadRunner(threads, predicatePreinsert);
+	threadRunner(threads, preinsert);
 	printf("Completed preinsertion!\n\n");
 
-	// Prepare read transactions for each thread.
-	for (size_t i = 0; i < THREAD_COUNT; i++)
+	// Create a random transactions of random operations and random size
+	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 	{
-		for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
+		// The transaction size is between 1 and TRANSACTION_SIZE, chosen at random.
+		size_t txnSize = (rand() % TRANSACTION_SIZE) + 1;
+
+		// A list of operations for the current thread.
+		Operation *ops = new Operation[txnSize];
+
+		// For each operation.
+		for (size_t k = 0; k < txnSize; k++)
 		{
-			// The transaction size is between 1 and TRANSACTION_SIZE, chosen at random.
-			size_t txnSize = (rand() % TRANSACTION_SIZE) + 1;
-
-			// A list of operations for the current thread.
-			Operation *ops = new Operation[txnSize];
-
-			// For each operation.
-			for (size_t k = 0; k < txnSize; k++)
-			{
-				ops[k].type = Operation::OpType(rand() % 6);
-				ops[k].index = rand() % 1000;
-				ops[k].val = rand() % 1000;
-			}
-
-			// Create a transaction containing the these operations.
-			Desc *desc = new Desc(txnSize, ops);
-
-			// Add the transaction to the list.
-			transactions.push_back(desc);
+			ops[k].type = Operation::OpType(rand() % 6);
+			ops[k].index = rand() % NUM_TRANSACTIONS;
+			ops[k].val = rand() % 1000;
 		}
+
+		// Create a transaction containing the these operations.
+		Desc *desc = new Desc(txnSize, ops);
+
+		// Add the transaction to the list.
+		transactions.push_back(desc);
 	}
 
 	// Get the current time.
 	auto start = std::chrono::system_clock::now();
 
 	// Run the threads.
-	threadRunner(threads, randThread);
+	threadRunner(threads, executeTransactions);
 
 	// Get total execution time.
 	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
@@ -118,9 +58,6 @@ int main (void)
 
 	// Pre-fill the allocators.
 	allocatorInit();
-
-	// Initialize the atomic counter
-	counter = 0;
 
 	// Preallocate the random number generator.
 	printf("Generating random numbers.\n");
@@ -142,7 +79,7 @@ int main (void)
 	transVector = new GCCSTMVector();
 #endif
 
-	randomTransactions();
+	createTransactions();
 
 	// Report allocator usage.
 	allocatorReport();

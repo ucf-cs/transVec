@@ -31,12 +31,19 @@ CoarseTransVector *transVector;
 CompactVector *transVector;
 #endif
 
+void executeTransactions(int threadNum);
+
+void threadRunner(std::thread *threads, void function(int threadNum));
+
+void preinsert(int threadNum);
+
 std::vector<Desc *> transactions;
 
 std::atomic<size_t> totalMatches;
 
+std::atomic<size_t> aborts;
+
 RandomNumberPool *numPool;
 
-std::atomic<int> counter;
 
 #endif
