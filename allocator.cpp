@@ -21,23 +21,23 @@ void threadAllocatorInit(int threadNum)
 
 void allocatorInit()
 {
-	printf("Initializing the memory allocators.\n");
-	printf("Operation* allocator.\n");
+	// printf("Initializing the memory allocators.\n");
+	// printf("Operation* allocator.\n");
 	MemAllocator<Operation *>::init();
 	// NOTE: Other MemAllocators are implicitly initialized.
 	// Would be better to initialize them in advance for performance.
 	// It's not a big deal if we pre-fill the vector first.
-	printf("Finished initializing the memory allocators.\n\n");
+	// printf("Finished initializing the memory allocators.\n\n");
 
 #ifdef SEGMENTVEC
 	// Preallocate the pages.
-	printf("sizeof(Page<VAL, SGMT_SIZE>)=%lu\n", sizeof(Page<VAL, SGMT_SIZE>));
+	// printf("sizeof(Page<VAL, SGMT_SIZE>)=%lu\n", sizeof(Page<VAL, SGMT_SIZE>));
 	Allocator<Page<VAL, SGMT_SIZE>>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
 	// Preallocate the size pages.
-	printf("sizeof(Page<VAL, SGMT_SIZE>)=%lu\n", sizeof(Page<size_t, 1>));
+	// printf("sizeof(Page<VAL, SGMT_SIZE>)=%lu\n", sizeof(Page<size_t, 1>));
 	Allocator<Page<size_t, 1>>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
 	// Preallocate page maps.
-	printf("sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>)=%lu\n", sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>));
+	// printf("sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>)=%lu\n", sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>));
 	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
 #endif
 #ifdef COMPACTVEC
@@ -54,7 +54,7 @@ void allocatorInit()
 #endif
 #if defined(SEGMENTVEC) || defined(COMPACTVEC)
 	// Preallocate the RWSet elements.
-	printf("sizeof(RWSet)=%lu\n", sizeof(RWSet));
+	// printf("sizeof(RWSet)=%lu\n", sizeof(RWSet));
 	Allocator<RWSet>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
 #endif
 	return;

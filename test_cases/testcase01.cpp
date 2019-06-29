@@ -20,9 +20,9 @@ void createTransactions(TransactionalVector *transVector,
 	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 	{
 		Operation *ops = new Operation[TRANSACTION_SIZE];
-		
+
 		// Each transaction will be of this size and only made of reads
-		for (size_t k = 0; k < NUM_TRANSACTIONS; k++)
+		for (size_t k = 0; k < TRANSACTION_SIZE; k++)
 		{
 			// Read all elements, split among threads.
 			ops[k].type = Operation::OpType::read;
@@ -47,7 +47,6 @@ void createTransactions(TransactionalVector *transVector,
 
 	std::cout << "" << THREAD_COUNT << " threads and " << NUM_TRANSACTIONS << " locations per thread" << std::endl;
 	std::cout << total.count() << " milliseconds" << std::endl;
-
 }
 
 int main(void)
@@ -59,7 +58,6 @@ int main(void)
 	allocatorInit();
 
 	// Preallocate the random number generator.
-	printf("Generating random numbers.\n");
 	RandomNumberPool *numPool;
 	numPool = new RandomNumberPool(THREAD_COUNT, NUM_TRANSACTIONS * (2 + 3 * TRANSACTION_SIZE));
 

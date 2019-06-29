@@ -47,8 +47,8 @@ public:
         }
         else
         {
-            printf("Random number generator ran out of numbers.\n");
-            printf("Generated %lu more numbers\n", count.fetch_add(1));
+            // printf("Random number generator ran out of numbers.\n");
+            // printf("Generated %lu more numbers\n", count.fetch_add(1));
             std::random_device rd;
             std::mt19937_64 e2(rd());
             std::uniform_int_distribution<size_t> dist(0, RANGE);

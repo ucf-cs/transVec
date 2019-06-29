@@ -40,7 +40,7 @@ void executeTransactions(int threadNum,
 
 	for (int i = start; i < end; i++)
 	{
-		Desc *desc = transactions.at(i);		
+		Desc *desc = transactions.at(i);	
 		transVector->executeTransaction(desc);
 
 		if (desc->status.load() != Desc::TxStatus::committed)

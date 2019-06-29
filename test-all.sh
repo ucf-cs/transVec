@@ -7,7 +7,7 @@
 # ADDING YOUR OWN TESTCASES: Just create a file named testcase0X.cpp and place
 # it in the test_cases/ directory. Update the variable below to the new number
 # of testcases
-NUM_TEST_CASES=3
+NUM_TEST_CASES=10
 
 # Before doing anything, make sure if passed in parameters are correct.
 # Make sure all macros are defined, start by extracting the macros from the
