@@ -17,14 +17,14 @@ CC_FLAGS = $(OPTIMAL_FLAGS)
 
 # File names
 EXEC = transVec.out
-MAIN = test_cases/testcase06.cpp
+MAIN = test_cases/testcase03.cpp
 SOURCES = $(wildcard *.cpp) test_cases/main.cpp $(MAIN)
 OBJECTS = $(SOURCES:.cpp=.o)
 DEFINES = 
 
 # Main target
 $(EXEC): $(OBJECTS)
-	$(CC) $(CC_FLAGS) $(OBJECTS) -o $(EXEC)
+	@$(CC) $(CC_FLAGS) $(OBJECTS) -o $(EXEC)
 
 # To obtain object files
 %.o: %.cpp
@@ -32,4 +32,4 @@ $(EXEC): $(OBJECTS)
 
 # To remove generated files
 clean:
-	rm -f $(EXEC) $(OBJECTS) $(wildcard test_cases/*.o)
+	@rm -f $(EXEC) $(OBJECTS) $(wildcard test_cases/*.o)

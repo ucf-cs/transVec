@@ -35,14 +35,14 @@ void executeTransactions(int threadNum,
 	threadAllocatorInit(threadNum);
 
 	// Each thread is allocated an interval to work on
-	double start = NUM_TRANSACTIONS / THREAD_COUNT * threadNum;
-	double end   = NUM_TRANSACTIONS / THREAD_COUNT * (threadNum +1 );
+	int start = NUM_TRANSACTIONS / THREAD_COUNT * threadNum;
+	int end   = NUM_TRANSACTIONS / THREAD_COUNT * (threadNum + 1);
 
 	for (int i = start; i < end; i++)
 	{
 		Desc *desc = transactions.at(i);	
 		transVector->executeTransaction(desc);
-
+		
 		if (desc->status.load() != Desc::TxStatus::committed)
 		{
 			printf("Error on thread %d. Transaction failed.\n", threadNum);

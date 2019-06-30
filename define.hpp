@@ -17,7 +17,7 @@
 // TUNE
 #define SGMT_SIZE 16
 // TUNE
-#define NUM_TRANSACTIONS 1000
+#define NUM_TRANSACTIONS 10000
 // TUNE
 #define TRANSACTION_SIZE 5
 // TUNE
@@ -36,10 +36,12 @@ const int UNSET = INT32_MAX;
 #else
 // Use this typedef to quickly change what type of objects we're working with.
 // TUNE (Compile time only)
-typedef short VAL;
+typedef int VAL;
 // This reserved value indicates that a value cannot be set by a read or write here.
 // Must differ depending on T.
 const VAL UNSET = __SHRT_MAX__;
+
+const VAL MAX_VAL = 0xffffffff;
 #endif
 
 #endif

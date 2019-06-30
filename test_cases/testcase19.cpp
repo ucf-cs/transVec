@@ -1,99 +1,28 @@
-// NINETEENTH TESTCASE - One major txn with a huge reserve
-// Preallocate a bunch of nodes and then preform a ranged series of writes
-// See transaction.cpp for more detail on "write"
+// NINETEENTH TESTCASE - One major txn with a huge reserve. Each thread gets a txn
+// We're not preinserting for this testcase
 
 #include "main.hpp"
-#include <limits.h>
 
-void threadRunner(std::thread *threads, void function(int threadNum))
+// Insert random elements into the vector then preforms a bunch of reads
+void createTransactions(TransactionalVector *transVector,
+						std::vector<Desc *> *transactions,
+						RandomNumberPool *numPool)
 {
-	// Start our threads.
-	for (size_t i = 0; i < THREAD_COUNT; i++)
+	// Prepare a txn size of 1. 1 txn for each thread.
+	for (size_t j = 0; j < THREAD_COUNT; j++)
 	{
-		threads[i] = std::thread(function, i);
-	}
+		Operation *ops = new Operation[1];
 
-	// Wait for all threads to complete.
-	for (size_t i = 0; i < THREAD_COUNT; i++)
-	{
-		threads[i].join();
-	}
-	return;
-}
+		// All operations are reserve.
+		ops[0].type = Operation::OpType::reserve;
 
-void predicatePreinsert(int threadNum)
-{
-	// Initialize the allocators.
-	threadAllocatorInit(threadNum);
-
-	// A list of operations for the current thread.
-	Operation *insertOps = new Operation[NUM_TRANSACTIONS];
-	
-	// For each operation.
-	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
-	{
-		// All operations are pushes.
-		insertOps[j].type = Operation::OpType::pushBack;
 		// Push random values into the vector.
-		// TODO: This assumes UNSET is always the max value.
-		insertOps[j].val = numPool->getNum(threadNum) % UNSET;
+		ops[0].index = NUM_TRANSACTIONS / THREAD_COUNT;
+
+		Desc *desc = new Desc(NUM_TRANSACTIONS, ops);
+		transactions->push_back(desc);
 	}
-
-	// Create a transaction containing the these operations.
-	Desc *insertDesc = new Desc(NUM_TRANSACTIONS, insertOps);
-
-	// Execute the transaction.
-	transVector->executeTransaction(insertDesc);
-	
-	return;
 }
-
-void writeThread(int threadNum)
-{
-	// Initialize the allocators.
-	threadAllocatorInit(threadNum);
-
-    // Only 1 txn in this testcase
-    transVector->executeTransaction(transactions.at(0));
-}
-
-
-// Insert random elements into the vector and count the number of elements that satisfy the predicate.
-void randomReadWriteTest()
-{
-	// Create our threads.
-	std::thread threads[THREAD_COUNT];
-
-	// Pre-insertion step.
-	threadRunner(threads, predicatePreinsert);
-	printf("Completed preinsertion!\n\n");
-
-    Operation *ops = new Operation[TRANSACTION_SIZE];
-
-    // Each operation reserves 5GB of memory
-    for (size_t k = 0; k < TRANSACTION_SIZE; k++)
-    {
-        ops[k].type  = Operation::OpType::reserve;
-        ops[k].index = 5000;
-    }
-
-	// Get the current time.
-	auto start = std::chrono::system_clock::now();
-
-	// Run the threads.
-	threadRunner(threads, writeThread);
-
-	// Get total execution time.
-	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
-
-	//transVector->printContents();
-
-	std::cout << "" << THREAD_COUNT << " threads and " << NUM_TRANSACTIONS << " locations per thread" << std::endl;
-	std::cout << total.count() << " milliseconds" << std::endl;
-
-	printf("Total: %lu matched out of %lu\n", totalMatches.load(), (size_t)THREAD_COUNT * NUM_TRANSACTIONS);
-}
-
 
 int main(void)
 {
@@ -103,18 +32,16 @@ int main(void)
 	// Pre-fill the allocators.
 	allocatorInit();
 
-	// Initialize atomic counter
-	counter = 0;
-
 	// Preallocate the random number generator.
-	printf("Generating random numbers.\n");
+	RandomNumberPool *numPool;
 	numPool = new RandomNumberPool(THREAD_COUNT, NUM_TRANSACTIONS * (2 + 3 * TRANSACTION_SIZE));
 
 	// Reserve the transaction vector, for minor performance gains.
+	std::vector<Desc *> transactions;
 	transactions.reserve(THREAD_COUNT);
 
 #ifdef SEGMENTVEC
-	transVector = new TransactionalVector();
+	TransactionalVector *transVector = new TransactionalVector();
 #endif
 #ifdef COMPACTVEC
 	transVector = new CompactVector();
@@ -126,10 +53,25 @@ int main(void)
 	transVector = new GCCSTMVector();
 #endif
 
-	randomReadWriteTest();
+	// Create our threads.
+	std::thread threads[THREAD_COUNT];
 
-	// Report allocator usage.
-	allocatorReport();
+	// Pre-insertion step.
+	threadRunner(threads, preinsert, transVector, transactions, numPool);
+
+	// Create the transactions that are to be executed and timed below
+	createTransactions(transVector, &transactions, numPool);
+
+	// Get the current time.
+	auto start = std::chrono::system_clock::now();
+
+	// Execute the transactions
+	threadRunner(threads, executeTransactions, transVector, transactions, numPool);
+
+	// Get total execution time.
+	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
+
+	std::cout << total.count() << " milliseconds" << std::endl;
 
 	return 0;
 }

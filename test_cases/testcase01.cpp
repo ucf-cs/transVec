@@ -6,16 +6,9 @@
 
 // Insert random elements into the vector then preforms a bunch of reads
 void createTransactions(TransactionalVector *transVector,
-						std::vector<Desc *> transactions,
+						std::vector<Desc *> *transactions,
 						RandomNumberPool *numPool)
 {
-	// Create our threads.
-	std::thread threads[THREAD_COUNT];
-
-	// Pre-insertion step.
-	threadRunner(threads, preinsert, transVector, transactions, numPool);
-	printf("Completed preinsertion!\n\n");
-
 	// Total number of transactions
 	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 	{
@@ -27,26 +20,13 @@ void createTransactions(TransactionalVector *transVector,
 			// Read all elements, split among threads.
 			ops[k].type = Operation::OpType::read;
 
-			// Multiple threads will be wanting to read the same index if txn size > 1
 			// Modding prevents going out of bounds
 			ops[k].index = (j + k) % NUM_TRANSACTIONS;
 		}
 
 		Desc *desc = new Desc(TRANSACTION_SIZE, ops);
-		transactions.push_back(desc);
+		transactions->push_back(desc);
 	}
-
-	// Get the current time.
-	auto start = std::chrono::system_clock::now();
-
-	// Run the threads.
-	threadRunner(threads, executeTransactions, transVector, transactions, numPool);
-
-	// Get total execution time.
-	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
-
-	std::cout << "" << THREAD_COUNT << " threads and " << NUM_TRANSACTIONS << " locations per thread" << std::endl;
-	std::cout << total.count() << " milliseconds" << std::endl;
 }
 
 int main(void)
@@ -59,7 +39,7 @@ int main(void)
 
 	// Preallocate the random number generator.
 	RandomNumberPool *numPool;
-	numPool = new RandomNumberPool(THREAD_COUNT, NUM_TRANSACTIONS * (2 + 3 * TRANSACTION_SIZE));
+	numPool = new RandomNumberPool(THREAD_COUNT, NUM_TRANSACTIONS * TRANSACTION_SIZE);
 
 	// Reserve the transaction vector, for minor performance gains.
 	std::vector<Desc *> transactions;
@@ -78,7 +58,25 @@ int main(void)
 	transVector = new GCCSTMVector();
 #endif
 
-	createTransactions(transVector, transactions, numPool);
+	// Create our threads.
+	std::thread threads[THREAD_COUNT];
+
+	// Pre-insertion step.
+	threadRunner(threads, preinsert, transVector, transactions, numPool);
+
+	// Create the transactions that are to be executed and timed below
+	createTransactions(transVector, &transactions, numPool);
+
+	// Get the current time.
+	auto start = std::chrono::system_clock::now();
+
+	// Execute the transactions
+	threadRunner(threads, executeTransactions, transVector, transactions, numPool);
+
+	// Get total execution time.
+	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
+
+	std::cout << total.count() << " milliseconds" << std::endl;
 
 	return 0;
 }
