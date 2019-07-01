@@ -12,7 +12,7 @@
 # ADDING YOUR OWN TESTCASES: Just create a file named testcase0X.cpp and place
 # it in the test_cases/ directory. Update the variable below to the new number
 # of testcases
-NUM_TEST_CASES=10
+NUM_TEST_CASES=18
 
 # Before doing anything, make sure if passed in parameters are correct.
 # Make sure all macros are defined, start by extracting the macros from the
@@ -88,6 +88,7 @@ REPORT="reports/final_report$(date +%m%d%H%M%S).txt"
 NUM_CORES=$(nproc)
 MODEL="Processor $(lscpu | grep GHz)"
 MODEL=$(echo "$MODEL" | sed -r 's/\s\s\s\s\s\s\s\s\s//g')
+RAM=$(free -h | grep -o -m 1 "\w*G\b" | head -1)
 
 # Create the file
 touch $REPORT
@@ -103,6 +104,7 @@ echo                                                                 >> $REPORT
 echo "Test preformed on $DATE."                                      >> $REPORT
 echo "Tested on a computer with $NUM_CORES cores."                   >> $REPORT
 echo "$MODEL"                                                        >> $REPORT
+echo "Total RAM on system: $RAM"                                     >> $REPORT
 echo                                                                 >> $REPORT
 
 # Replace spaces with '|' to be able to pass it to the makefile
@@ -115,16 +117,16 @@ fi
 ###############################################################################
 
 # NUM_CORES will determine up to which value we go to for THREAD_COUNT
-# for (( i=1; i<=$NUM_CORES; i++ ))
+# for i in `seq 1 $NUM_CORES`
 # do
 #     # Test for TRANSACTION_SIZE from 1 - 5
-#     for (( j=1; j<=5; j++))
+#     for j in `seq 1 5`
 #     do
         echo "=====================================================" >> $REPORT
-        echo "SGMT_SIZE = 16         "                               >> $REPORT
+        echo "SGMT_SIZE        = 16    "                             >> $REPORT
         echo "NUM_TRANSACTIONS = 250000"                             >> $REPORT
-        echo "THREAD_COUNT = $i      "                               >> $REPORT
-        echo "TRANSACTION_SIZE = $j  "                               >> $REPORT
+        echo "THREAD_COUNT     = $i    "                             >> $REPORT
+        echo "TRANSACTION_SIZE = $j    "                             >> $REPORT
         echo                                                         >> $REPORT
 
         # For loop to go through the test cases

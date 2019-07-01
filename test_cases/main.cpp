@@ -45,8 +45,8 @@ void executeTransactions(int threadNum,
 		
 		if (desc->status.load() != Desc::TxStatus::committed)
 		{
-			printf("Error on thread %d. Transaction failed.\n", threadNum);
-			return;
+			// printf("Error on thread %d. Transaction failed.\n", threadNum);
+			throw std::exception();
 		}
 		
 		// Busy wait until they are ready. Should never happen, but we need to be safe.
@@ -91,8 +91,6 @@ void preinsert(int threadNum,
 
 	// Execute the transaction.
 	transVector->executeTransaction(pushDesc);
-
-	printf("do we ever get here?\n");
 	
 	return;
 }

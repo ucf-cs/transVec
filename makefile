@@ -16,8 +16,8 @@ CC_FLAGS = $(OPTIMAL_FLAGS)
 #-latomic
 
 # File names
-EXEC = transVec.out
-MAIN = test_cases/testcase04.cpp
+EXEC    = transVec.out
+MAIN    = test_cases/testcase04.cpp
 SOURCES = $(wildcard *.cpp) test_cases/main.cpp $(MAIN)
 OBJECTS = $(SOURCES:.cpp=.o)
 DEFINES = 
@@ -33,3 +33,7 @@ $(EXEC): $(OBJECTS)
 # To remove generated files
 clean:
 	@rm -f $(EXEC) $(OBJECTS) $(wildcard test_cases/*.o)
+
+# Clean the reports directory
+cr:
+	@rm -f reports/*.txt
