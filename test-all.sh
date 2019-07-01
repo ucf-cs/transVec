@@ -117,11 +117,11 @@ fi
 ###############################################################################
 
 # NUM_CORES will determine up to which value we go to for THREAD_COUNT
-# for i in `seq 1 $NUM_CORES`
-# do
-#     # Test for TRANSACTION_SIZE from 1 - 5
-#     for j in `seq 1 5`
-#     do
+for i in `seq 1`
+do
+    # Test for TRANSACTION_SIZE from 1 - 5
+    for j in `seq 1`
+    do
         echo "=====================================================" >> $REPORT
         echo "SGMT_SIZE        = 16    "                             >> $REPORT
         echo "NUM_TRANSACTIONS = 250000"                             >> $REPORT
@@ -132,7 +132,7 @@ fi
         # For loop to go through the test cases
         for k in `seq -f "%02g" 1 $NUM_TEST_CASES`;
         do
-            echo "Starting testcase$k, THRD_CNT = $i, TXN_SIZE = $j"
+            echo -e "\e[96mStarting testcase$k: THRD_CNT = $i, TXN_SIZE = $j\e[0m"
             echo -n "Testcase $k ... "                               >> $REPORT
 
             # Make the executable file with a different main file everytime
@@ -156,8 +156,8 @@ fi
 
 
         done
-#     done
-# done
+    done
+done
 
 # Clean up after yo self
 echo 
