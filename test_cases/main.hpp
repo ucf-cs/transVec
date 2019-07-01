@@ -33,21 +33,21 @@
 
 void executeTransactions(int threadNum,
 						 TransactionalVector *transVector,
-						 std::vector<Desc *> transactions,
+						 std::vector<Desc *> *transactions,
 						 RandomNumberPool *numPool);
 
 void threadRunner(std::thread *threads,
                   void function(int threadNum,
 						        TransactionalVector *transVector,
-						        std::vector<Desc *> transactions,
+						        std::vector<Desc *> *transactions,
 						        RandomNumberPool *numPool),
 				  TransactionalVector *transVector,
-				  std::vector<Desc *> transactions,
+				  std::vector<Desc *> *transactions,
 				  RandomNumberPool *numPool);
 
 void preinsert(int threadNum,
 			   TransactionalVector *transVector,
-			   std::vector<Desc *> transactions,
+			   std::vector<Desc *> *transactions,
 			   RandomNumberPool *numPool);
 
 #endif

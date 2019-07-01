@@ -17,7 +17,7 @@ void createTransactions(TransactionalVector *transVector,
 		for (size_t k = 0; k < TRANSACTION_SIZE; k++)
 		{
 			// Read at random indices.
-			ops[k].type = Operation::OpType::read;
+			ops[k].type  = Operation::OpType::read;
 			ops[k].index = rand() % NUM_TRANSACTIONS;
 		}
 
@@ -59,7 +59,7 @@ int main(void)
 	std::thread threads[THREAD_COUNT];
 
 	// Pre-insertion step.
-	threadRunner(threads, preinsert, transVector, transactions, numPool);
+	threadRunner(threads, preinsert, transVector, &transactions, numPool);
 
 	// Create the transactions that are to be executed and timed below
 	createTransactions(transVector, &transactions, numPool);
@@ -68,7 +68,7 @@ int main(void)
 	auto start = std::chrono::system_clock::now();
 
 	// Execute the transactions
-	threadRunner(threads, executeTransactions, transVector, transactions, numPool);
+	threadRunner(threads, executeTransactions, transVector, &transactions, numPool);
 
 	// Get total execution time.
 	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);

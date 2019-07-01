@@ -8,10 +8,10 @@
 void threadRunner(std::thread *threads,
 				  void function(int threadNum,
 						        TransactionalVector *transVector,
-						        std::vector<Desc *> transactions,
+						        std::vector<Desc *> *transactions,
 						        RandomNumberPool *numPool),
 				  TransactionalVector *transVector,
-				  std::vector<Desc *> transactions,
+				  std::vector<Desc *> *transactions,
 				  RandomNumberPool *numPool)
 {
 	// Start our threads.
@@ -28,7 +28,7 @@ void threadRunner(std::thread *threads,
 // Goes through the vector of transactions and executes them.
 void executeTransactions(int threadNum,
 						 TransactionalVector *transVector,
-						 std::vector<Desc *> transactions,
+						 std::vector<Desc *> *transactions,
 						 RandomNumberPool *numPool)
 {
 	// Initialize the allocators.
@@ -40,7 +40,7 @@ void executeTransactions(int threadNum,
 
 	for (int i = start; i < end; i++)
 	{
-		Desc *desc = transactions.at(i);	
+		Desc *desc = transactions->at(i);	
 		transVector->executeTransaction(desc);
 		
 		if (desc->status.load() != Desc::TxStatus::committed)
@@ -58,33 +58,41 @@ void executeTransactions(int threadNum,
 	}
 }
 
-// Preinserts a bunch of objects into the vector
+// Prepushes a bunch of objects into the vector
 void preinsert(int threadNum,
 			   TransactionalVector *transVector,
-			   std::vector<Desc *> transactions,
+			   std::vector<Desc *> *transactions,
 			   RandomNumberPool *numPool)
 {
 	// Initialize the allocators.
 	threadAllocatorInit(threadNum);
 
+	int opsPerThread = NUM_TRANSACTIONS / THREAD_COUNT;
+
 	// A list of operations for the current thread.
-	Operation *insertOps = new Operation[NUM_TRANSACTIONS];
+	Operation *pushOps = new Operation[opsPerThread];
+
+	// Each thread is allocated an interval to work on
+	int start = opsPerThread *  threadNum;
+	int end   = opsPerThread * (threadNum + 1);
 
 	// For each operation.
-	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
+	for (size_t j = 0; j < opsPerThread; j++)
 	{
 		// All operations are pushes.
-		insertOps[j].type = Operation::OpType::pushBack;
+		pushOps[j].type = Operation::OpType::pushBack;
 
 		// Push random values into the vector.
-		insertOps[j].val = numPool->getNum(threadNum) % UNSET;
+		pushOps[j].val = numPool->getNum(threadNum) % UNSET;
 	}
 
 	// Create a transaction containing the these operations.
-	Desc *insertDesc = new Desc(NUM_TRANSACTIONS, insertOps);
+	Desc *pushDesc = new Desc(opsPerThread, pushOps);
 
 	// Execute the transaction.
-	transVector->executeTransaction(insertDesc);
+	transVector->executeTransaction(pushDesc);
 
+	printf("do we ever get here?\n");
+	
 	return;
 }
