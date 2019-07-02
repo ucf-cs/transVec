@@ -28,7 +28,7 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 
 	// The head of the linkedlist of updates.
 	Page<VAL, SGMT_SIZE> *rootPage = NULL;
-	// The previous head. The new page has been updated to consider everything after this point.
+	// The previous head. The new page has already been updated to consider everything after this point.
 	Page<VAL, SGMT_SIZE> *prevRoot = NULL;
 	// Keep looping until page insertion suceeds or the transaction fails.
 	while (true)
@@ -86,17 +86,23 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 			{
 				// Check the status of the transaction.
 				typename Desc::TxStatus status = currentPage->transaction->status.load();
-				// If the current page is part of an active transaction.
 				// No need to help reads, so check if there are any dependencies with writes.
-				if (status == Desc::TxStatus::active && (posessedBits & currentPage->bitset.write) != 0)
+				// If any of the posessed bits of the current page were writes.
+				if ((posessedBits & currentPage->bitset.write) != 0)
 				{
-					// Help the active transaction.
-					while (currentPage->transaction->status.load() == Desc::TxStatus::active)
+					// If the current page is part of an active transaction.
+					if (status == Desc::TxStatus::active)
 					{
-						completeTransaction(currentPage->transaction, true, index);
+						// Help the active transaction.
+						while (currentPage->transaction->status.load() == Desc::TxStatus::active)
+						{
+#ifdef HELP
+							completeTransaction(currentPage->transaction, true, index);
+#endif
+						}
+						// Update our status to its final (committed or aborted) state.
+						status = currentPage->transaction->status.load();
 					}
-					// Update our status to its final (committed or aborted) state.
-					status = currentPage->transaction->status.load();
 				}
 				// Go through the bits.
 				for (size_t i = 0; i < Page<VAL, SGMT_SIZE>::SEG_SIZE; i++)
@@ -153,7 +159,7 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 		else
 		{
 			// Retry on failure.
-			// Keep track of the previous root to reduce redundant lookups.
+			// Keep track of the previous root to prevent redundant lookups.
 			prevRoot = rootPage;
 		}
 	}
@@ -166,7 +172,7 @@ void TransactionalVector::insertPages(std::map<size_t, Page<VAL, SGMT_SIZE> *, s
 	assert(pages != NULL);
 	// Get the start of the map.
 	typename std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>>::reverse_iterator iter = pages->rbegin();
-	// Advance to a specific index, if specified.
+	// Advance to a target index, if specified.
 	if (startPage < SIZE_MAX)
 	{
 		// Attempt to find a page at the target index.
@@ -229,6 +235,10 @@ TransactionalVector::TransactionalVector()
 	{
 		endTransaction = new Desc(0, NULL);
 		endTransaction->status.store(Desc::TxStatus::committed);
+#ifdef HELP_FREE_READS
+		size_t zero = 0;
+		endTransaction->version.compare_exchange_strong(zero, globalVersionCounter.fetch_add(1));
+#endif
 	}
 
 	// Allocate an end page, if it hasn't been already.
@@ -256,7 +266,7 @@ TransactionalVector::TransactionalVector()
 	size.store(sizePage);
 }
 
-void TransactionalVector::prepareTransaction(Desc *descriptor)
+bool TransactionalVector::prepareTransaction(Desc *descriptor)
 {
 	RWSet *set = descriptor->set.load();
 	if (set == NULL)
@@ -277,7 +287,11 @@ void TransactionalVector::prepareTransaction(Desc *descriptor)
 	set = descriptor->set.load();
 
 	// Ensure that we can fit all of the segments we plan to insert.
-	reserve(set->maxReserveAbsolute > set->size ? set->maxReserveAbsolute : set->size);
+	if (!reserve(set->maxReserveAbsolute > set->size ? set->maxReserveAbsolute : set->size))
+	{
+		descriptor->status.store(Desc::TxStatus::aborted);
+		return false;
+	}
 
 	if (descriptor->pages.load() == NULL)
 	{
@@ -285,7 +299,7 @@ void TransactionalVector::prepareTransaction(Desc *descriptor)
 		set->setToPages(descriptor);
 	}
 
-	return;
+	return true;
 }
 
 bool TransactionalVector::completeTransaction(Desc *descriptor, bool helping, size_t startPage)
@@ -295,6 +309,11 @@ bool TransactionalVector::completeTransaction(Desc *descriptor, bool helping, si
 
 	auto active = Desc::TxStatus::active;
 	auto committed = Desc::TxStatus::committed;
+#ifdef HELP_FREE_READS
+	// Always set the version number before committing.
+	size_t zero = 0;
+	descriptor->version.compare_exchange_strong(zero, globalVersionCounter.fetch_add(1));
+#endif
 	// Commit the transaction.
 	// If this fails, either we aborted or some other transaction committed, so no need to retry.
 	if (!descriptor->status.compare_exchange_strong(active, committed))
@@ -312,8 +331,124 @@ bool TransactionalVector::completeTransaction(Desc *descriptor, bool helping, si
 	return true;
 }
 
+#ifdef HELP_FREE_READS
+void TransactionalVector::executeHelpFreeReads(Desc *descriptor)
+{
+	// Get the time now.
+	// Any transactions after this will not be considered by these reads.
+	size_t zero = 0;
+	descriptor->version.compare_exchange_strong(zero, globalVersionCounter.fetch_add(1));
+
+	// Validate that this is actually a purely help-free read transaction.
+	// This step can be skipped for performance, but should happen for validation.
+	// We start at 1 since executeTransaction already validated the operation at index 0.
+	for (size_t i = 1; i < descriptor->size; i++)
+	{
+		assert(descriptor->ops[i].type == Operation::OpType::hfRead);
+	}
+
+	// Perform the reads.
+	for (size_t i = 0; i < descriptor->size; i++)
+	{
+		// The head of the linkedlist of updates.
+		Page<VAL, SGMT_SIZE> *rootPage = NULL;
+		// Get the bucket and index of the read.
+		std::pair<size_t, size_t> indexes = RWSet::access(descriptor->ops[i].index);
+
+		// Get the root page.
+		if (!array->read(descriptor->ops[i].index, rootPage))
+		{
+			// Failure means the transaction attempted an invalid read or write, as the vector wasn't allocated to this point.
+			descriptor->status.store(Desc::TxStatus::aborted);
+			// DEBUG:
+			//printf("Aborted!\n");
+			// No need to even try anymore. The whole transaction failed.
+			return;
+		}
+
+		// Initialize the current page at the start of the linked list of updates.
+		Page<VAL, SGMT_SIZE> *currentPage = rootPage;
+		bool traverse = true;
+		while (traverse)
+		{
+			// If we reach the end before identifying a value, use a generic initializer page instead.
+			// In this page, all values are write UNSET, for proper abort handling.
+			if (currentPage == NULL)
+			{
+				currentPage = endPage;
+			}
+
+			// If this page read or wrote to this location.
+			if ((currentPage->bitset.read[indexes.second] || currentPage->bitset.write[indexes.second]) != 0)
+			{
+				// NOTE: Continue traversal only if the page is active or the timestamp is too late.
+				// Otherwise, we have found a value to return.
+
+				// The element's logical status is based on the page's transaction status.
+				switch (currentPage->transaction->status.load())
+				{
+				case Desc::TxStatus::active:
+					break;
+				case Desc::TxStatus::committed:
+					// If this transaction completed before the help-free read transaction started.
+					if (currentPage->transaction->version.load() < descriptor->version.load())
+					{
+						// If a write committed.
+						if (currentPage->bitset.write[indexes.second] != 0)
+						{
+							currentPage->get(indexes.second, NEW_VAL, descriptor->ops[i].ret);
+						}
+						// If a read committed.
+						else
+						{
+							currentPage->get(indexes.second, OLD_VAL, descriptor->ops[i].ret);
+						}
+						traverse = false;
+					}
+					break;
+				case Desc::TxStatus::aborted:
+					// If this transaction completed before the help-free read transaction started.
+					if (currentPage->transaction->version.load() < descriptor->version.load())
+					{
+						currentPage->get(indexes.second, OLD_VAL, descriptor->ops[i].ret);
+						traverse = false;
+					}
+					break;
+				default:
+					assert(false);
+					break;
+				}
+			}
+			// Go to the next page.
+			currentPage = currentPage->next;
+		}
+
+		// Abort if an UNSET is read.
+		if (descriptor->ops[i].ret == UNSET)
+		{
+			descriptor->status.store(Desc::TxStatus::aborted);
+			return;
+		}
+	}
+	// Complete the reads.
+	descriptor->status.store(Desc::TxStatus::committed);
+	descriptor->returnedValues.store(true);
+	return;
+}
+#endif
+
 void TransactionalVector::executeTransaction(Desc *descriptor)
 {
+#ifdef HELP_FREE_READS
+	// Determine if this is a help-free read transaction.
+	if (descriptor->size > 0 && descriptor->ops[0].type == Operation::OpType::hfRead)
+	{
+		// Call the specialized transaction function to handle it.
+		executeHelpFreeReads(descriptor);
+		return;
+	}
+#endif
+
 	// Initialize the set for the descriptor.
 	prepareTransaction(descriptor);
 

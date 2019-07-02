@@ -25,8 +25,6 @@ struct alignas(16) CompactElement
     int oldVal;
     int newVal;
     Desc *descriptor;
-    // NOTE: Can infer opid from the element's index in the vector.
-
     CompactElement() noexcept;
     void print();
 };
@@ -47,7 +45,7 @@ private:
     void insertElements(RWSet *set, bool helping = false, unsigned int startElement = UINT32_MAX);
     // Create a RWSet for the transaction.
     // Only used in helping on size conflict.
-    void prepareTransaction(Desc *descriptor);
+    bool prepareTransaction(Desc *descriptor);
     // Finish the vector transaction.
     // Used for helping.
     bool completeTransaction(Desc *descriptor, bool helping = false, unsigned int startElement = UINT32_MAX);

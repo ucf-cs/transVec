@@ -86,7 +86,6 @@ public:
 		return;
 	}
 	// The number of elements represented by each segment.
-	// TUNE
 	const static size_t SEG_SIZE = S;
 	// A list of what modification types this transaction performs.
 	Bitset<SEG_SIZE> bitset;

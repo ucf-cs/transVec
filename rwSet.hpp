@@ -84,7 +84,7 @@ public:
 	size_t maxReserveAbsolute = 0;
 #ifdef SEGMENTVEC
 	// Our size descriptor. After reading size, we use this to write a new size value later.
-	Page<size_t, 1> *sizeDesc = NULL;
+	std::atomic<Page<size_t, 1> *> sizeDesc;
 	// Set this if size changes.
 	size_t size = 0;
 #endif
@@ -97,9 +97,14 @@ public:
 
 	~RWSet();
 
+#ifdef SEGMENTVEC
 	// Return the indexes associated with a RW operation access.
-	std::pair<size_t, size_t> access(size_t pos);
-
+	static std::pair<size_t, size_t> access(size_t pos);
+#endif
+#ifdef COMPACTVEC
+	// Return the index associated with a RW operation access.
+	static size_t access(size_t pos);
+#endif
 #ifdef SEGMENTVEC
 	// Converts a transaction descriptor into a read/write set.
 	bool createSet(Desc *descriptor, TransactionalVector *vector);
@@ -119,10 +124,10 @@ public:
 #endif
 
 #ifdef SEGMENTVEC
-	size_t getSize(Desc *transaction, TransactionalVector *sizeHead);
+	size_t getSize(TransactionalVector *sizeHead, Desc *transaction);
 #endif
 #ifdef COMPACTVEC
-	unsigned int getSize(CompactVector *vector);
+	unsigned int getSize(CompactVector *vector, Desc *descriptor = NULL);
 #endif
 
 #ifdef SEGMENTVEC

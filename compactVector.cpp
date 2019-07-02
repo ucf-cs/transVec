@@ -67,7 +67,9 @@ bool CompactVector::updateElement(size_t index, CompactElement &newElem)
             // Help the active transaction.
             while (oldDesc->status.load() == Desc::TxStatus::active)
             {
+#ifdef HELP
                 completeTransaction(oldDesc, true, index);
+#endif
             }
             // Update our status to its final (committed or aborted) state.
             status = oldDesc->status.load();
@@ -111,15 +113,6 @@ bool CompactVector::updateElement(size_t index, CompactElement &newElem)
 
 void CompactVector::insertElements(RWSet *set, bool helping, unsigned int startElement)
 {
-    // DEBUG: Print out the map.
-    /*
-    for (auto it = set->operations.cbegin(); it != set->operations.cend(); ++it)
-    {
-        std::cout << it->first << " "
-                  << it->second << "\n";
-    }
-    */
-
     // Get the start of the map.
     typename std::map<size_t, RWOperation *, std::equal_to<size_t>, MemAllocator<std::pair<size_t, RWOperation *>>>::reverse_iterator iter = set->operations.rbegin();
 
@@ -194,7 +187,7 @@ CompactVector::CompactVector()
     return;
 }
 
-void CompactVector::prepareTransaction(Desc *descriptor)
+bool CompactVector::prepareTransaction(Desc *descriptor)
 {
     RWSet *set = descriptor->set.load();
     if (set == NULL)
@@ -210,13 +203,17 @@ void CompactVector::prepareTransaction(Desc *descriptor)
 
         RWSet *nullVal = NULL;
         descriptor->set.compare_exchange_strong(nullVal, set);
-        // TODO: Preferably deallocate if we fail to CAS.
+        // TODO2: Preferably deallocate if we fail to CAS.
     }
     // Make sure we only work with the set that succeeded first.
     set = descriptor->set.load();
     // Ensure that we can fit all of the elements we plan to insert.
-    reserve(set->maxReserveAbsolute > set->size ? set->maxReserveAbsolute : set->size);
-    return;
+    if (!reserve(set->maxReserveAbsolute > set->size ? set->maxReserveAbsolute : set->size))
+    {
+        descriptor->status.store(Desc::TxStatus::aborted);
+        return false;
+    }
+    return true;
 }
 
 bool CompactVector::completeTransaction(Desc *descriptor, bool helping, unsigned int startElement)

@@ -198,8 +198,7 @@ void predicatePreinsert(int threadNum)
 		// All operations are pushes.
 		insertOps[j].type = Operation::OpType::pushBack;
 		// Push random values into the vector.
-		// TODO: This assumes UNSET is always the max value.
-		insertOps[j].val = numPool->getNum(threadNum) % UNSET;
+		insertOps[j].val = numPool->getNum(threadNum) % std::numeric_limits<VAL>::max();
 	}
 	// Create a transaction containing the these operations.
 	Desc *insertDesc = new Desc(NUM_TRANSACTIONS, insertOps);
@@ -322,6 +321,53 @@ void randomRun()
 	std::cout << total.count() << " milliseconds" << std::endl;
 }
 
+// Help-free test.
+void helpFreeSearch()
+{
+	// Ensure we start with no matches.
+	totalMatches.store(0);
+
+	// Create our threads.
+	std::thread threads[THREAD_COUNT];
+
+	// Pre-insertion step.
+	threadRunner(threads, predicatePreinsert);
+	printf("Completed preinsertion!\n\n\n");
+
+	// Prepare read transactions for each thread.
+	for (size_t i = 0; i < THREAD_COUNT; i++)
+	{
+		Operation *ops = new Operation[NUM_TRANSACTIONS];
+		// Prepare to read the entire vector.
+		for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
+		{
+			// Read all elements, split among threads.
+			ops[j].type = Operation::OpType::hfRead;
+			ops[j].index = i * NUM_TRANSACTIONS + j;
+		}
+		Desc *desc = new Desc(NUM_TRANSACTIONS, ops);
+		std::vector<Desc *> threadTransactions;
+		threadTransactions.push_back(desc);
+		transactions.push_back(threadTransactions);
+	}
+
+	// Get the current time.
+	auto start = std::chrono::system_clock::now();
+
+	// Run the threads.
+	threadRunner(threads, predicateFind);
+
+	// Get total execution time.
+	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
+
+	//transVector->printContents();
+
+	std::cout << "" << THREAD_COUNT << " threads and " << NUM_TRANSACTIONS << " locations per thread" << std::endl;
+	std::cout << total.count() << " milliseconds" << std::endl;
+
+	printf("Total: %lu matched out of %lu\n", totalMatches.load(), (size_t)THREAD_COUNT * NUM_TRANSACTIONS);
+}
+
 void allocatorInit()
 {
 	printf("Initializing the memory allocators.\n");
@@ -386,31 +432,6 @@ int main(int argc, char *argv[])
 	// Seed the random number generator.
 	srand(time(NULL));
 
-	/*
-	// TODO: This doesn't work.
-	// Pull optional command-line arguments.
-	for (int i = 1; i < argc; i++)
-	{
-		switch (i)
-		{
-		case 1: // NUM_TRANSACTIONS
-			sscanf(argv[i], "%zu", &NUM_TRANSACTIONS);
-				//NUM_TRANSACTIONS = atoi(argv[i]);
-			break;
-		case 2: // TRANSACTION_SIZE
-			sscanf(argv[i], "%zu", &TRANSACTION_SIZE);
-			//TRANSACTION_SIZE = atoi(argv[i]);
-			break;
-		case 3: // THREAD_COUNT
-			sscanf(argv[i], "%zu", &THREAD_COUNT);
-			//THREAD_COUNT = atoi(argv[i]);
-			break;
-		default:
-			break;
-		}
-	}
-	*/
-
 	// Pre-fill the allocators.
 	allocatorInit();
 
@@ -439,6 +460,9 @@ int main(int argc, char *argv[])
 #endif
 #ifdef RANDOM_RUN
 	randomRun();
+#endif
+#ifdef HF_SEARCH
+	helpFreeSearch();
 #endif
 
 	// Report allocator usage.

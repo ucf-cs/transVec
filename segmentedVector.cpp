@@ -49,19 +49,24 @@ bool SegmentedVector<T>::allocBucket(size_t bucket)
 	{
 		return false;
 	}
+	// If the bucket is already allocated, no work needs to be done here.
+	if (bucketArray[bucket].load() != NULL)
+	{
+		return true;
+	}
 	// The size of the bucket we are allocating.
 	// firstBucketSize^(bucket+1)
 	size_t bucketSize = 1 << (highestBit(firstBucketSize) * (bucket + 1));
 	// Allocate the new segment.
 	std::atomic<T> *mem = new std::atomic<T>[bucketSize]();
-	// Only do this if T is a pointer type.
-	#ifdef SEGMENTVEC
+// Only do this if T is a pointer type.
+#ifdef SEGMENTVEC
 	// Ensure the segment is initialized to NULL.
 	for (size_t i = 0; i < bucketSize; i++)
 	{
 		mem[i].store(NULL);
 	}
-	#endif
+#endif
 	// We need to initialize the NULL pointer if we want to CAS.
 	std::atomic<T> *null = NULL;
 	// Attempt to place the segment in shared memory.
@@ -220,12 +225,12 @@ void SegmentedVector<T>::printBuckets()
 		size_t bucketSize = 1 << (highestBit(firstBucketSize) * (i + 1));
 		for (size_t j = 0; j < bucketSize; j++)
 		{
-			#ifdef SEGMENTVEC
+#ifdef SEGMENTVEC
 			printf("%p\n", bucketArray[i].load()[j].load());
-			#endif
-			#ifdef COMPACTVEC
+#endif
+#ifdef COMPACTVEC
 			bucketArray[i].load()[j].load().print();
-			#endif
+#endif
 		}
 	}
 	printf("\n");

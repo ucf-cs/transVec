@@ -3,27 +3,53 @@
 RWSet::~RWSet()
 {
     operations.clear();
+#ifdef SEGMENTVEC
+    sizeDesc.store(NULL);
+#endif
     return;
 }
 
+#ifdef SEGMENTVEC
 std::pair<size_t, size_t> RWSet::access(size_t pos)
 {
-    // All other cases.
     size_t first = pos / SGMT_SIZE;
     size_t second = pos % SGMT_SIZE;
     return std::make_pair(first, second);
 }
+#endif
+#ifdef COMPACTVEC
+size_t RWSet::access(size_t pos)
+{
+    return pos;
+}
+#endif
 
 #ifdef SEGMENTVEC
 bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
+#endif
+#ifdef COMPACTVEC
+    bool RWSet::createSet(Desc *descriptor, CompactVector *vector)
+#endif
 {
-    // DEBUG:
-    //descriptor->print();
+#ifdef COMPACTVEC
+    // Create a size object if it doesn't already exist.
+    if (sizeElement == NULL)
+    {
+        sizeElement = Allocator<CompactElement>::alloc();
+    }
+    // Set the set's descriptor.
+    this->descriptor = descriptor;
+#endif
 
     // Go through each operation.
     for (size_t i = 0; i < descriptor->size; i++)
     {
+#ifdef SEGMENTVEC
         std::pair<size_t, size_t> indexes;
+#endif
+#ifdef COMPACTVEC
+        unsigned int indexes;
+#endif
         RWOperation *op = NULL;
         switch (descriptor->ops[i].type)
         {
@@ -35,7 +61,7 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             if (op->lastWriteOp != NULL)
             {
                 descriptor->ops[i].ret = op->lastWriteOp->val;
-                // If the value was unset (shouldn't really be possible here), then our transaction fails.
+                // If the value was unset (internal pop?), then our transaction fails.
                 if (op->lastWriteOp->val == UNSET)
                 {
                     descriptor->status.store(Desc::TxStatus::aborted);
@@ -58,16 +84,33 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
         case Operation::OpType::write:
             indexes = access(descriptor->ops[i].index);
             getOp(op, indexes);
-            if (op->checkBounds == RWOperation::Assigned::unset)
+            // If this location has already been written to, read its value.
+            // This is done to handle operations that are totally internal to the transaction.
+            if (op->lastWriteOp != NULL)
             {
-                op->checkBounds = RWOperation::Assigned::yes;
+                // If the value was unset (internal pop?), then our transaction fails.
+                if (op->lastWriteOp->val == UNSET)
+                {
+                    descriptor->status.store(Desc::TxStatus::aborted);
+                    // DEBUG:
+                    //printf("Aborted!\n");
+                    return false;
+                }
+            }
+            // We haven't written here before. Request a read from the shared structure.
+            else
+            {
+                if (op->checkBounds == RWOperation::Assigned::unset)
+                {
+                    op->checkBounds = RWOperation::Assigned::yes;
+                }
             }
             op->lastWriteOp = &descriptor->ops[i];
             break;
         case Operation::OpType::pushBack:
-            getSize(descriptor, vector);
+            getSize(vector, descriptor);
             // This should never happen, but make sure we don't have an integer overflow.
-            if (size == SIZE_MAX)
+            if (size == std::numeric_limits<decltype(size)>::max())
             {
                 descriptor->status.store(Desc::TxStatus::aborted);
                 // DEBUG:
@@ -84,7 +127,7 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             op->lastWriteOp = &descriptor->ops[i];
             break;
         case Operation::OpType::popBack:
-            getSize(descriptor, vector);
+            getSize(vector, descriptor);
             // Prevent popping past the bottom of the stack.
             if (size < 1)
             {
@@ -118,7 +161,7 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             op->lastWriteOp = &descriptor->ops[i];
             break;
         case Operation::OpType::size:
-            getSize(descriptor, vector);
+            getSize(vector, descriptor);
 
             // NOTE: Don't store in ret. Store in index, as a special case for size calls.
             descriptor->ops[i].index = size;
@@ -131,167 +174,26 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
                 maxReserveAbsolute = descriptor->ops[i].index;
             }
             break;
+#ifdef HELP_FREE_READS
+        case Operation::OpType::hfRead:
+            assert(false && "Cannot use help-free reads in a standard transaction.");
+            break;
+#endif
         default:
             // Unexpected operation type found.
             break;
         }
     }
 
-    // DEBUG: Print out the map.
-    /*
-    for (auto it = operations.cbegin(); it != operations.cend(); ++it)
-    {
-        std::cout << it->first << ": ";
-        for (size_t i = 0; i < SGMT_SIZE; i++)
-        {
-            std::cout << it->second[i] << " ";
-        }
-        std::cout << "\n";
-    }
-    */
-
     // If we accessed size, we need to report what we changed it to.
+#ifdef SEGMENTVEC
     if (sizeDesc != NULL)
     {
-        sizeDesc->set(0, NEW_VAL, size);
+        sizeDesc.load()->set(0, NEW_VAL, size);
     }
-    return true;
-}
 #endif
 #ifdef COMPACTVEC
-bool RWSet::createSet(Desc *descriptor, CompactVector *vector)
-{
-    // Create a size object if it doesn't already exist.
-    if (sizeElement == NULL)
-    {
-        sizeElement = Allocator<CompactElement>::alloc();
-    }
-
-    // Set the set's descriptor.
-    this->descriptor = descriptor;
-
-    // Go through each operation.
-    for (size_t i = 0; i < descriptor->size; i++)
-    {
-        unsigned int index;
-        RWOperation *op = NULL;
-        switch (descriptor->ops[i].type)
-        {
-        case Operation::OpType::read:
-            index = descriptor->ops[i].index;
-            getOp(op, index);
-            // If this location has already been written to, read its value.
-            // This is done to handle operations that are totally internal to the transaction.
-            if (op->lastWriteOp != NULL)
-            {
-                descriptor->ops[i].ret = op->lastWriteOp->val;
-                // If the value was unset (shouldn't really be possible here), then our transaction fails.
-                if (op->lastWriteOp->val == UNSET)
-                {
-                    descriptor->status.store(Desc::TxStatus::aborted);
-                    return false;
-                }
-            }
-            // We haven't written here before. Request a read from the shared structure.
-            else
-            {
-                if (op->checkBounds == RWOperation::Assigned::unset)
-                {
-                    op->checkBounds = RWOperation::Assigned::yes;
-                }
-                // Add ourselves to the read list.
-                op->readList.push_back(&descriptor->ops[i]);
-            }
-            break;
-        case Operation::OpType::write:
-            index = descriptor->ops[i].index;
-            getOp(op, index);
-            if (op->checkBounds == RWOperation::Assigned::unset)
-            {
-                op->checkBounds = RWOperation::Assigned::yes;
-            }
-            op->lastWriteOp = &descriptor->ops[i];
-            break;
-        case Operation::OpType::pushBack:
-            getSize(vector);
-            // This should never happen, but make sure we don't have an integer overflow.
-            if (size == UINT32_MAX)
-            {
-                descriptor->status.store(Desc::TxStatus::aborted);
-                return false;
-            }
-            index = size++;
-
-            getOp(op, index);
-            if (op->checkBounds == RWOperation::Assigned::unset)
-            {
-                op->checkBounds = RWOperation::Assigned::no;
-            }
-            op->lastWriteOp = &descriptor->ops[i];
-            break;
-        case Operation::OpType::popBack:
-            getSize(vector);
-            // Prevent popping past the bottom of the stack.
-            if (size < 1)
-            {
-                descriptor->status.store(Desc::TxStatus::aborted);
-                return false;
-            }
-            index = --size;
-
-            getOp(op, index);
-            // If this location has already been written to, read its value. This is done to handle operations that are totally internal to the transaction.
-            if (op->lastWriteOp != NULL)
-            {
-                descriptor->ops[i].ret = op->lastWriteOp->val;
-            }
-            // We haven't written here before. Request a read from the shared structure.
-            else
-            {
-                // Add ourselves to the read list.
-                op->readList.push_back(&descriptor->ops[i]);
-            }
-            // We actually write an unset value here when we pop.
-            // Make sure we explicitly mark as UNSET.
-            // Don't leave this in the hands of the person creating the transactions.
-            descriptor->ops[i].val = UNSET;
-            if (op->checkBounds == RWOperation::Assigned::unset)
-            {
-                op->checkBounds = RWOperation::Assigned::no;
-            }
-            op->lastWriteOp = &descriptor->ops[i];
-            break;
-        case Operation::OpType::size:
-            getSize(vector);
-
-            // NOTE: Don't store in ret. Store in index, as a special case for size calls.
-            descriptor->ops[i].index = size;
-            break;
-        case Operation::OpType::reserve:
-            // We only care about the largest reserve call.
-            // All other reserve operations will consolidate into a single call at the beginning of the transaction.
-            if ((unsigned int)descriptor->ops[i].index > maxReserveAbsolute)
-            {
-                maxReserveAbsolute = descriptor->ops[i].index;
-            }
-            break;
-        default:
-            // Unexpected operation type found.
-            break;
-        }
-    }
-
-    // DEBUG: Print out the map.
-    /*
-    for (auto it = operations.cbegin(); it != operations.cend(); ++it)
-    {
-        std::cout << it->first << " "
-                  << it->second << "\n";
-    }
-    */
-
-    // If we accessed size, we need to report what we changed it to.
-    if (size != UINT32_MAX)
+    if (size != std::numeric_limits<decltype(size)>::max())
     {
         // Replace our size element in shared memory with a finalized size value.
         CompactElement newSizeElement;
@@ -301,9 +203,18 @@ bool RWSet::createSet(Desc *descriptor, CompactVector *vector)
         // This can only fail if a thread helped us, so don't retry.
         vector->size.compare_exchange_strong(*sizeElement, newSizeElement);
     }
+
+    // DEBUG: Print out the map.
+    RWSet *set = descriptor->set.load();
+    for (auto it = set->operations.cbegin(); it != set->operations.cend(); ++it)
+    {
+        std::cout << it->first << " "
+                  << it->second << "\n";
+    }
+
+#endif
     return true;
 }
-#endif
 
 #ifdef SEGMENTVEC
 void RWSet::setToPages(Desc *descriptor)
@@ -320,24 +231,6 @@ void RWSet::setToPages(Desc *descriptor)
         // Link the page to the transaction descriptor.
         page->transaction = descriptor;
 
-        /*
-		Old, map of maps implementation.
-		// For each element to place in the given page.
-		for (auto j = i->second.begin(); j != i->second.end(); ++j)
-		{
-			size_t index = j->first;
-			// Infer a read based on the read list size.
-			page->bitset.read[index] = (j->second->readList.size() > 0);
-			// Infer a write based on the write op pointer.
-			page->bitset.write[index] = (j->second->lastWriteOp != NULL);
-			page->bitset.checkBounds[index] = (j->second->checkBounds == RWOperation::Assigned::yes) ? true : false;
-			// If a write occured, place the appropriate new value from it.
-			if (j->second->lastWriteOp != NULL)
-			{
-				page->set(index, NEW_VAL, j->second->lastWriteOp->val);
-			}
-		}
-		*/
         for (size_t j = 0; j < SGMT_SIZE; j++)
         {
             RWOperation *op = i->second[j];
@@ -417,9 +310,9 @@ void RWSet::setOperationVals(Desc *descriptor, std::map<size_t, Page<VAL, SGMT_S
 #endif
 
 #ifdef SEGMENTVEC
-size_t RWSet::getSize(Desc *descriptor, TransactionalVector *vector)
+size_t RWSet::getSize(TransactionalVector *vector, Desc *descriptor)
 {
-    if (sizeDesc != NULL)
+    if (sizeDesc.load() != NULL)
     {
         return size;
     }
@@ -427,12 +320,12 @@ size_t RWSet::getSize(Desc *descriptor, TransactionalVector *vector)
     // Prepend a read page to size.
     // The size page is always of size 1.
     // Set all unchanging page values here.
-    sizeDesc = Allocator<Page<size_t, 1>>::alloc();
-    sizeDesc->bitset.read.set();
-    sizeDesc->bitset.write.set();
-    sizeDesc->bitset.checkBounds.reset();
-    sizeDesc->transaction = descriptor;
-    sizeDesc->next = NULL;
+    Page<size_t, 1> *tempSizeDesc = Allocator<Page<size_t, 1>>::alloc();
+    tempSizeDesc->bitset.read.set();
+    tempSizeDesc->bitset.write.set();
+    tempSizeDesc->bitset.checkBounds.reset();
+    tempSizeDesc->transaction = descriptor;
+    tempSizeDesc->next = NULL;
 
     Page<size_t, 1> *rootPage = NULL;
     do
@@ -451,10 +344,10 @@ size_t RWSet::getSize(Desc *descriptor, TransactionalVector *vector)
         if (rootPage == NULL)
         {
             // Assume an initial size of 0.
-            sizeDesc->set(0, OLD_VAL, 0);
+            tempSizeDesc->set(0, OLD_VAL, 0);
         }
         // If a helper got here first.
-        else if (rootPage->transaction == sizeDesc->transaction)
+        else if (rootPage->transaction == tempSizeDesc->transaction)
         {
             // Do not insert again.
             break;
@@ -464,8 +357,10 @@ size_t RWSet::getSize(Desc *descriptor, TransactionalVector *vector)
             enum Desc::TxStatus status = rootPage->transaction->status.load();
             while (status == Desc::TxStatus::active)
             {
+#ifdef HELP
                 // Help the active transaction.
                 vector->sizeHelp(rootPage->transaction);
+#endif
                 status = rootPage->transaction->status.load();
             }
 
@@ -480,13 +375,16 @@ size_t RWSet::getSize(Desc *descriptor, TransactionalVector *vector)
             {
                 rootPage->get(0, OLD_VAL, value);
             }
-            sizeDesc->set(0, OLD_VAL, value);
+            tempSizeDesc->set(0, OLD_VAL, value);
         }
         // Append the old page onto the new page. Used to maintain history.
-        sizeDesc->next = rootPage;
+        tempSizeDesc->next = rootPage;
     }
     // Replace the page. Finish on success. Retry on failure.
-    while (!vector->size.compare_exchange_strong(rootPage, sizeDesc));
+    while (!vector->size.compare_exchange_strong(rootPage, tempSizeDesc));
+
+    // Store the descriptor locally.
+    sizeDesc.store(tempSizeDesc);
 
     // Store the actual size locally.
     vector->size.load()->get(0, OLD_VAL, size);
@@ -496,7 +394,7 @@ size_t RWSet::getSize(Desc *descriptor, TransactionalVector *vector)
 #endif
 #ifdef COMPACTVEC
 // Special way to retrieve the current size.
-unsigned int RWSet::getSize(CompactVector *vector)
+unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
 {
     // If size has already been set.
     if (size != UINT32_MAX)
@@ -526,8 +424,10 @@ unsigned int RWSet::getSize(CompactVector *vector)
         Desc::TxStatus status = oldSizeElement.descriptor->status.load();
         while (status == Desc::TxStatus::active)
         {
+#ifdef HELP
             // Help the active transaction.
             vector->sizeHelp(oldSizeElement.descriptor);
+#endif
             status = oldSizeElement.descriptor->status.load();
         }
 

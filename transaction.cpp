@@ -14,6 +14,11 @@ Desc::Desc(unsigned int size, Operation *ops)
 #endif
 	// The RWSet always starts out empty.
 	set.store(NULL);
+#ifdef HELP_FREE_READS
+	// Initialize the time to the lowest possbile value.
+	// This way, we know if it has been set yet.
+	version.store(0);
+#endif
 	return;
 }
 
@@ -67,7 +72,7 @@ void Desc::print()
 
 void Operation::print()
 {
-	const char *typeStrList[] = {"pushBack", "popBack", "reserve", "read", "write", "size"};
+	const char *typeStrList[] = {"pushBack", "popBack", "reserve", "read", "write", "size", "hfRead"};
 	size_t typeStrIndex = 0;
 	switch (type)
 	{
@@ -88,7 +93,11 @@ void Operation::print()
 		break;
 	case size:
 		typeStrIndex = 5;
+#ifdef HELP_FREE_READS
+	case hfRead:
+		typeStrIndex = 6;
 		break;
+#endif
 	}
 	std::cout << "Type:\t" << typeStrList[typeStrIndex] << std::endl;
 	std::cout << "index:\t" << index << std::endl;

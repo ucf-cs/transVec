@@ -22,6 +22,12 @@ class Page;
 
 class RWSet;
 
+#ifdef HELP_FREE_READS
+// The global version counter.
+// Used for help-free reads.
+static std::atomic<size_t> globalVersionCounter(1);
+#endif
+
 // A standard, user-generated operation.
 // Works with values of type T.
 struct Operation
@@ -45,7 +51,15 @@ struct Operation
 		write,
 		// Simillar to read, but always at the size index (probably 1?).
 		// Returned answer can be offset by a transaction's push and pop ops.
-		size
+		size,
+#ifdef HELP_FREE_READS
+		// A help-free read.
+		// Simillar to normal read, but can be reordered to prevent helping.
+		// NOTE: hfRead inside a transaction will not be serializable like the others.
+		// Should try to keep hfReads to their own transactions for correctness.
+		// You could reason that they are seperate transactions.
+		hfRead,
+#endif
 	};
 
 	// The type of operation being performed.
@@ -92,6 +106,10 @@ struct Desc
 	std::atomic<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *> pages;
 #endif
 	std::atomic<RWSet *> set;
+#ifdef HELP_FREE_READS
+	// Used to determine how to reorder help-free reads.
+	std::atomic<size_t> version;
+#endif
 
 	// Create a descriptor object.
 	// ops:     An array of operations, passed by reference.

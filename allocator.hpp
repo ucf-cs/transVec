@@ -96,8 +96,7 @@ public:
     }
     else
     {
-      // DEBUG: TODO: Uncomment this when done testing.
-      //printf("Pool for thread %lu ran out of elements of size %lu.\n", threadNum, sizeof(DataType));
+      printf("Pool for thread %lu ran out of elements of size %lu.\n", threadNum, sizeof(DataType));
       object = new DataType();
     }
     if (object == NULL)

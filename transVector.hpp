@@ -42,8 +42,11 @@ private:
 	bool prependPage(size_t index, Page<VAL, SGMT_SIZE> *page);
 
 	// Takes in a set of pages and inserts them into our vector.
-	// startPage is used in the helping scheme to start inserting at later pages.
+	// startPage is used in the helping scheme to start inserting at a specific page.
 	void insertPages(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *pages, bool helping = false, size_t startPage = SIZE_MAX);
+
+	// A special case where help-free reads occur.
+	void executeHelpFreeReads(Desc *descriptor);
 
 public:
 	// A page holding our shared size variable.
@@ -52,8 +55,8 @@ public:
 	// Default contructor.
 	TransactionalVector();
 	// Create a RWSet for the transaction.
-	// Only used in helping on size conflict.
-	void prepareTransaction(Desc *descriptor);
+	// If helping, this will only be called on a size conflict.
+	bool prepareTransaction(Desc *descriptor);
 	// Finish the vector transaction.
 	// Used for helping.
 	bool completeTransaction(Desc *descriptor, bool helping = false, size_t startPage = SIZE_MAX);
