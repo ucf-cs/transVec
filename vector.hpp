@@ -180,7 +180,6 @@ public:
         if (ret)
         {
             desc->status.store(Desc::TxStatus::committed);
-            desc->returnedValues.store(true);
         }
         else
         {
@@ -245,7 +244,6 @@ public:
         if (ret)
         {
             desc->status.store(Desc::TxStatus::committed);
-            desc->returnedValues.store(true);
         }
         else
         {

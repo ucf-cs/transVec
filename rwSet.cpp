@@ -12,8 +12,10 @@ RWSet::~RWSet()
 #ifdef SEGMENTVEC
 std::pair<size_t, size_t> RWSet::access(size_t pos)
 {
-    size_t first = pos / SGMT_SIZE;
-    size_t second = pos % SGMT_SIZE;
+    size_t first = pos / (size_t)SGMT_SIZE;
+    size_t second = pos % (size_t)SGMT_SIZE;
+    // DEBUG
+    //printf("SGMT_SIZE=%lu\tpos=%lu\tfirst=%lu\tsecond=%lu\n", SGMT_SIZE, pos, first, second);
     return std::make_pair(first, second);
 }
 #endif
@@ -237,6 +239,8 @@ void RWSet::setToPages(Desc *descriptor)
             // Ignore NULL elements in the array.
             if (op == NULL)
             {
+                // DEBUG
+                //printf("No op at page %lu index %lu\n", i->first, j);
                 continue;
             }
             // Infer a read based on the read list size.
@@ -258,52 +262,6 @@ void RWSet::setToPages(Desc *descriptor)
     // Only the first thread to finish the job succeeds here.
     std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator> *nullVal = NULL;
     descriptor->pages.compare_exchange_strong(nullVal, pages);
-
-    return;
-}
-
-void RWSet::setOperationVals(Desc *descriptor, std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator> pages)
-{
-    // If the returned values have already been copied over, do no more.
-    if (descriptor->returnedValues.load() == true)
-    {
-        return;
-    }
-
-    // For each page.
-    for (auto i = pages.begin(); i != pages.end(); ++i)
-    {
-        // Get the page.
-        Page<VAL, SGMT_SIZE> *page = i->second;
-        // Get a list of values in the page.
-        std::bitset<SGMT_SIZE> usedBits = page->bitset.read | page->bitset.write;
-        // For each element.
-        for (auto j = 0; j < SGMT_SIZE; ++j)
-        {
-            // Skip elements that aren't represented in this page.
-            if (!usedBits[j])
-            {
-                continue;
-            }
-
-            // Get the value.
-            VAL value = UNSET;
-            page->get(j, OLD_VAL, value);
-
-            // Get the read list for the current element.
-            std::vector<Operation *, MemAllocator<Operation *>> readList = operations.at(i->first).at(j)->readList;
-
-            // For each operation attempting to read the element.
-            for (size_t k = 0; k < readList.size(); k++)
-            {
-                // Assign the return value.
-                readList[k]->ret = value;
-            }
-        }
-    }
-
-    // Subsequent attempts to load values will not have to repeat this work.
-    descriptor->returnedValues.store(true);
 
     return;
 }
@@ -381,7 +339,7 @@ size_t RWSet::getSize(TransactionalVector *vector, Desc *descriptor)
         tempSizeDesc->next = rootPage;
     }
     // Replace the page. Finish on success. Retry on failure.
-    while (!vector->size.compare_exchange_strong(rootPage, tempSizeDesc));
+    while (!vector->size.compare_exchange_weak(rootPage, tempSizeDesc));
 
     // Store the descriptor locally.
     sizeDesc.store(tempSizeDesc);
@@ -444,7 +402,7 @@ unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
         }
     }
     // Replace the old size element.
-    while (vector->size.compare_exchange_strong(oldSizeElement, *sizeElement));
+    while (vector->size.compare_exchange_weak(oldSizeElement, *sizeElement));
 
     // Set the size.
     size = sizeElement->oldVal;

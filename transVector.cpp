@@ -164,6 +164,29 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 		}
 	}
 
+	// TODO: Add this to the paper.
+	// For each element in the page.
+	for (size_t i = 0; i < page->SEG_SIZE; i++)
+	{
+		// If a read was not performed, skip it.
+		if (!page->bitset.read[i])
+		{
+			continue;
+		}
+		// Get the RWOperation with the readList.
+		RWOperation *op = NULL;
+		page->transaction->set.load()->getOp(op, std::make_pair(index, i));
+		// Get the old value from the page.
+		VAL val = UNSET;
+		page->get(i, OLD_VAL, val);
+		// For each operation attempting to read the element.
+		for (size_t i = 0; i < op->readList.size(); i++)
+		{
+			// Assign the return values.
+			op->readList[i]->ret = val;
+		}
+	}
+
 	return true;
 }
 
@@ -356,12 +379,13 @@ void TransactionalVector::executeHelpFreeReads(Desc *descriptor)
 		std::pair<size_t, size_t> indexes = RWSet::access(descriptor->ops[i].index);
 
 		// Get the root page.
-		if (!array->read(descriptor->ops[i].index, rootPage))
+		if (!array->read(indexes.first, rootPage))
 		{
 			// Failure means the transaction attempted an invalid read or write, as the vector wasn't allocated to this point.
 			descriptor->status.store(Desc::TxStatus::aborted);
 			// DEBUG:
 			//printf("Aborted!\n");
+
 			// No need to even try anymore. The whole transaction failed.
 			return;
 		}
@@ -390,6 +414,9 @@ void TransactionalVector::executeHelpFreeReads(Desc *descriptor)
 				case Desc::TxStatus::active:
 					break;
 				case Desc::TxStatus::committed:
+					// DEBUG:
+					//printf("currentPage->transaction->version = %d\t descriptor->version = %d\n", currentPage->transaction->version.load(), descriptor->version.load());
+
 					// If this transaction completed before the help-free read transaction started.
 					if (currentPage->transaction->version.load() < descriptor->version.load())
 					{
@@ -432,7 +459,6 @@ void TransactionalVector::executeHelpFreeReads(Desc *descriptor)
 	}
 	// Complete the reads.
 	descriptor->status.store(Desc::TxStatus::committed);
-	descriptor->returnedValues.store(true);
 	return;
 }
 #endif
@@ -448,17 +474,10 @@ void TransactionalVector::executeTransaction(Desc *descriptor)
 		return;
 	}
 #endif
-
 	// Initialize the set for the descriptor.
 	prepareTransaction(descriptor);
-
 	// If the transaction committed.
-	if (completeTransaction(descriptor))
-	{
-		// Set values for all operations that wanted to read from shared memory.
-		// This only occurs on one thread. Helpers don't bother with this.
-		descriptor->set.load()->setOperationVals(descriptor, *descriptor->pages.load());
-	}
+	completeTransaction(descriptor);
 }
 
 void TransactionalVector::sizeHelp(Desc *descriptor)
@@ -466,7 +485,7 @@ void TransactionalVector::sizeHelp(Desc *descriptor)
 	// Must actually start at the very beginning.
 	prepareTransaction(descriptor);
 	// Must help from the beginning of the list, since we didn't help part way through.
-	completeTransaction(descriptor, true, SIZE_MAX);
+	completeTransaction(descriptor, true);
 }
 
 void TransactionalVector::printContents()

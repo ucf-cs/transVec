@@ -197,8 +197,17 @@ void predicatePreinsert(int threadNum)
 	{
 		// All operations are pushes.
 		insertOps[j].type = Operation::OpType::pushBack;
+
 		// Push random values into the vector.
-		insertOps[j].val = numPool->getNum(threadNum) % std::numeric_limits<VAL>::max();
+		VAL val = UNSET;
+		// Ensure we never get an UNSET.
+		while (val == UNSET)
+		{
+			val = numPool->getNum(threadNum) % std::numeric_limits<VAL>::max();
+		}
+		insertOps[j].val = val;
+		
+		//insertOps[j].val = threadNum * NUM_TRANSACTIONS + j;
 	}
 	// Create a transaction containing the these operations.
 	Desc *insertDesc = new Desc(NUM_TRANSACTIONS, insertOps);
@@ -220,13 +229,6 @@ void predicateFind(int threadNum)
 	{
 		printf("Error on thread %d. Transaction failed.\n", threadNum);
 		return;
-	}
-	// Get the results.
-	// Busy wait until they are ready. Should never happen, but we need to be safe.
-	while (desc->returnedValues.load() == false)
-	{
-		printf("Thread %d had to wait on returned values.\n", threadNum);
-		continue;
 	}
 	// Check for predicate matches.
 	size_t matchCount = 0;

@@ -98,9 +98,6 @@ struct Desc
 	Operation *ops;
 	// The status of the transaction.
 	std::atomic<TxStatus> status;
-	// The status of the returned values.
-	// They are not safe to access until this is true.
-	std::atomic<bool> returnedValues;
 #ifdef SEGMENTVEC
 	// A list of pages for the transaction to insert.
 	std::atomic<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *> pages;

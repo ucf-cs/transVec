@@ -1,5 +1,3 @@
-# Declaration of variables
-
 # Default compiler
 CC = g++
 # Used to build CompactVector

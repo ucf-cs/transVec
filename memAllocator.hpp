@@ -76,6 +76,9 @@ public:
             // *2 to ensure we have pools for our two rounds of threads.
             size_t poolSize = sizeof(T) * NUM_POOLS * POOL_SIZE;
             newPool = (char *)memalign(objectSize, poolSize);
+            if(newPool == NULL){
+                assert(false);
+            }
             char *nullVal = NULL;
             // If newPool is NULL, while loop will retry.
             if (!pool.compare_exchange_strong(nullVal, newPool))
@@ -211,7 +214,7 @@ size_t MemAllocator<T>::NUM_POOLS;
 
 // NOTE: This size is used if the pool is never explicitly initialized.
 template <typename T>
-size_t MemAllocator<T>::POOL_SIZE(22000000);
+size_t MemAllocator<T>::POOL_SIZE(2200000);
 
 template <typename T>
 bool MemAllocator<T>::isInit(false);

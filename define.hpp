@@ -19,13 +19,13 @@
 // Divide by the size of the elements in the segment an by 2, so we can hold old and new values on the same cache line.
 // NOTE: This may break if division makes this resolve to 0.
 // TUNE
-#define SGMT_SIZE (8 * 16) / (sizeof(VAL) * 2)
+#define SGMT_SIZE ((8 * 16) / (sizeof(VAL) * 2))
 // TUNE
-#define NUM_TRANSACTIONS 250000
+#define NUM_TRANSACTIONS 25000
 // TUNE
 #define TRANSACTION_SIZE 5
 // TUNE
-#define THREAD_COUNT 2
+#define THREAD_COUNT 24
 // Define this to enable the helping scheme.
 #define HELP
 // Define this to align SEGMENTVEC pages.
@@ -47,10 +47,10 @@ const int UNSET = INT32_MAX;
 #else
 // Use this typedef to quickly change what type of objects we're working with.
 // TUNE (Compile time only)
-typedef short VAL;
+typedef unsigned int VAL;
 // This reserved value indicates that a value cannot be set by a read or write here.
 // Must differ depending on T.
-const VAL UNSET = __SHRT_MAX__;
+const VAL UNSET = UINT32_MAX;
 #endif
 
 #endif

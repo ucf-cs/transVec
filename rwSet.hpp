@@ -70,7 +70,19 @@ public:
 		operations;
 	// The descriptor associated with this set.
 	Desc *descriptor = NULL;
-#else
+	// Set this if size changes.
+	unsigned int size = UINT32_MAX;
+	// A replacement size element, used by this RWSet.
+	CompactElement *sizeElement = NULL;
+	// Return the index associated with a RW operation access.
+	static size_t access(size_t pos);
+	// Converts a transaction descriptor into a read/write set.
+	bool createSet(Desc *descriptor, CompactVector *vector);
+	unsigned int getSize(CompactVector *vector, Desc *descriptor = NULL);
+	// Get an op node from a map. Allocate it if it doesn't already exist.
+	bool getOp(RWOperation *&op, size_t index);
+#endif
+#ifdef SEGMENTVEC
 	// Map vector locations to read/write operations.
 	std::unordered_map<size_t,
 					   std::array<RWOperation *, SGMT_SIZE>,
@@ -78,71 +90,26 @@ public:
 					   std::equal_to<size_t>,
 					   MemAllocator<std::pair<size_t, std::array<RWOperation *, SGMT_SIZE>>>>
 		operations;
-#endif
-
-	// An absolute reserve position.
-	size_t maxReserveAbsolute = 0;
-#ifdef SEGMENTVEC
 	// Our size descriptor. After reading size, we use this to write a new size value later.
 	std::atomic<Page<size_t, 1> *> sizeDesc;
 	// Set this if size changes.
 	size_t size = 0;
-#endif
-#ifdef COMPACTVEC
-	// Set this if size changes.
-	unsigned int size = UINT32_MAX;
-	// A replacement size element, used by this RWSet.
-	CompactElement *sizeElement = NULL;
-#endif
-
-	~RWSet();
-
-#ifdef SEGMENTVEC
 	// Return the indexes associated with a RW operation access.
 	static std::pair<size_t, size_t> access(size_t pos);
-#endif
-#ifdef COMPACTVEC
-	// Return the index associated with a RW operation access.
-	static size_t access(size_t pos);
-#endif
-#ifdef SEGMENTVEC
 	// Converts a transaction descriptor into a read/write set.
 	bool createSet(Desc *descriptor, TransactionalVector *vector);
-#endif
-#ifdef COMPACTVEC
-	// Converts a transaction descriptor into a read/write set.
-	bool createSet(Desc *descriptor, CompactVector *vector);
-#endif
-
-#ifdef SEGMENTVEC
 	// Convert from a set of reads and writes to a list of pages.
 	// A pointer to the pages is stored in the descriptor.
 	void setToPages(Desc *descriptor);
-
-	// Set the values in a transaction to the retrived values.
-	void setOperationVals(Desc *descriptor, std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator> pages);
-#endif
-
-#ifdef SEGMENTVEC
 	size_t getSize(TransactionalVector *sizeHead, Desc *transaction);
-#endif
-#ifdef COMPACTVEC
-	unsigned int getSize(CompactVector *vector, Desc *descriptor = NULL);
-#endif
-
-#ifdef SEGMENTVEC
 	// Get an op node from a map. Allocate it if it doesn't already exist.
 	void getOp(RWOperation *&op, std::pair<size_t, size_t> indexes);
-#endif
-#ifdef COMPACTVEC
-	// Get an op node from a map. Allocate it if it doesn't already exist.
-	bool getOp(RWOperation *&op, size_t index);
-#endif
-
-#ifdef SEGMENTVEC
 	// Print out a list of all locations with operations associated with them.
 	void printOps();
 #endif
+	// An absolute reserve position.
+	size_t maxReserveAbsolute = 0;
+	~RWSet();
 };
 
 #endif

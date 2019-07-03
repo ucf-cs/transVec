@@ -6,8 +6,6 @@ Desc::Desc(unsigned int size, Operation *ops)
 	this->ops = ops;
 	// Transactions are always active at start.
 	status.store(active);
-	// Returned values are never safe to access until they have been explicitly set.
-	returnedValues.store(false);
 #ifdef SEGMENTVEC
 	// The page map always starts out empty.
 	pages.store(NULL);
