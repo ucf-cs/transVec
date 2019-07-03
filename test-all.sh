@@ -22,6 +22,9 @@ PARAMETERS=$(grep "// #define" define.hpp)
 PARAMETERS=$(echo "$PARAMETERS" | sed -r 's/[a-z0-9/#\s]*//g')
 MAIN=
 
+# Redirect all local error messages to /dev/null (like "process aborted").
+exec 2> /dev/null
+
 # Store tokens in an array
 for word in $PARAMETERS
 do
@@ -132,7 +135,8 @@ do
         # For loop to go through the test cases
         for k in `seq -f "%02g" 1 $NUM_TEST_CASES`;
         do
-            echo -e "\e[96mStarting testcase$k: THRD_CNT = $i, TXN_SIZE = $j\e[0m"
+            echo -e -n "\e[96mStarting testcase$k:"
+            echo -e -n " THRD_CNT = $i, TXN_SIZE = $j ... \e[0m"
             echo -n "Testcase $k ... "                               >> $REPORT
 
             # Make the executable file with a different main file everytime
@@ -141,20 +145,22 @@ do
             # Check if it compiled correctly or not
             compile_val=$?
             if [[ $compile_val != 0 ]]; then
+                echo -e "\e[91m fail (failed to compile)\e[0m"                
                 echo "fail (failed to compile)"                      >> $REPORT
                 continue
             fi
 
-            ./transVec.out                                           >> $REPORT
+            ./transVec.out                              >> $REPORT 2> /dev/null
 
             # Check if the program crashed or not                 
             execution_val=$?
             if [[ $execution_val != 0 ]]; then
+                echo -e "\e[91m fail (program crashed)\e[0m"                
                 echo "fail (program crashed)"                        >> $REPORT
                 continue
             fi
 
-
+            echo -e "\e[94m Success!\e[0m"
         done
     done
 done
