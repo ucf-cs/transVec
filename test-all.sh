@@ -25,62 +25,10 @@ MAIN=
 # Redirect all local error messages to /dev/null (like "process aborted").
 exec 2> /dev/null
 
-# Store tokens in an array
+# Store all the macros in an array
 for word in $PARAMETERS
 do
-    TOKENS+=($word)
-done
-
-###############################################################################
-# If not enough command line arguements are passed
-###############################################################################
-if [ "$NUM_PARAMETERS" != "$#" ]
-then
-    # This will be the error message.
-    for word in $PARAMETERS
-    do
-        CORRECT+="$word=??? "
-    done
-
-    echo
-    echo "Error: Wrong number of parameters are passed!"
-    echo "       Expected macros to be passed are [$NUM_PARAMETERS]:"
-    echo
-    echo "       Proper syntax:"
-    echo "       bash test-all.sh $CORRECT"
-    echo
-    echo "       Aborting test script. Byeeeeeeeee."
-    echo
-    exit
-fi
-
-###############################################################################
-# Make sure that the passed arguments are spelled correctly.
-###############################################################################
-for VAR in "$@"
-do
-    TEMP=$(echo "$VAR" | sed -r 's/[a-z0-9/#\s=]*//g')
-    MISMATCH=true
-
-    # If anyone is spelt wrong or not found, then change the value of MISMATCH
-    for (( j=0; j<$NUM_PARAMETERS; j++ ))
-    do
-        if [ "$TEMP" = "${TOKENS[j]}" ]
-        then
-            MISMATCH=false
-        fi
-    done
-
-    if $MISMATCH
-    then
-        echo
-        echo "Error: There's no macro named $TEMP!"
-        echo "       Please fix this typo before continuing."
-        echo 
-        echo "       Aborting test script. Byeeeeeeeee."
-        echo
-        exit
-    fi
+    MACROS+=($word)
 done
 
 ###############################################################################
@@ -110,20 +58,11 @@ echo "$MODEL"                                                        >> $REPORT
 echo "Total RAM on system: $RAM"                                     >> $REPORT
 echo                                                                 >> $REPORT
 
-# Replace spaces with '|' to be able to pass it to the makefile
-if [ "$NUM_PARAMETERS" != "0" ]; then
-    TO_BE_PASSED="|$(echo "$@" | sed -r 's/\s/|/g')"
-fi
-
-###############################################################################
-# Now we're actually going to start with the testing
-###############################################################################
-
 # NUM_CORES will determine up to which value we go to for THREAD_COUNT
-for i in `seq 1`
+for i in `seq 2 2`
 do
     # Test for TRANSACTION_SIZE from 1 - 5
-    for j in `seq 1`
+    for j in `seq 5 5`
     do
         echo "=====================================================" >> $REPORT
         echo "SGMT_SIZE        = 16    "                             >> $REPORT
@@ -132,7 +71,75 @@ do
         echo "TRANSACTION_SIZE = $j    "                             >> $REPORT
         echo                                                         >> $REPORT
 
-        # For loop to go through the test cases
+        # Preparing the the macros that are being passed this rouand of testing
+        if [ "$NUM_PARAMETERS" != "0" ]; then
+            TO_BE_PASSED=("THREAD_COUNT=$i")
+            TO_BE_PASSED+=("TRANSACTION_SIZE=$j")
+            TO_BE_PASSED+=$@
+
+            # Make sure the macros there are the correct number of macros
+            if [ "${#TO_BE_PASSED[@]}" != "$NUM_PARAMETERS" ]
+            then
+                # This will be the error message.
+                for word in $PARAMETERS
+                do
+                    CORRECT+="$word=??? "
+                done
+
+                echo
+                echo "Error: Wrong number of parameters are passed!"
+                echo "       Expected number of macros: [$NUM_PARAMETERS]:"
+                echo "       Currently, only [${#TO_BE_PASSED[@]}] are defined."
+                echo
+                echo "Proper syntax:"
+                echo "  bash test-all.sh <macro1>=<value> <macro2>=<value> etc"
+                echo -n " (or define them by editing the bash script and"
+                echo " adding a for loop or something)"
+                echo
+                echo "=> Aborting test script. Byeeeeeeeee."
+                echo
+                rm $REPORT
+                exit
+            fi
+
+            # Make sure parameters are spelt correcly
+            for VAR in ${TO_BE_PASSED[@]}
+            do
+                TEMP=$(echo "$VAR" | sed -r 's/[a-z0-9/#\s=]*//g')
+                MISMATCH=true
+
+                for k in `seq 0 $NUM_PARAMETERS`
+                do
+                    if [ "$TEMP" = "${MACROS[k]}" ]
+                    then
+                        MISMATCH=false
+                    fi
+                done
+
+                if $MISMATCH
+                then
+                    echo
+                    echo "Error: There's no macro named $TEMP!"
+                    echo "       Please fix this typo before continuing."
+                    echo
+                    echo "       (or it's already defined... Just check define.hpp"
+                    echo "        and make sure everything is correct.)"
+                    echo 
+                    echo "       Aborting test script. Byeeeeeeeee."
+                    echo
+                    rm $REPORT
+                    exit
+                fi
+            done
+
+            # Finally, replace spaces with "|" to be able to pass it to the
+            # makefile (Makefiles are weird like that)
+            TO_BE_PASSED="|$(echo "${TO_BE_PASSED[@]}" | sed -r 's/\s/|/g')"
+        fi
+
+        #######################################################################
+        # Now we're actually going to start with the testcases.
+        #######################################################################
         for k in `seq -f "%02g" 1 $NUM_TEST_CASES`;
         do
             echo -e -n "\e[96mStarting testcase$k:"

@@ -19,9 +19,9 @@
 // TUNE
 #define NUM_TRANSACTIONS 10000
 // TUNE
-#define TRANSACTION_SIZE 5
+// #define TRANSACTION_SIZE 5
 // TUNE
-#define THREAD_COUNT 2
+// #define THREAD_COUNT 2
 // Define this to align SEGMENTVEC pages.
 //#define ALIGNED
 
