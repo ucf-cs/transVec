@@ -22,8 +22,6 @@ void createTransactions(TransactionalVector *transVector,
 		Desc *desc = new Desc(NUM_TRANSACTIONS, ops);
 		transactions->push_back(desc);
 	}
-
-	printf("hello?\n");
 }
 
 int main(void)

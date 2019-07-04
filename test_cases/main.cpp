@@ -35,8 +35,8 @@ void executeTransactions(int threadNum,
 	threadAllocatorInit(threadNum);
 
 	// Each thread is allocated an interval to work on
-	int start = NUM_TRANSACTIONS / THREAD_COUNT * threadNum;
-	int end   = NUM_TRANSACTIONS / THREAD_COUNT * (threadNum + 1);
+	int start = transactions->size() / THREAD_COUNT * threadNum;
+	int end   = transactions->size() / THREAD_COUNT * (threadNum + 1);
 
 	for (int i = start; i < end; i++)
 	{
