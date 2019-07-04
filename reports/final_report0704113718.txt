@@ -1,0 +1,34 @@
+=====================================================
+  T R A N S A C T I O N A L   V E C T O R   T E S T  
+=====================================================
+
+Test preformed on Thu Jul  4 11:37:18 DST 2019.
+Tested on a computer with 4 cores.
+Processor Model name: Intel(R) Core(TM) i5-7300HQ CPU @ 2.50GHz
+Total RAM on system: 16GB
+
+=====================================================
+SGMT_SIZE        = 16    
+NUM_TRANSACTIONS = 250000
+THREAD_COUNT     = 2    
+TRANSACTION_SIZE = 5    
+
+Testcase 01 ... 9546300 nanoseconds
+Testcase 02 ... 6900900 nanoseconds
+Testcase 03 ... fail (program crashed)
+Testcase 04 ... 29510200 nanoseconds
+Testcase 05 ... 5257800 nanoseconds
+Testcase 06 ... 29144700 nanoseconds
+Testcase 07 ... 28937100 nanoseconds
+Testcase 08 ... 34619000 nanoseconds
+Testcase 09 ... 32603500 nanoseconds
+Testcase 10 ... 27934000 nanoseconds
+Testcase 11 ... fail (program crashed)
+Testcase 12 ... fail (program crashed)
+Testcase 13 ... fail (program crashed)
+Testcase 14 ... fail (program crashed)
+Testcase 15 ... fail (program crashed)
+Testcase 16 ... fail (program crashed)
+Testcase 17 ... 11176200 nanoseconds
+Testcase 18 ... 12372200 nanoseconds
+Testcase 19 ... fail (program crashed)

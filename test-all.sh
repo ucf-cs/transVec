@@ -7,20 +7,19 @@
 # This script is made with the intention of providing a convinient way to run
 # multiple testcases and generate a cute report at the end. If you want to run
 # any individual testcase, just change the MAIN variable in the makefile and
-# simple run "make" from a commandline
+# simply run "make" from a commandline
 
-# ADDING YOUR OWN TESTCASES: Just create a file named testcase0X.cpp and place
+# ADDING YOUR OWN TESTCASES: Just create a file named testcaseX.cpp and place
 # it in the test_cases/ directory. Update the variable below to the new number
 # of testcases
-NUM_TEST_CASES=18
+NUM_TEST_CASES=19
 
-# Before doing anything, make sure if passed in parameters are correct.
-# Make sure all macros are defined, start by extracting the macros from the
-# define.hpp file using grep, sed, and regex.
+# Start by extracting the commented out macros from the define.hpp file using
+# grep, sed, and regex. It will be used to make sure all macros are correctly
+# defined before running a testcase
 NUM_PARAMETERS=$(grep "// #define" define.hpp | wc -l)
 PARAMETERS=$(grep "// #define" define.hpp)
 PARAMETERS=$(echo "$PARAMETERS" | sed -r 's/[a-z0-9/#\s]*//g')
-MAIN=
 
 # Redirect all local error messages to /dev/null (like "process aborted").
 exec 2> /dev/null
@@ -39,7 +38,7 @@ REPORT="reports/final_report$(date +%m%d%H%M%S).txt"
 NUM_CORES=$(nproc)
 MODEL="Processor $(lscpu | grep GHz)"
 MODEL=$(echo "$MODEL" | sed -r 's/\s\s\s\s\s\s\s\s\s//g')
-RAM=$(free -h | grep -o -m 1 "\w*G\b" | head -1)
+RAM="$(free -h --si | grep -o -m 1 "\w*G\b" | head -1)B"
 
 # Create the file
 touch $REPORT
@@ -157,6 +156,7 @@ do
                 continue
             fi
 
+            # Run the executable and suppress all ouptut
             ./transVec.out                              >> $REPORT 2> /dev/null
 
             # Check if the program crashed or not                 

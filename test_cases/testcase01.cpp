@@ -67,16 +67,15 @@ int main(void)
 	// Create the transactions that are to be executed and timed below
 	createTransactions(transVector, &transactions, numPool);
 
-	// Get the current time.
-	auto start = std::chrono::system_clock::now();
+	// Get start time.
+	auto start = std::chrono::high_resolution_clock::now();
 
 	// Execute the transactions
 	threadRunner(threads, executeTransactions, transVector, &transactions, numPool);
 
-	// Get total execution time.
-	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
-
-	std::cout << total.count() << " milliseconds" << std::endl;
+	// Get end time.
+	auto finish = std::chrono::high_resolution_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count() << " nanoseconds\n";
 
 	return 0;
 }

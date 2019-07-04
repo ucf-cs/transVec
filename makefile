@@ -17,7 +17,7 @@ CC_FLAGS = $(OPTIMAL_FLAGS)
 
 # File names
 EXEC    = transVec.out
-MAIN    = test_cases/testcase04.cpp
+MAIN    = test_cases/testcase19.cpp
 SOURCES = $(wildcard *.cpp) test_cases/main.cpp $(MAIN)
 OBJECTS = $(SOURCES:.cpp=.o)
 DEFINES = 
