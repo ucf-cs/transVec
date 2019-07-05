@@ -5,7 +5,6 @@
 
 #include "main.hpp"
 
-// Insert random elements into the vector then preforms a bunch of reads
 void createTransactions(TransactionalVector *transVector,
 						std::vector<Desc *> *transactions,
 						RandomNumberPool *numPool)
@@ -48,13 +47,13 @@ void createTransactions(TransactionalVector *transVector,
 					// All operations are writes.
 					ops[k].type  = Operation::OpType::write;
 					ops[k].val   = 0;
-					ops[k].index = rand() % NUM_TRANSACTIONS;
+					ops[k].index = rand() % (NUM_TRANSACTIONS / 10);
 				}
 				else
 				{
 					// Read all elements, split among threads.
 					ops[k].type = Operation::OpType::read;
-					ops[k].index = rand() % NUM_TRANSACTIONS;
+					ops[k].index = rand() % (NUM_TRANSACTIONS / 10);
 				}
 			}
 		}

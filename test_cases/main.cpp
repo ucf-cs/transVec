@@ -46,6 +46,7 @@ void executeTransactions(int threadNum,
 		if (desc->status.load() != Desc::TxStatus::committed)
 		{
 			// printf("Error on thread %d. Transaction failed.\n", threadNum);
+			// return;
 			throw std::exception();
 		}
 		

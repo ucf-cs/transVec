@@ -3,7 +3,6 @@
 // All operations are of equal chance to be chosen
 #include "main.hpp"
 
-// Insert random elements into the vector then preforms a bunch of reads
 void createTransactions(TransactionalVector *transVector,
 						std::vector<Desc *> *transactions,
 						RandomNumberPool *numPool)
