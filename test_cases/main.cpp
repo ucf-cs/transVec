@@ -35,7 +35,7 @@ void executeTransactions(int threadNum,
 	threadAllocatorInit(threadNum);
 
 	// Each thread is allocated an interval to work on
-	int start = transactions->size() / THREAD_COUNT * threadNum;
+	int start = transactions->size() / THREAD_COUNT *  threadNum;
 	int end   = transactions->size() / THREAD_COUNT * (threadNum + 1);
 
 	for (int i = start; i < end; i++)
@@ -44,11 +44,7 @@ void executeTransactions(int threadNum,
 		transVector->executeTransaction(desc);
 		
 		if (desc->status.load() != Desc::TxStatus::committed)
-		{
-			// printf("Error on thread %d. Transaction failed.\n", threadNum);
-			// return;
-			throw std::exception();
-		}
+			continue;
 		
 		// Busy wait until they are ready. Should never happen, but we need to be safe.
 		while (desc->returnedValues.load() == false)
@@ -94,4 +90,18 @@ void preinsert(int threadNum,
 	transVector->executeTransaction(pushDesc);
 	
 	return;
+}
+
+int countAborts(std::vector<Desc *> *transactions)
+{
+	int retVal = 0;
+	for (int i = 0; i < transactions->size(); i++)
+	{
+		Desc *desc = transactions->at(i);	
+
+		if (desc->status.load() == Desc::TxStatus::aborted)
+			retVal++;
+	}
+
+	return retVal;
 }

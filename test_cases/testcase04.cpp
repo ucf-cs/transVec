@@ -69,9 +69,10 @@ int main(void)
 	// Execute the transactions
 	threadRunner(threads, executeTransactions, transVector, &transactions, numPool);
 
-	// Get end time.
+	// Get end time and count abort(s)
 	auto finish = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count() << " nanoseconds\n";
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count();
+	std::cout << "ns with " << countAborts(&transactions) << " abort(s)\n";
 
 	return 0;
 }

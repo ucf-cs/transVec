@@ -50,4 +50,6 @@ void preinsert(int threadNum,
 			   std::vector<Desc *> *transactions,
 			   RandomNumberPool *numPool);
 
+int countAborts(std::vector<Desc *> *transactions);
+
 #endif
