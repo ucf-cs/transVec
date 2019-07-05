@@ -21,7 +21,7 @@ NUM_PARAMETERS=$(grep "// #define" define.hpp | wc -l)
 PARAMETERS=$(grep "// #define" define.hpp)
 PARAMETERS=$(echo "$PARAMETERS" | sed -r 's/[a-z0-9/#\s]*//g')
 
-# Redirect all local error messages to /dev/null (like "process aborted").
+# Redirect all local error messages to /dev/null (ie "process aborted" errors).
 exec 2> /dev/null
 
 # Store all the macros in an array
@@ -58,10 +58,10 @@ echo "Total RAM on system: $RAM"                                     >> $REPORT
 echo                                                                 >> $REPORT
 
 # NUM_CORES will determine up to which value we go to for THREAD_COUNT
-for i in `seq 2 2`
+for i in `seq 1 $NUM_CORES`
 do
     # Test for TRANSACTION_SIZE from 1 - 5
-    for j in `seq 5 5`
+    for j in `seq 1 5`
     do
         echo "=====================================================" >> $REPORT
         echo "SGMT_SIZE        = 16    "                             >> $REPORT
@@ -121,7 +121,7 @@ do
                     echo "Error: There's no macro named $TEMP!"
                     echo "       Please fix this typo before continuing."
                     echo
-                    echo "       (or it's already defined... Just check define.hpp"
+                    echo "       (or it's already defined... Check define.hpp"
                     echo "        and make sure everything is correct.)"
                     echo 
                     echo "       Aborting test script. Byeeeeeeeee."
@@ -174,8 +174,8 @@ done
 
 # Clean up after yo self
 echo 
-echo "===================================="
-echo "Cleaning up the mess that we made..."
-echo "===================================="
+echo "====================================================="
+echo "   End of test script. Cleaning up object files...   "
+echo "====================================================="
 make clean
 echo 
