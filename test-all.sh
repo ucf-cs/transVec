@@ -169,6 +169,10 @@ do
 
             echo -e "\e[94m Success!\e[0m"
         done
+	
+	# Clean all object files to prepare for the next round of testing
+	make clean
+	echo
     done
 done
 

@@ -1,0 +1,147 @@
+=====================================================
+  T R A N S A C T I O N A L   V E C T O R   T E S T  
+=====================================================
+
+Test preformed on Fri Jul  5 12:34:28 EDT 2019.
+Tested on a computer with 48 cores.
+Processor Model name: Intel(R) Xeon(R) Platinum 8160 CPU @ 2.10GHz
+Total RAM on system: 130GB
+
+=====================================================
+SGMT_SIZE        = 16    
+NUM_TRANSACTIONS = 250000
+THREAD_COUNT     = 1    
+TRANSACTION_SIZE = 1    
+
+Testcase 01 ... 22386696ns with 0 abort(s)
+Testcase 02 ... 15235044ns with 0 abort(s)
+Testcase 03 ... 25638035ns with 25 abort(s)
+Testcase 04 ... 38887665ns with 0 abort(s)
+Testcase 05 ... 12105896ns with 0 abort(s)
+Testcase 06 ... 38354473ns with 0 abort(s)
+Testcase 07 ... 40610184ns with 0 abort(s)
+Testcase 08 ... 38571062ns with 0 abort(s)
+Testcase 09 ... 41483591ns with 0 abort(s)
+Testcase 10 ... 37082176ns with 0 abort(s)
+Testcase 11 ... 42909257ns with 32 abort(s)
+Testcase 12 ... 36622522ns with 29 abort(s)
+Testcase 13 ... 34247747ns with 38 abort(s)
+Testcase 14 ... 44966716ns with 10 abort(s)
+Testcase 15 ... 42431780ns with 8 abort(s)
+Testcase 16 ... 28613592ns with 0 abort(s)
+Testcase 17 ... 27217795ns with 0 abort(s)
+Testcase 18 ... 29426387ns with 0 abort(s)
+Testcase 19 ... 262289ns with 0 abort(s)
+=====================================================
+SGMT_SIZE        = 16    
+NUM_TRANSACTIONS = 250000
+THREAD_COUNT     = 1    
+TRANSACTION_SIZE = 2    
+
+Testcase 01 ... 23149692ns with 0 abort(s)
+Testcase 02 ... 15369439ns with 0 abort(s)
+Testcase 03 ... 25389086ns with 14 abort(s)
+Testcase 04 ... 40569720ns with 0 abort(s)
+Testcase 05 ... 11879405ns with 0 abort(s)
+Testcase 06 ... 38796297ns with 0 abort(s)
+Testcase 07 ... 40258849ns with 0 abort(s)
+Testcase 08 ... 37319400ns with 0 abort(s)
+Testcase 09 ... 42553862ns with 0 abort(s)
+Testcase 10 ... 40091017ns with 0 abort(s)
+Testcase 11 ... 39839072ns with 30 abort(s)
+Testcase 12 ... 40033786ns with 40 abort(s)
+Testcase 13 ... 36351836ns with 26 abort(s)
+Testcase 14 ... 45607696ns with 8 abort(s)
+Testcase 15 ... 42904183ns with 20 abort(s)
+Testcase 16 ... 27058922ns with 0 abort(s)
+Testcase 17 ... 27295219ns with 0 abort(s)
+Testcase 18 ... 31792876ns with 0 abort(s)
+Testcase 19 ... 273859ns with 0 abort(s)
+=====================================================
+SGMT_SIZE        = 16    
+NUM_TRANSACTIONS = 250000
+THREAD_COUNT     = 1    
+TRANSACTION_SIZE = 3    
+
+Testcase 01 ... 21609668ns with 0 abort(s)
+Testcase 02 ... 15416831ns with 0 abort(s)
+Testcase 03 ... 25117117ns with 16 abort(s)
+Testcase 04 ... 38049266ns with 0 abort(s)
+Testcase 05 ... 12191379ns with 0 abort(s)
+Testcase 06 ... 38774517ns with 0 abort(s)
+Testcase 07 ... 38641379ns with 0 abort(s)
+Testcase 08 ... 40129341ns with 0 abort(s)
+Testcase 09 ... 42717842ns with 0 abort(s)
+Testcase 10 ... 37287379ns with 0 abort(s)
+Testcase 11 ... 40494044ns with 38 abort(s)
+Testcase 12 ... 36411754ns with 29 abort(s)
+Testcase 13 ... 36418914ns with 44 abort(s)
+Testcase 14 ... 43913964ns with 53 abort(s)
+Testcase 15 ... 47062778ns with 20 abort(s)
+Testcase 16 ... 27439297ns with 0 abort(s)
+Testcase 17 ... 30065365ns with 0 abort(s)
+Testcase 18 ... 29367265ns with 0 abort(s)
+Testcase 19 ... 260181ns with 0 abort(s)
+=====================================================
+SGMT_SIZE        = 16    
+NUM_TRANSACTIONS = 250000
+THREAD_COUNT     = 1    
+TRANSACTION_SIZE = 4    
+
+Testcase 01 ... 21604615ns with 0 abort(s)
+Testcase 02 ... 18408717ns with 0 abort(s)
+Testcase 03 ... 25607730ns with 22 abort(s)
+Testcase 04 ... 38801082ns with 0 abort(s)
+Testcase 05 ... 12162419ns with 0 abort(s)
+Testcase 06 ... 41548102ns with 0 abort(s)
+Testcase 07 ... 38114098ns with 0 abort(s)
+Testcase 08 ... 37644672ns with 0 abort(s)
+Testcase 09 ... 39117939ns with 0 abort(s)
+Testcase 10 ... 39163718ns with 0 abort(s)
+Testcase 11 ... 42094754ns with 31 abort(s)
+Testcase 12 ... 39225716ns with 30 abort(s)
+Testcase 13 ... 34500401ns with 29 abort(s)
+Testcase 14 ... 38557748ns with 6 abort(s)
+Testcase 15 ... 46884916ns with 10 abort(s)
+Testcase 16 ... 29160001ns with 0 abort(s)
+Testcase 17 ... 26664138ns with 0 abort(s)
+Testcase 18 ... 29424129ns with 0 abort(s)
+Testcase 19 ... 220104ns with 0 abort(s)
+=====================================================
+SGMT_SIZE        = 16    
+NUM_TRANSACTIONS = 250000
+THREAD_COUNT     = 1    
+TRANSACTION_SIZE = 5    
+
+Testcase 01 ... 21752976ns with 0 abort(s)
+Testcase 02 ... 15761109ns with 0 abort(s)
+Testcase 03 ... 25981526ns with 19 abort(s)
+Testcase 04 ... 40490256ns with 0 abort(s)
+Testcase 05 ... 12413696ns with 0 abort(s)
+Testcase 06 ... 40622648ns with 0 abort(s)
+Testcase 07 ... 40512584ns with 0 abort(s)
+Testcase 08 ... 40634964ns with 0 abort(s)
+Testcase 09 ... 41024497ns with 0 abort(s)
+Testcase 10 ... 40642685ns with 0 abort(s)
+Testcase 11 ... 40028589ns with 27 abort(s)
+Testcase 12 ... 40170135ns with 38 abort(s)
+Testcase 13 ... 35387816ns with 29 abort(s)
+Testcase 14 ... 43874035ns with 37 abort(s)
+Testcase 15 ... 48980045ns with 39 abort(s)
+Testcase 16 ... 28502410ns with 0 abort(s)
+Testcase 17 ... 26449802ns with 0 abort(s)
+Testcase 18 ... 29962023ns with 0 abort(s)
+Testcase 19 ... 244333ns with 0 abort(s)
+=====================================================
+SGMT_SIZE        = 16    
+NUM_TRANSACTIONS = 250000
+THREAD_COUNT     = 2    
+TRANSACTION_SIZE = 1    
+
+Testcase 01 ... 22434822ns with 0 abort(s)
+Testcase 02 ... 15409965ns with 0 abort(s)
+Testcase 03 ... 25570427ns with 15 abort(s)
+Testcase 04 ... 38322524ns with 0 abort(s)
+Testcase 05 ... 11987292ns with 0 abort(s)
+Testcase 06 ... 37972226ns with 0 abort(s)
+Testcase 07 ... 
