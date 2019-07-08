@@ -173,7 +173,7 @@ do
 	# Clean all object files to prepare for the next round of testing
 	make clean
         echo "====================================================="
-        echo "=====================================================" >> $REPORT
+        echo                                                         >> $REPORT
     done
 done
 
