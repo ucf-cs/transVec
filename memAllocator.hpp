@@ -61,8 +61,8 @@ public:
         if (!isInit)
         {
             isInit = true;
-            printf("Allocating an uninitialized object of type %s. ", typeid(T).name());
-            printf("Will use default pool size or use malloc as a fallback.\n");
+            // printf("Allocating an uninitialized object of type %s. ", typeid(T).name());
+            // printf("Will use default pool size or use malloc as a fallback.\n");
         }
 
         NUM_POOLS = THREAD_COUNT * 2;
@@ -153,7 +153,7 @@ public:
     // Print out allocator usage statistics.
     static void report()
     {
-        printf("Used %lu allocations for %lu pools.\n", count.load(), NUM_POOLS);
+        // printf("Used %lu allocations for %lu pools.\n", count.load(), NUM_POOLS);
         return;
     }
 

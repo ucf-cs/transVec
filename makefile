@@ -20,18 +20,24 @@ CC_FLAGS = $(DEBUG_FLAGS)
 #-latomic
 
 # File names
-EXEC = transVec.out
-SOURCES = $(wildcard *.cpp)
+EXEC    = transVec.out
+MAIN    = test_cases/testcase11.cpp
+SOURCES = $(wildcard *.cpp) test_cases/main.cpp $(MAIN)
 OBJECTS = $(SOURCES:.cpp=.o)
+DEFINES = 
 
 # Main target
 $(EXEC): $(OBJECTS)
-	$(CC) $(CC_FLAGS) $(OBJECTS) -o $(EXEC)
+	@$(CC) $(CC_FLAGS) $(OBJECTS) -o $(EXEC)
 
 # To obtain object files
 %.o: %.cpp
-	$(CC) -c $(CC_FLAGS) -flto $< -o $@
+	@$(CC) -c $(CC_FLAGS) $(subst |, -D ,$(DEFINES)) -flto $< -o $@ 
 
 # To remove generated files
 clean:
-	rm -f $(EXEC) $(OBJECTS)
+	@rm -f $(EXEC) $(OBJECTS) $(wildcard test_cases/*.o)
+
+# Clean the reports directory
+cr:
+	@rm -f reports/*.txt
