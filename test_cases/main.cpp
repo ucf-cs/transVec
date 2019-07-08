@@ -7,9 +7,9 @@
 //        The last three inputs are the inputs to the fn ptr.
 void threadRunner(std::thread *threads,
 				  void function(int threadNum,
-						        TransactionalVector *transVector,
-						        std::vector<Desc *> *transactions,
-						        RandomNumberPool *numPool),
+								TransactionalVector *transVector,
+								std::vector<Desc *> *transactions,
+								RandomNumberPool *numPool),
 				  TransactionalVector *transVector,
 				  std::vector<Desc *> *transactions,
 				  RandomNumberPool *numPool)
@@ -35,21 +35,16 @@ void executeTransactions(int threadNum,
 	threadAllocatorInit(threadNum);
 
 	// Each thread is allocated an interval to work on
-	int start = transactions->size() / THREAD_COUNT *  threadNum;
-	int end   = transactions->size() / THREAD_COUNT * (threadNum + 1);
+	int start = transactions->size() / THREAD_COUNT * threadNum;
+	int end = transactions->size() / THREAD_COUNT * (threadNum + 1);
 
 	for (int i = start; i < end; i++)
 	{
-		Desc *desc = transactions->at(i);	
+		Desc *desc = transactions->at(i);
 		transVector->executeTransaction(desc);
-		
+
 		if (desc->status.load() != Desc::TxStatus::committed)
-			continue;
-		
-		// Busy wait until they are ready. Should never happen, but we need to be safe.
-		while (desc->returnedValues.load() == false)
 		{
-			printf("Thread %d had to wait on returned values.\n", threadNum);
 			continue;
 		}
 	}
@@ -70,8 +65,8 @@ void preinsert(int threadNum,
 	Operation *pushOps = new Operation[opsPerThread];
 
 	// Each thread is allocated an interval to work on
-	int start = opsPerThread *  threadNum;
-	int end   = opsPerThread * (threadNum + 1);
+	int start = opsPerThread * threadNum;
+	int end = opsPerThread * (threadNum + 1);
 
 	// For each operation.
 	for (size_t j = 0; j < opsPerThread; j++)
@@ -80,7 +75,13 @@ void preinsert(int threadNum,
 		pushOps[j].type = Operation::OpType::pushBack;
 
 		// Push random values into the vector.
-		pushOps[j].val = numPool->getNum(threadNum) % UNSET;
+		VAL val = UNSET;
+		// Ensure we never get an UNSET.
+		while (val == UNSET)
+		{
+			val = numPool->getNum(threadNum) % std::numeric_limits<VAL>::max();
+		}
+		pushOps[j].val = val;
 	}
 
 	// Create a transaction containing the these operations.
@@ -88,7 +89,7 @@ void preinsert(int threadNum,
 
 	// Execute the transaction.
 	transVector->executeTransaction(pushDesc);
-	
+
 	return;
 }
 
@@ -97,7 +98,7 @@ int countAborts(std::vector<Desc *> *transactions)
 	int retVal = 0;
 	for (int i = 0; i < transactions->size(); i++)
 	{
-		Desc *desc = transactions->at(i);	
+		Desc *desc = transactions->at(i);
 
 		if (desc->status.load() == Desc::TxStatus::aborted)
 			retVal++;

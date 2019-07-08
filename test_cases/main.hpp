@@ -13,7 +13,7 @@
 
 // #ifdef SEGMENTVEC
 // #include "../transVector.hpp"
-//     extern TransactionalVector *transVector;
+// TransactionalVector *transVector;
 // #endif
 
 // #ifdef STMVEC
@@ -37,10 +37,10 @@ void executeTransactions(int threadNum,
 						 RandomNumberPool *numPool);
 
 void threadRunner(std::thread *threads,
-                  void function(int threadNum,
-						        TransactionalVector *transVector,
-						        std::vector<Desc *> *transactions,
-						        RandomNumberPool *numPool),
+				  void function(int threadNum,
+								TransactionalVector *transVector,
+								std::vector<Desc *> *transactions,
+								RandomNumberPool *numPool),
 				  TransactionalVector *transVector,
 				  std::vector<Desc *> *transactions,
 				  RandomNumberPool *numPool);
