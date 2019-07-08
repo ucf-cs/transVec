@@ -65,7 +65,7 @@ public:
 	// Map vector locations to read/write operations.
 	std::map<size_t,
 			 RWOperation *,
-			 std::equal_to<size_t>,
+			 std::less<size_t>,
 			 MemAllocator<std::pair<size_t, RWOperation *>>>
 		operations;
 	// The descriptor associated with this set.
@@ -75,7 +75,7 @@ public:
 	// A replacement size element, used by this RWSet.
 	CompactElement *sizeElement = NULL;
 	// Return the index associated with a RW operation access.
-	static size_t access(size_t pos);
+	static size_t access(unsigned int pos);
 	// Converts a transaction descriptor into a read/write set.
 	bool createSet(Desc *descriptor, CompactVector *vector);
 	unsigned int getSize(CompactVector *vector, Desc *descriptor = NULL);

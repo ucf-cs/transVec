@@ -38,7 +38,7 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 		{
 			// Failure means the transaction attempted an invalid read or write, as the vector wasn't allocated to this point.
 			page->transaction->status.store(Desc::TxStatus::aborted);
-			// DEBUG:
+			// DEBUG: Abort reporting.
 			//printf("Aborted!\n");
 			// No need to even try anymore. The whole transaction failed.
 			return false;
@@ -55,7 +55,7 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 		// May occur during helping.
 		if (rootPage != NULL && rootPage->transaction == page->transaction)
 		{
-			// DEBUG:
+			// DEBUG: Duplicate page insertion catch.
 			//printf("Attempted to prepend a page to itself.\n");
 
 			// Insertion failed, but the transaction is incomplete, so keep trying.
@@ -131,7 +131,7 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 					// Abort if the operation fails our bounds check.
 					if (page->bitset.checkBounds[i] && val == UNSET)
 					{
-						// DEBUG:
+						// DEBUG: Abort reporting.
 						//printf("Aborted!\n");
 
 						page->transaction->status.store(Desc::TxStatus::aborted);
@@ -383,7 +383,7 @@ void TransactionalVector::executeHelpFreeReads(Desc *descriptor)
 		{
 			// Failure means the transaction attempted an invalid read or write, as the vector wasn't allocated to this point.
 			descriptor->status.store(Desc::TxStatus::aborted);
-			// DEBUG:
+			// DEBUG: Abort reporting.
 			//printf("Aborted!\n");
 
 			// No need to even try anymore. The whole transaction failed.
@@ -414,9 +414,6 @@ void TransactionalVector::executeHelpFreeReads(Desc *descriptor)
 				case Desc::TxStatus::active:
 					break;
 				case Desc::TxStatus::committed:
-					// DEBUG:
-					//printf("currentPage->transaction->version = %d\t descriptor->version = %d\n", currentPage->transaction->version.load(), descriptor->version.load());
-
 					// If this transaction completed before the help-free read transaction started.
 					if (currentPage->transaction->version.load() < descriptor->version.load())
 					{

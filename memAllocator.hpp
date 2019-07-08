@@ -24,8 +24,7 @@ private:
     static size_t POOL_SIZE;
     // Used to determine if we missed any pools.
     static bool isInit;
-    // DEBUG:
-    // A counter used to keep track of allocations. Use this to tune allocation sizes.
+    // DEBUG: A counter used to keep track of allocations. Use this to tune allocation sizes.
     static std::atomic<size_t> count;
 
     // Offset in the pool for this thread's access.
@@ -95,7 +94,7 @@ public:
     // Use pointer if pointer is not a value_type*
     value_type *allocate(std::size_t n)
     {
-        // DEBUG:
+        // DEBUG: Allocation counter.
         count.fetch_add(n);
 
         // Ensure everything needed is allocated.
@@ -113,7 +112,7 @@ public:
             base = pool.load() + threadId * sizeof(T) * POOL_SIZE;
             freeIndex = 0;
 
-            // DEBUG:
+            // DEBUG: Verify pool initialization.
             //printf("pool.load()=%p\tthreadNum=%lu\tbase=%p\tsizeof(T)=%lu\t\n", pool.load(), threadId, base, sizeof(T));
         }
 

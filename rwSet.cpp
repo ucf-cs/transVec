@@ -14,13 +14,13 @@ std::pair<size_t, size_t> RWSet::access(size_t pos)
 {
     size_t first = pos / (size_t)SGMT_SIZE;
     size_t second = pos % (size_t)SGMT_SIZE;
-    // DEBUG
+    // DEBUG: Ensure we access the correct page and offset for a given segment size.
     //printf("SGMT_SIZE=%lu\tpos=%lu\tfirst=%lu\tsecond=%lu\n", SGMT_SIZE, pos, first, second);
     return std::make_pair(first, second);
 }
 #endif
 #ifdef COMPACTVEC
-size_t RWSet::access(size_t pos)
+size_t RWSet::access(unsigned int pos)
 {
     return pos;
 }
@@ -67,8 +67,8 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
                 if (op->lastWriteOp->val == UNSET)
                 {
                     descriptor->status.store(Desc::TxStatus::aborted);
-                    // DEBUG:
-                    //printf("Aborted!\n");
+                    // DEBUG: Abort reporting.
+                    printf("Aborted!\n");
                     return false;
                 }
             }
@@ -94,8 +94,8 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
                 if (op->lastWriteOp->val == UNSET)
                 {
                     descriptor->status.store(Desc::TxStatus::aborted);
-                    // DEBUG:
-                    //printf("Aborted!\n");
+                    // DEBUG: Abort reporting.
+                    printf("Aborted!\n");
                     return false;
                 }
             }
@@ -115,8 +115,8 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             if (size == std::numeric_limits<decltype(size)>::max())
             {
                 descriptor->status.store(Desc::TxStatus::aborted);
-                // DEBUG:
-                //printf("Aborted!\n");
+                // DEBUG: Abort reporting.
+                printf("Aborted!\n");
                 return false;
             }
             indexes = access(size++);
@@ -134,8 +134,8 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             if (size < 1)
             {
                 descriptor->status.store(Desc::TxStatus::aborted);
-                // DEBUG:
-                //printf("Aborted!\n");
+                // DEBUG: Abort reporting.
+                printf("Aborted!\n");
                 return false;
             }
             indexes = access(--size);
@@ -205,15 +205,6 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
         // This can only fail if a thread helped us, so don't retry.
         vector->size.compare_exchange_strong(*sizeElement, newSizeElement);
     }
-
-    // DEBUG: Print out the map.
-    RWSet *set = descriptor->set.load();
-    for (auto it = set->operations.cbegin(); it != set->operations.cend(); ++it)
-    {
-        std::cout << it->first << " "
-                  << it->second << "\n";
-    }
-
 #endif
     return true;
 }
@@ -239,7 +230,7 @@ void RWSet::setToPages(Desc *descriptor)
             // Ignore NULL elements in the array.
             if (op == NULL)
             {
-                // DEBUG
+                // DEBUG: NULL element in the array.
                 //printf("No op at page %lu index %lu\n", i->first, j);
                 continue;
             }
@@ -354,6 +345,9 @@ size_t RWSet::getSize(TransactionalVector *vector, Desc *descriptor)
 // Special way to retrieve the current size.
 unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
 {
+    // TODO: Something is wrong with multi-threaded getSize.
+    printf("%u\n", size);
+
     // If size has already been set.
     if (size != UINT32_MAX)
     {
@@ -427,12 +421,15 @@ void RWSet::getOp(RWOperation *&op, std::pair<size_t, size_t> indexes)
 // Get an op node from a map. Allocate it if it doesn't already exist.
 bool RWSet::getOp(RWOperation *&op, size_t index)
 {
-    op = operations[index];
-    if (op == NULL)
+    try
+    {
+        op = operations.at(index);
+    }
+    catch (std::out_of_range)
     {
         op = Allocator<RWOperation>::alloc();
         assert(op != NULL);
-        operations[index] = op;
+        operations.insert(std::pair<size_t, RWOperation *>(index, op));
     }
     return true;
 }

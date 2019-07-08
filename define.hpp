@@ -3,16 +3,18 @@
 
 // These are used to switch between different vector implementations.
 // Only uncomment one of them at a time.
-#define SEGMENTVEC
-//#define COMPACTVEC
+//#define SEGMENTVEC
+#define COMPACTVEC
 //#define COARSEVEC
 //#define STMVEC
 
 // These are used to switch between different tests.
 // Only uncomment one of them at a time.
-//#define PREDICATE_SEARCH
+#define PREDICATE_SEARCH
 //#define RANDOM_RUN
-#define HF_SEARCH
+#ifdef SEGMENTVEC
+//#define HF_SEARCH
+#endif
 
 // Change these to test different situations.
 // Makes sense to make this cache line size times associativity (perhaps at L2 level, so 8*16)
@@ -25,14 +27,17 @@
 // TUNE
 #define TRANSACTION_SIZE 5
 // TUNE
-#define THREAD_COUNT 24
+#define THREAD_COUNT 2
 // Define this to enable the helping scheme.
 #define HELP
+
+#ifdef SEGMENTVEC
 // Define this to align SEGMENTVEC pages.
 //#define ALIGNED
 // Define this to make compact vector store only transaction pointers.
-// TODO: Implement this.
-#define HELP_FREE_READS
+//#define HELP_FREE_READS
+#endif
+
 // TODO2: Maybe implement this.
 //#define POINTER_ONLY
 

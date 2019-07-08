@@ -28,7 +28,7 @@ public:
   thread_local static size_t threadNum;
   // The pool of objects.
   static std::vector<std::vector<DataType *> *> pool;
-  // DEBUG:
+  // DEBUG: A counter used to keep track of allocations. Use this to tune allocation sizes.
   static std::atomic<size_t> count;
 
   // Initialize the allocator.
@@ -79,7 +79,7 @@ public:
   // Get a delta page with the appropriate size.
   static DataType *alloc()
   {
-    // DEBUG:
+    // DEBUG: Allocation counter.
     Allocator<DataType>::count.fetch_add(1);
 
     if (threadNum == SIZE_MAX)

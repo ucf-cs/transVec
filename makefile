@@ -1,7 +1,7 @@
 # Default compiler
-CC = g++
+#CC = g++
 # Used to build CompactVector
-#CC = g++-5
+CC = g++-5
 # Used to build GCC STM vector
 #CC = g++-7
 

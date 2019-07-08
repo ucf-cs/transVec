@@ -70,7 +70,11 @@ void Desc::print()
 
 void Operation::print()
 {
-	const char *typeStrList[] = {"pushBack", "popBack", "reserve", "read", "write", "size", "hfRead"};
+	const char *typeStrList[] = {"pushBack", "popBack", "reserve", "read", "write", "size",
+#ifdef HELP_FREE_READS
+								 "hfRead"
+#endif
+	};
 	size_t typeStrIndex = 0;
 	switch (type)
 	{

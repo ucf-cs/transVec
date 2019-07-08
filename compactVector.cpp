@@ -32,6 +32,8 @@ bool CompactVector::updateElement(size_t index, CompactElement &newElem)
         {
             // Failure means the transaction attempted an invalid read or write, as the vector wasn't allocated to this point.
             newElem.descriptor->status.store(Desc::TxStatus::aborted);
+            // DEBUG: Abort reporting.
+            printf("Aborted!\n");
             // No need to even try anymore. The whole transaction failed.
             return false;
         }
@@ -76,7 +78,8 @@ bool CompactVector::updateElement(size_t index, CompactElement &newElem)
         }
 
         // We only get the new value if it was write committed.
-        if (status == Desc::TxStatus::committed && newElem.descriptor->set.load()->getOp(op, index) && op->lastWriteOp != NULL)
+        // Also check if it matches the end transaction, as that is a special case where we should see a write, even though the set is empty.
+        if (oldDesc == endTransaction || (status == Desc::TxStatus::committed && oldDesc->set.load()->getOp(op, index) && op->lastWriteOp != NULL))
         {
             newElem.oldVal = oldElem.newVal;
         }
@@ -89,9 +92,12 @@ bool CompactVector::updateElement(size_t index, CompactElement &newElem)
         }
 
         // Abort if the operation fails our bounds check.
-        if (op->checkBounds == RWOperation::Assigned::yes && newElem.oldVal == UNSET)
+        newElem.descriptor->set.load()->getOp(op, index);
+        if (op != NULL && op->checkBounds == RWOperation::Assigned::yes && newElem.oldVal == UNSET)
         {
             newElem.descriptor->status.store(Desc::TxStatus::aborted);
+            // DEBUG: Abort reporting.
+            printf("Aborted!\n");
             // No need to even try anymore. The whole transaction failed.
             return false;
         }
@@ -135,7 +141,7 @@ void CompactVector::insertElements(RWSet *set, bool helping, unsigned int startE
         }
     }
 
-    for (auto i = iter; i != set->operations.rend(); ++i)
+    for (; iter != set->operations.rend(); ++iter)
     {
         // If something caused a failure, don't insert any more elements for this transaction.
         if (set->descriptor->status.load() == Desc::TxStatus::aborted)
@@ -144,15 +150,15 @@ void CompactVector::insertElements(RWSet *set, bool helping, unsigned int startE
         }
 
         // The index comes straight from the map.
-        size_t index = i->first;
+        size_t index = iter->first;
 
         // The element is generated
         CompactElement element;
-        // NOTE: oldVal is automatically set upon insertion, so don't worry about setting it here.
+        // NOTE: oldVal is automatically set upon insertion, so don't worry about setting it yet.
         // Only assign a new value if we actually have one to assign.
-        if (i->second != NULL && i->second->lastWriteOp != NULL)
+        if (iter->second != NULL && iter->second->lastWriteOp != NULL)
         {
-            element.newVal = i->second->lastWriteOp->val;
+            element.newVal = iter->second->lastWriteOp->val;
         }
         element.descriptor = set->descriptor;
 
@@ -211,6 +217,8 @@ bool CompactVector::prepareTransaction(Desc *descriptor)
     if (!reserve(set->maxReserveAbsolute > set->size ? set->maxReserveAbsolute : set->size))
     {
         descriptor->status.store(Desc::TxStatus::aborted);
+        // DEBUG: Abort reporting.
+        printf("Aborted!\n");
         return false;
     }
     return true;
@@ -269,7 +277,7 @@ void CompactVector::printContents()
                i,
                elem.oldVal,
                elem.newVal,
-               elem.descriptor->status.load() == Desc::TxStatus::committed ? "new" : "old",
+               elem.descriptor == NULL ? "NULL  " : (elem.descriptor->status.load() == Desc::TxStatus::committed ? "commit" : "abort "),
                elem.descriptor);
     }
     printf("\n");

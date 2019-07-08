@@ -206,7 +206,7 @@ void predicatePreinsert(int threadNum)
 			val = numPool->getNum(threadNum) % std::numeric_limits<VAL>::max();
 		}
 		insertOps[j].val = val;
-		
+
 		//insertOps[j].val = threadNum * NUM_TRANSACTIONS + j;
 	}
 	// Create a transaction containing the these operations.
@@ -284,7 +284,8 @@ void predicateSearch()
 	// Get total execution time.
 	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
 
-	//transVector->printContents();
+	// DEBUG: Print out the current vector.
+	transVector->printContents();
 
 	std::cout << "" << THREAD_COUNT << " threads and " << NUM_TRANSACTIONS << " locations per thread" << std::endl;
 	std::cout << total.count() << " milliseconds" << std::endl;
@@ -323,6 +324,7 @@ void randomRun()
 	std::cout << total.count() << " milliseconds" << std::endl;
 }
 
+#ifdef HF_SEARCH
 // Help-free test.
 void helpFreeSearch()
 {
@@ -369,6 +371,7 @@ void helpFreeSearch()
 
 	printf("Total: %lu matched out of %lu\n", totalMatches.load(), (size_t)THREAD_COUNT * NUM_TRANSACTIONS);
 }
+#endif
 
 void allocatorInit()
 {
