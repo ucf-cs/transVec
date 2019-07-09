@@ -103,6 +103,14 @@ SegmentedVector<T>::SegmentedVector()
 {
 	// Initialize the first level of the array.
 	bucketArray = new std::atomic<std::atomic<T> *>[buckets]();
+	// Ensure the array is entirely NULL by default to avoid undefined behavior.
+	// NOTE: No need to do this because the array should always be NULL by default.
+	/*
+	for (size_t i = 0; i < buckets; i++)
+	{
+		bucketArray[i].store(NULL);
+	}
+	*/
 	// Initialize the first segment in the second level.
 	reserve(1);
 	// Ensure that the objects in this vector are actually lock-free.

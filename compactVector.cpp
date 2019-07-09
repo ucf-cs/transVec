@@ -258,6 +258,9 @@ void CompactVector::executeTransaction(Desc *descriptor)
 
 void CompactVector::sizeHelp(Desc *descriptor)
 {
+    // DEBUG: Print the thread id that is helping.
+    //printf("Thread %lu is helping descriptor %p\n", std::hash<std::thread::id>{}(std::this_thread::get_id()), descriptor);
+
     // Must actually start at the very beginning.
     prepareTransaction(descriptor);
     // Must help from the beginning of the list, since we didn't help part way through.
@@ -273,7 +276,7 @@ void CompactVector::printContents()
         {
             break;
         }
-        printf("%lu:\told: %d\tnew: %d\tselection: %s\tdesc: %p\n",
+        printf("%5lu:\told: %10u\tnew: %10u\tselection: %s\tdesc: %p\n",
                i,
                elem.oldVal,
                elem.newVal,

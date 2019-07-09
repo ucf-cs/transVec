@@ -22,8 +22,8 @@ class Desc;
 struct alignas(16) CompactElement
 {
     // NOTE: Use bit fields here if needed.
-    int oldVal = UNSET;
-    int newVal = UNSET;
+    VAL oldVal = UNSET;
+    VAL newVal = UNSET;
     Desc *descriptor = NULL;
     CompactElement() noexcept;
     void print();

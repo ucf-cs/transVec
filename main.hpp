@@ -30,7 +30,7 @@ CoarseTransVector *transVector;
 CompactVector *transVector;
 #endif
 
-std::vector<std::vector<Desc *>> transactions;
+std::vector<std::vector<Desc *>*> transactions;
 
 std::atomic<size_t> totalMatches;
 

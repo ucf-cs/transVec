@@ -190,16 +190,15 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
 #endif
 #ifdef COMPACTVEC
     // If size changed.
-    if (size != std::numeric_limits<decltype(size)>::max())
+    if (sizeElement != NULL)
     {
         // Replace our size element in shared memory with a finalized size value.
         CompactElement newSizeElement;
-        // TODO: Set this properly.
         newSizeElement.newVal = size;
         newSizeElement.oldVal = sizeElement->oldVal;
         newSizeElement.descriptor = descriptor;
         // Attempt to update the vector's size to contain the new value.
-        // If this CAS fails, then either the final size value was already set by a helper or a new transaction has updated size and our transaction already completed.
+        // If this CAS fails, then either the final size value was already set by a helper or a new transaction was associated with size and our transaction already completed long ago.
         vector->size.compare_exchange_strong(*sizeElement, newSizeElement);
     }
 #endif
@@ -376,34 +375,50 @@ unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
             return size;
         }
 
-        Desc::TxStatus status = oldSizeElement.descriptor->status.load();
-        while (status == Desc::TxStatus::active)
+        if (oldSizeElement.descriptor == NULL)
         {
+            sizeElement->descriptor = descriptor;
+            sizeElement->newVal = 0;
+            sizeElement->oldVal = 0;
+        }
+        else
+        {
+            Desc::TxStatus status = oldSizeElement.descriptor->status.load();
 #ifdef HELP
-            // Help the active transaction.
-            vector->sizeHelp(oldSizeElement.descriptor);
+            if (status == Desc::TxStatus::active)
+            {
+                // Help the active transaction.
+                vector->sizeHelp(oldSizeElement.descriptor);
+                // Start the loop over again.
+                continue;
+            }
+#else
+            // Busy wait for the conflicting thread to complete.
+            while (status == Desc::TxStatus::active)
+            {
+                status = oldSizeElement.descriptor->status.load();
+            }
 #endif
-            status = oldSizeElement.descriptor->status.load();
-        }
 
-        // Create a new size element.
-        // Set newVal so the whole object is known.
-        // To keep things deterministic, newVal == oldVal when the final value has not been set.
-        // This way, helpers can still perform a size CAS to complete the operation.
-        sizeElement->descriptor = descriptor;
-        if (status == Desc::TxStatus::committed)
-        {
-            sizeElement->newVal = oldSizeElement.newVal;
-            sizeElement->oldVal = oldSizeElement.newVal;
-        }
-        else // Aborted.
-        {
-            sizeElement->newVal = oldSizeElement.oldVal;
-            sizeElement->oldVal = oldSizeElement.oldVal;
+            // Create a new size element.
+            // Set newVal so the whole object is known.
+            // To keep things deterministic, newVal == oldVal when the final value has not been set.
+            // This way, helpers can still perform a size CAS to complete the operation.
+            sizeElement->descriptor = descriptor;
+            if (status == Desc::TxStatus::committed)
+            {
+                sizeElement->newVal = oldSizeElement.newVal;
+                sizeElement->oldVal = oldSizeElement.newVal;
+            }
+            else // Aborted.
+            {
+                sizeElement->newVal = oldSizeElement.oldVal;
+                sizeElement->oldVal = oldSizeElement.oldVal;
+            }
         }
     }
     // Replace the old size element.
-    while (vector->size.compare_exchange_weak(oldSizeElement, *sizeElement));
+    while (!vector->size.compare_exchange_weak(oldSizeElement, *sizeElement));
 
     // Set the size.
     size = sizeElement->oldVal;

@@ -12,21 +12,15 @@
 // Only uncomment one of them at a time.
 #define PREDICATE_SEARCH
 //#define RANDOM_RUN
-#ifdef SEGMENTVEC
 //#define HF_SEARCH
-#endif
 
 // Change these to test different situations.
-// Makes sense to make this cache line size times associativity (perhaps at L2 level, so 8*16)
+// Makes sense to make this cache line size X associativity (perhaps at L2 level, so 8*16)
 // Divide by the size of the elements in the segment an by 2, so we can hold old and new values on the same cache line.
 // NOTE: This may break if division makes this resolve to 0.
-// TUNE
 #define SGMT_SIZE ((8 * 16) / (sizeof(VAL) * 2))
-// TUNE
 #define NUM_TRANSACTIONS 25000
-// TUNE
 #define TRANSACTION_SIZE 5
-// TUNE
 #define THREAD_COUNT 12
 // Define this to enable the helping scheme.
 #define HELP
@@ -44,14 +38,13 @@
 // Compact vector requires 32-bit or smaller value types.
 #ifdef COMPACTVEC
 // Use this typedef to quickly change what type of objects we're working with.
-// TUNE (Compile time only)
-typedef int VAL;
+// NOTE: VAL is unsigned to keep things simple between size and object elements.
+typedef unsigned int VAL;
 // This reserved value indicates that a value cannot be set by a read or write here.
 // Must differ depending on T.
-const int UNSET = INT32_MAX;
+const VAL UNSET = UINT32_MAX;
 #else
 // Use this typedef to quickly change what type of objects we're working with.
-// TUNE (Compile time only)
 typedef unsigned int VAL;
 // This reserved value indicates that a value cannot be set by a read or write here.
 // Must differ depending on T.

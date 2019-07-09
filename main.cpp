@@ -146,7 +146,7 @@ void randThreadInit(int threadNum)
 	threadAllocatorInit(threadNum);
 
 	// A vector containing all of a thread's transactions.
-	std::vector<Desc *> threadTransactions;
+	std::vector<Desc *> *threadTransactions = new std::vector<Desc *>();
 
 	// For each transaction.
 	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
@@ -165,10 +165,10 @@ void randThreadInit(int threadNum)
 		// Create a transaction containing the these operations.
 		Desc *desc = new Desc(transSize, ops);
 		// Add the transaction to the list.
-		threadTransactions.push_back(desc);
+		threadTransactions->push_back(desc);
 	}
 	// Place this thread's transactions in the list.
-	transactions[threadNum] = threadTransactions;
+	transactions.at(threadNum) = threadTransactions;
 }
 
 void randThread(int threadNum)
@@ -180,7 +180,7 @@ void randThread(int threadNum)
 	for (size_t i = 0; i < NUM_TRANSACTIONS; i++)
 	{
 		// Execute the transaction.
-		transVector->executeTransaction(transactions[threadNum][i]);
+		transVector->executeTransaction(transactions.at(threadNum)->at(i));
 	}
 	return;
 }
@@ -222,7 +222,7 @@ void predicateFind(int threadNum)
 	threadAllocatorInit(threadNum);
 
 	// Get the transaction associated with the thread.
-	Desc *desc = transactions[threadNum][0];
+	Desc *desc = transactions.at(threadNum)->at(0);
 	// Execute the transaction.
 	transVector->executeTransaction(desc);
 	if (desc->status.load() != Desc::TxStatus::committed)
@@ -258,6 +258,7 @@ void predicateSearch()
 	threadRunner(threads, predicatePreinsert);
 	printf("Completed preinsertion!\n\n\n");
 
+	std::vector<Desc *> *threadTransactions = new std::vector<Desc *>();
 	// Prepare read transactions for each thread.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
 	{
@@ -270,10 +271,9 @@ void predicateSearch()
 			ops[j].index = i * NUM_TRANSACTIONS + j;
 		}
 		Desc *desc = new Desc(NUM_TRANSACTIONS, ops);
-		std::vector<Desc *> threadTransactions;
-		threadTransactions.push_back(desc);
-		transactions.push_back(threadTransactions);
+		threadTransactions->push_back(desc);
 	}
+	transactions.push_back(threadTransactions);
 
 	// Get the current time.
 	auto start = std::chrono::system_clock::now();
@@ -305,6 +305,8 @@ void randomRun()
 
 	// Generate all of the random transactions.
 	printf("Generating transactions.\n");
+	// Set the size of our transactions list in advance.
+	transactions.resize(THREAD_COUNT);
 	threadRunner(threads, randThreadInit);
 
 	printf("Done!\n");

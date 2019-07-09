@@ -66,11 +66,12 @@ public:
 			 std::less<size_t>,
 			 MemAllocator<std::pair<size_t, RWOperation *>>>
 		operations;
-		// The descriptor associated with this set.
+	// The descriptor associated with this set.
 	Desc *descriptor = NULL;
 	// Set this if size changes.
-	unsigned int size = UINT32_MAX;
+	unsigned int size = 0;
 	// A replacement size element, used by this RWSet.
+	// Must be a pointer because CompactElement was forward declared.
 	CompactElement *sizeElement;
 
 	// Return the index associated with a RW operation access.
