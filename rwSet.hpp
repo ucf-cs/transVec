@@ -14,15 +14,13 @@
 #include "transaction.hpp"
 #ifdef SEGMENTVEC
 #include "transVector.hpp"
+class TransactionalVector;
 #endif
 #ifdef COMPACTVEC
 #include "compactVector.hpp"
-#endif
-
-class TransactionalVector;
-
 class CompactVector;
 class CompactElement;
+#endif
 
 class RWOperation;
 class Operation;
@@ -68,12 +66,13 @@ public:
 			 std::less<size_t>,
 			 MemAllocator<std::pair<size_t, RWOperation *>>>
 		operations;
-	// The descriptor associated with this set.
+		// The descriptor associated with this set.
 	Desc *descriptor = NULL;
 	// Set this if size changes.
 	unsigned int size = UINT32_MAX;
 	// A replacement size element, used by this RWSet.
-	CompactElement *sizeElement = NULL;
+	CompactElement *sizeElement;
+
 	// Return the index associated with a RW operation access.
 	static size_t access(unsigned int pos);
 	// Converts a transaction descriptor into a read/write set.
@@ -91,9 +90,10 @@ public:
 					   MemAllocator<std::pair<size_t, std::array<RWOperation *, SGMT_SIZE>>>>
 		operations;
 	// Our size descriptor. After reading size, we use this to write a new size value later.
-	std::atomic<Page<size_t, 1> *> sizeDesc;
+	Page<size_t, 1> *sizeDesc;
 	// Set this if size changes.
 	size_t size = 0;
+
 	// Return the indexes associated with a RW operation access.
 	static std::pair<size_t, size_t> access(size_t pos);
 	// Converts a transaction descriptor into a read/write set.
@@ -109,6 +109,8 @@ public:
 #endif
 	// An absolute reserve position.
 	size_t maxReserveAbsolute = 0;
+
+	// Set deconstructor.
 	~RWSet();
 };
 

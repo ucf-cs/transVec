@@ -4,7 +4,7 @@ RWSet::~RWSet()
 {
     operations.clear();
 #ifdef SEGMENTVEC
-    sizeDesc.store(NULL);
+    sizeDesc = NULL;
 #endif
     return;
 }
@@ -34,15 +34,9 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
 #endif
 {
 #ifdef COMPACTVEC
-    // Create a size object if it doesn't already exist.
-    if (sizeElement == NULL)
-    {
-        sizeElement = Allocator<CompactElement>::alloc();
-    }
     // Set the set's descriptor.
     this->descriptor = descriptor;
 #endif
-
     // Go through each operation.
     for (size_t i = 0; i < descriptor->size; i++)
     {
@@ -68,7 +62,7 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
                 {
                     descriptor->status.store(Desc::TxStatus::aborted);
                     // DEBUG: Abort reporting.
-                    printf("Aborted!\n");
+                    //printf("Aborted!\n");
                     return false;
                 }
             }
@@ -95,7 +89,7 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
                 {
                     descriptor->status.store(Desc::TxStatus::aborted);
                     // DEBUG: Abort reporting.
-                    printf("Aborted!\n");
+                    //printf("Aborted!\n");
                     return false;
                 }
             }
@@ -116,7 +110,7 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             {
                 descriptor->status.store(Desc::TxStatus::aborted);
                 // DEBUG: Abort reporting.
-                printf("Aborted!\n");
+                //printf("Aborted!\n");
                 return false;
             }
             indexes = access(size++);
@@ -135,7 +129,7 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             {
                 descriptor->status.store(Desc::TxStatus::aborted);
                 // DEBUG: Abort reporting.
-                printf("Aborted!\n");
+                //printf("Aborted!\n");
                 return false;
             }
             indexes = access(--size);
@@ -191,18 +185,21 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
 #ifdef SEGMENTVEC
     if (sizeDesc != NULL)
     {
-        sizeDesc.load()->set(0, NEW_VAL, size);
+        sizeDesc->set(0, NEW_VAL, size);
     }
 #endif
 #ifdef COMPACTVEC
+    // If size changed.
     if (size != std::numeric_limits<decltype(size)>::max())
     {
         // Replace our size element in shared memory with a finalized size value.
         CompactElement newSizeElement;
-        newSizeElement.oldVal = newSizeElement.oldVal;
+        // TODO: Set this properly.
         newSizeElement.newVal = size;
-        newSizeElement.descriptor = sizeElement->descriptor;
-        // This can only fail if a thread helped us, so don't retry.
+        newSizeElement.oldVal = sizeElement->oldVal;
+        newSizeElement.descriptor = descriptor;
+        // Attempt to update the vector's size to contain the new value.
+        // If this CAS fails, then either the final size value was already set by a helper or a new transaction has updated size and our transaction already completed.
         vector->size.compare_exchange_strong(*sizeElement, newSizeElement);
     }
 #endif
@@ -261,7 +258,7 @@ void RWSet::setToPages(Desc *descriptor)
 #ifdef SEGMENTVEC
 size_t RWSet::getSize(TransactionalVector *vector, Desc *descriptor)
 {
-    if (sizeDesc.load() != NULL)
+    if (sizeDesc != NULL)
     {
         return size;
     }
@@ -332,11 +329,11 @@ size_t RWSet::getSize(TransactionalVector *vector, Desc *descriptor)
     // Replace the page. Finish on success. Retry on failure.
     while (!vector->size.compare_exchange_weak(rootPage, tempSizeDesc));
 
-    // Store the descriptor locally.
-    sizeDesc.store(tempSizeDesc);
-
     // Store the actual size locally.
     vector->size.load()->get(0, OLD_VAL, size);
+
+    // Store the descriptor locally.
+    sizeDesc = tempSizeDesc;
 
     return size;
 }
@@ -345,15 +342,15 @@ size_t RWSet::getSize(TransactionalVector *vector, Desc *descriptor)
 // Special way to retrieve the current size.
 unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
 {
-    // TODO: Something is wrong with multi-threaded getSize.
-    printf("%u\n", size);
-
     // If size has already been set.
-    if (size != UINT32_MAX)
+    if (sizeElement != NULL)
     {
         // Just return that size.
         return size;
     }
+
+    // Allocate the size element.
+    sizeElement = Allocator<CompactElement>::alloc();
 
     CompactElement oldSizeElement;
     do
@@ -369,8 +366,14 @@ unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
         // If a helper got here first.
         if (oldSizeElement.descriptor == descriptor)
         {
+            // We can just use the size of the existing element.
+            size = oldSizeElement.oldVal;
+            // Prepare sizeElement for a CAS later on.
+            sizeElement->descriptor = descriptor;
+            sizeElement->newVal = oldSizeElement.oldVal;
+            sizeElement->oldVal = oldSizeElement.oldVal;
             // Do not insert again.
-            break;
+            return size;
         }
 
         Desc::TxStatus status = oldSizeElement.descriptor->status.load();
@@ -384,14 +387,18 @@ unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
         }
 
         // Create a new size element.
-        sizeElement->newVal = oldSizeElement.oldVal;
+        // Set newVal so the whole object is known.
+        // To keep things deterministic, newVal == oldVal when the final value has not been set.
+        // This way, helpers can still perform a size CAS to complete the operation.
         sizeElement->descriptor = descriptor;
         if (status == Desc::TxStatus::committed)
         {
+            sizeElement->newVal = oldSizeElement.newVal;
             sizeElement->oldVal = oldSizeElement.newVal;
         }
         else // Aborted.
         {
+            sizeElement->newVal = oldSizeElement.oldVal;
             sizeElement->oldVal = oldSizeElement.oldVal;
         }
     }

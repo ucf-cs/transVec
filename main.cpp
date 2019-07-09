@@ -285,7 +285,7 @@ void predicateSearch()
 	auto total = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
 
 	// DEBUG: Print out the current vector.
-	transVector->printContents();
+	//transVector->printContents();
 
 	std::cout << "" << THREAD_COUNT << " threads and " << NUM_TRANSACTIONS << " locations per thread" << std::endl;
 	std::cout << total.count() << " milliseconds" << std::endl;

@@ -27,7 +27,7 @@
 // TUNE
 #define TRANSACTION_SIZE 5
 // TUNE
-#define THREAD_COUNT 2
+#define THREAD_COUNT 12
 // Define this to enable the helping scheme.
 #define HELP
 

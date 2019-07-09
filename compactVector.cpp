@@ -33,7 +33,7 @@ bool CompactVector::updateElement(size_t index, CompactElement &newElem)
             // Failure means the transaction attempted an invalid read or write, as the vector wasn't allocated to this point.
             newElem.descriptor->status.store(Desc::TxStatus::aborted);
             // DEBUG: Abort reporting.
-            printf("Aborted!\n");
+            //printf("Aborted!\n");
             // No need to even try anymore. The whole transaction failed.
             return false;
         }
@@ -97,7 +97,7 @@ bool CompactVector::updateElement(size_t index, CompactElement &newElem)
         {
             newElem.descriptor->status.store(Desc::TxStatus::aborted);
             // DEBUG: Abort reporting.
-            printf("Aborted!\n");
+            //printf("Aborted!\n");
             // No need to even try anymore. The whole transaction failed.
             return false;
         }
@@ -218,7 +218,7 @@ bool CompactVector::prepareTransaction(Desc *descriptor)
     {
         descriptor->status.store(Desc::TxStatus::aborted);
         // DEBUG: Abort reporting.
-        printf("Aborted!\n");
+        //printf("Aborted!\n");
         return false;
     }
     return true;
