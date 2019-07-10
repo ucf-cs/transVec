@@ -1,5 +1,16 @@
 # Default compiler
-CC = g++
+SGMTVEC = g++
+CMPTVEC = g++-5
+STMVEC  = g++-7
+
+ifeq ($(shell head define.hpp | grep '\#define SEGMENTVEC' | wc -l), 1)
+	CC = $(SGMTVEC)
+else ifeq ($(shell head define.hpp | grep '\#define COMPACTVEC' | wc -l), 1)
+	CC = $(CMPTVEC)
+else
+	CC = $(STMVEC)
+endif
+
 # Used to build CompactVector
 # CC = g++-5
 # Used to build GCC STM vector
@@ -21,7 +32,7 @@ CC_FLAGS = $(DEBUG_FLAGS)
 
 # File names
 EXEC    = transVec.out
-MAIN    = test_cases/testcase11.cpp
+MAIN    = test_cases/testcase01.cpp
 SOURCES = $(wildcard *.cpp) test_cases/main.cpp $(MAIN)
 OBJECTS = $(SOURCES:.cpp=.o)
 DEFINES = 

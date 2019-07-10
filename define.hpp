@@ -3,6 +3,7 @@
 
 // These are used to switch between different vector implementations.
 // Only uncomment one of them at a time.
+// **It's important to keep these comments as "//#define" instead of "// define"**
 #define SEGMENTVEC
 //#define COMPACTVEC
 //#define COARSEVEC
@@ -13,7 +14,7 @@
 #define PREDICATE_SEARCH
 //#define RANDOM_RUN
 #ifdef SEGMENTVEC
-//#define HF_SEARCH
+#define HELP_FREE_READS
 #endif
 
 // Change these to test different situations.
@@ -23,11 +24,11 @@
 // TUNE
 #define SGMT_SIZE ((8 * 16) / (sizeof(VAL) * 2))
 // TUNE
-#define NUM_TRANSACTIONS 10000
+#define NUM_TRANSACTIONS 1000
 // TUNE
-#define TRANSACTION_SIZE 5
+// #define TRANSACTION_SIZE 5
 // TUNE
-#define THREAD_COUNT 4
+// #define THREAD_COUNT 2
 // Define this to enable the helping scheme.
 #define HELP
 

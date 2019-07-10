@@ -2,9 +2,9 @@
 
 #include "main.hpp"
 
-// Initialize your global variables here
+// All global variables are initialized here
 // Preallocate the random number generator.
-RandomNumberPool *numPool = new RandomNumberPool(THREAD_COUNT, NUM_TRANSACTIONS * TRANSACTION_SIZE);
+RandomNumberPool *numPool = new RandomNumberPool(THREAD_COUNT, NUM_TRANSACTIONS * (2 + 3 * TRANSACTION_SIZE));
 std::vector<Desc *> *transactions = new std::vector<Desc *>();
 #ifdef SEGMENTVEC
 	TransactionalVector *transVector = new TransactionalVector();

@@ -1,6 +1,5 @@
-// TWENTIETH TESTCASE - RANGED HELPFREE READS (predicateFind)
-// This test case inserts a bunch of random elements and then reads then reads the entire
-// vector and counts for even numbers. See transaction.cpp for more detail on "read"
+// TWENTY FIRST TESTCASE - RANDOM HELP FREE READS
+// Creats a bunch of only read operations at random places in the vector
 
 #include "main.hpp"
 
@@ -9,15 +8,13 @@ void createTransactions()
 	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 	{
 		Operation *ops = new Operation[TRANSACTION_SIZE];
-
+		
 		// Each transaction will be of this size and only made of reads
 		for (size_t k = 0; k < TRANSACTION_SIZE; k++)
 		{
-			// Read all elements, split among threads.
-			ops[k].type = Operation::OpType::hfRead;
-
-			// Modding prevents going out of bounds
-			ops[k].index = (j + k) % NUM_TRANSACTIONS;
+			// Read at random indices.
+			ops[k].type  = Operation::OpType::hfRead;
+			ops[k].index = rand() % NUM_TRANSACTIONS;
 		}
 
 		Desc *desc = new Desc(TRANSACTION_SIZE, ops);
