@@ -1,9 +1,9 @@
 # Default compiler
-#CC = g++
+CC = g++
 # Used to build CompactVector
-CC = g++-5
+# CC = g++-5
 # Used to build GCC STM vector
-#CC = g++-7
+# CC = g++-7
 
 DEBUG_FLAGS = -std=c++14 -g -pthread -fgnu-tm -mcx16
 OPTIMAL_FLAGS = -std=c++14 -march=native -Ofast -pthread -fgnu-tm  -mcx16

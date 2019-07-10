@@ -11,44 +11,38 @@
 #include "../transaction.hpp"
 #include "../allocator.hpp"
 
-// #ifdef SEGMENTVEC
-// #include "../transVector.hpp"
-// TransactionalVector *transVector;
-// #endif
+// ALL GLOBAL VARIABLES ARE INITIALIZED IN main.cpp
+#ifdef SEGMENTVEC
+#include "../transVector.hpp"
+extern TransactionalVector *transVector;
+#endif
 
-// #ifdef STMVEC
-// #include "../vector.hpp"
-// GCCSTMVector *transVector;
-// #endif
+#ifdef STMVEC
+#include "../vector.hpp"
+GCCSTMVector *transVector;
+#endif
 
-// #ifdef COARSEVEC
-// #include "../vector.hpp"
-// CoarseTransVector *transVector;
-// #endif
+#ifdef COARSEVEC
+#include "../vector.hpp"
+CoarseTransVector *transVector;
+#endif
 
-// #ifdef COMPACTVEC
-// #include "../compactVector.hpp"
-// CompactVector *transVector;
-// #endif
+#ifdef COMPACTVEC
+#include "../compactVector.hpp"
+CompactVector *transVector;
+#endif
 
-void executeTransactions(int threadNum,
-						 TransactionalVector *transVector,
-						 std::vector<Desc *> *transactions,
-						 RandomNumberPool *numPool);
+extern std::vector<Desc *> *transactions;
 
-void threadRunner(std::thread *threads,
-				  void function(int threadNum,
-								TransactionalVector *transVector,
-								std::vector<Desc *> *transactions,
-								RandomNumberPool *numPool),
-				  TransactionalVector *transVector,
-				  std::vector<Desc *> *transactions,
-				  RandomNumberPool *numPool);
+extern RandomNumberPool *numPool;
 
-void preinsert(int threadNum,
-			   TransactionalVector *transVector,
-			   std::vector<Desc *> *transactions,
-			   RandomNumberPool *numPool);
+void executeTransactions(int threadNum);
+
+void threadRunner(std::thread *threads, void function(int threadNum));
+
+void preinsert(int threadNum);
+
+void createTransactions(int threadNum);
 
 int countAborts(std::vector<Desc *> *transactions);
 

@@ -68,7 +68,7 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
                 {
                     descriptor->status.store(Desc::TxStatus::aborted);
                     // DEBUG: Abort reporting.
-                    printf("Aborted!\n");
+                    fprintf(stderr, "Aborted!\n");
                     return false;
                 }
             }
@@ -95,7 +95,7 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
                 {
                     descriptor->status.store(Desc::TxStatus::aborted);
                     // DEBUG: Abort reporting.
-                    printf("Aborted!\n");
+                    fprintf(stderr, "Aborted!\n");
                     return false;
                 }
             }
@@ -116,7 +116,7 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             {
                 descriptor->status.store(Desc::TxStatus::aborted);
                 // DEBUG: Abort reporting.
-                printf("Aborted!\n");
+                fprintf(stderr, "Aborted!\n");
                 return false;
             }
             indexes = access(size++);
@@ -135,7 +135,7 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             {
                 descriptor->status.store(Desc::TxStatus::aborted);
                 // DEBUG: Abort reporting.
-                printf("Aborted!\n");
+                fprintf(stderr, "Aborted!\n");
                 return false;
             }
             indexes = access(--size);

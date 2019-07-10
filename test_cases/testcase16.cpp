@@ -2,11 +2,8 @@
 
 #include "main.hpp"
 
-void createTransactions(TransactionalVector *transVector,
-						std::vector<Desc *> *transactions,
-						RandomNumberPool *numPool)
+void createTransactions()
 {
-	// Prepare to read the entire vector.
 	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 	{
 		Operation *ops = new Operation[TRANSACTION_SIZE];
@@ -20,7 +17,7 @@ void createTransactions(TransactionalVector *transVector,
 				ops[k].type = Operation::OpType::pushBack;
 
 				// Push random values into the vector.
-				ops[k].val = rand();
+				ops[k].val = rand() % std::numeric_limits<VAL>::max();
 			}
 			else
 			{
@@ -41,46 +38,28 @@ int main(void)
 	// Pre-fill the allocators.
 	allocatorInit();
 
-	// Preallocate the random number generator.
-	RandomNumberPool *numPool;
-	numPool = new RandomNumberPool(THREAD_COUNT, NUM_TRANSACTIONS * (2 + 3 * TRANSACTION_SIZE));
-
 	// Reserve the transaction vector, for minor performance gains.
-	std::vector<Desc *> transactions;
-	transactions.reserve(THREAD_COUNT);
-
-#ifdef SEGMENTVEC
-	TransactionalVector *transVector = new TransactionalVector();
-#endif
-#ifdef COMPACTVEC
-	transVector = new CompactVector();
-#endif
-#ifdef COARSEVEC
-	transVector = new CoarseTransVector();
-#endif
-#ifdef STMVEC
-	transVector = new GCCSTMVector();
-#endif
+	transactions->reserve(THREAD_COUNT);
 
 	// Create our threads.
 	std::thread threads[THREAD_COUNT];
 
 	// Pre-insertion step.
-	threadRunner(threads, preinsert, transVector, &transactions, numPool);
+	threadRunner(threads, preinsert);
 
 	// Create the transactions that are to be executed and timed below
-	createTransactions(transVector, &transactions, numPool);
+	createTransactions();
 
 	// Get start time.
 	auto start = std::chrono::high_resolution_clock::now();
 
 	// Execute the transactions
-	threadRunner(threads, executeTransactions, transVector, &transactions, numPool);
+	threadRunner(threads, executeTransactions);
 
 	// Get end time and count abort(s)
 	auto finish = std::chrono::high_resolution_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count();
-	std::cout << "ns with " << countAborts(&transactions) << " abort(s)\n";
+	std::cout << "ns with " << countAborts(transactions) << " abort(s)\n";
 
 	return 0;
 }

@@ -2,21 +2,30 @@
 
 #include "main.hpp"
 
+// Initialize your global variables here
+// Preallocate the random number generator.
+RandomNumberPool *numPool = new RandomNumberPool(THREAD_COUNT, NUM_TRANSACTIONS * TRANSACTION_SIZE);
+std::vector<Desc *> *transactions = new std::vector<Desc *>();
+#ifdef SEGMENTVEC
+	TransactionalVector *transVector = new TransactionalVector();
+#endif
+#ifdef COMPACTVEC
+	transVector = new CompactVector();
+#endif
+#ifdef COARSEVEC
+	transVector = new CoarseTransVector();
+#endif
+#ifdef STMVEC
+	transVector = new GCCSTMVector();
+#endif
+
 // Input: 1- Array of threads that will execute a fucntion.
-//        2- A function pointer to that function. The fn ptr takes 4 inputs
-//        The last three inputs are the inputs to the fn ptr.
-void threadRunner(std::thread *threads,
-				  void function(int threadNum,
-								TransactionalVector *transVector,
-								std::vector<Desc *> *transactions,
-								RandomNumberPool *numPool),
-				  TransactionalVector *transVector,
-				  std::vector<Desc *> *transactions,
-				  RandomNumberPool *numPool)
+//        2- A function pointer to that function.
+void threadRunner(std::thread *threads, void function(int threadNum))
 {
 	// Start our threads.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
-		threads[i] = std::thread(function, i, transVector, transactions, numPool);
+		threads[i] = std::thread(function, i);
 
 	// Wait for all threads to complete.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
@@ -26,10 +35,7 @@ void threadRunner(std::thread *threads,
 }
 
 // Goes through the vector of transactions and executes them.
-void executeTransactions(int threadNum,
-						 TransactionalVector *transVector,
-						 std::vector<Desc *> *transactions,
-						 RandomNumberPool *numPool)
+void executeTransactions(int threadNum)
 {
 	// Initialize the allocators.
 	threadAllocatorInit(threadNum);
@@ -51,10 +57,7 @@ void executeTransactions(int threadNum,
 }
 
 // Prepushes a bunch of objects into the vector
-void preinsert(int threadNum,
-			   TransactionalVector *transVector,
-			   std::vector<Desc *> *transactions,
-			   RandomNumberPool *numPool)
+void preinsert(int threadNum)
 {
 	// Initialize the allocators.
 	threadAllocatorInit(threadNum);
@@ -63,10 +66,6 @@ void preinsert(int threadNum,
 
 	// A list of operations for the current thread.
 	Operation *pushOps = new Operation[opsPerThread];
-
-	// Each thread is allocated an interval to work on
-	int start = opsPerThread * threadNum;
-	int end = opsPerThread * (threadNum + 1);
 
 	// For each operation.
 	for (size_t j = 0; j < opsPerThread; j++)
@@ -79,7 +78,7 @@ void preinsert(int threadNum,
 		// Ensure we never get an UNSET.
 		while (val == UNSET)
 		{
-			val = numPool->getNum(threadNum) % std::numeric_limits<VAL>::max();
+			val = rand() % std::numeric_limits<VAL>::max();
 		}
 		pushOps[j].val = val;
 	}

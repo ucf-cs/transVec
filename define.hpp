@@ -3,8 +3,8 @@
 
 // These are used to switch between different vector implementations.
 // Only uncomment one of them at a time.
-//#define SEGMENTVEC
-#define COMPACTVEC
+#define SEGMENTVEC
+//#define COMPACTVEC
 //#define COARSEVEC
 //#define STMVEC
 
@@ -23,11 +23,11 @@
 // TUNE
 #define SGMT_SIZE ((8 * 16) / (sizeof(VAL) * 2))
 // TUNE
-#define NUM_TRANSACTIONS 25000
+#define NUM_TRANSACTIONS 10000
 // TUNE
 #define TRANSACTION_SIZE 5
 // TUNE
-#define THREAD_COUNT 2
+#define THREAD_COUNT 4
 // Define this to enable the helping scheme.
 #define HELP
 
