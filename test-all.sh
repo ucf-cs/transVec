@@ -12,7 +12,7 @@
 # ADDING YOUR OWN TESTCASES: Just create a file named testcaseX.cpp and place
 # it in the test_cases/ directory. Update the variable below to the new number
 # of testcases
-NUM_TEST_CASES=21
+NUM_TEST_CASES=5
 
 # Start by extracting the commented out macros from the define.hpp file using
 # grep, sed, and regex. Depending on what values are defined, certain values
@@ -71,9 +71,7 @@ do
         echo                                                         >> $REPORT
 
         # Parsing the values that will be changed during compile time
-        TO_BE_PASSED=("\"THREAD_COUNT=$i\"")
-        TO_BE_PASSED+=("\"TRANSACTION_SIZE=$j\"")
-        TO_BE_PASSED="|$(echo "${TO_BE_PASSED[@]}" | sed -r 's/\s/|/g')"
+        TO_BE_PASSED="|THREAD_COUNT=$i|TRANSACTION_SIZE=$j"
 
         #######################################################################
         # Now we're actually going to start with the testcases.
@@ -85,7 +83,7 @@ do
             echo -n "Testcase $k ... "                               >> $REPORT
 
             # Make the executable file with a different main file everytime
-            make CC=$c MAIN=test_cases/testcase$k.cpp DEFINES=$TO_BE_PASSED -j$NUM_CORES
+            make MAIN=test_cases/testcase$k.cpp DEFINES=$TO_BE_PASSED -j$NUM_CORES
 
             # Check if it compiled correctly or not
             compile_val=$?
