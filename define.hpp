@@ -24,7 +24,7 @@
 // TUNE
 #define SGMT_SIZE ((8 * 16) / (sizeof(VAL) * 2))
 // TUNE
-#define NUM_TRANSACTIONS 1000
+#define NUM_TRANSACTIONS 250000
 // TUNE
 // #define TRANSACTION_SIZE 5
 // TUNE

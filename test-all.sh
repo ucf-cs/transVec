@@ -12,7 +12,7 @@
 # ADDING YOUR OWN TESTCASES: Just create a file named testcaseX.cpp and place
 # it in the test_cases/ directory. Update the variable below to the new number
 # of testcases
-NUM_TEST_CASES=5
+NUM_TEST_CASES=21
 
 # Start by extracting the commented out macros from the define.hpp file using
 # grep, sed, and regex. Depending on what values are defined, certain values
