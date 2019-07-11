@@ -20,7 +20,7 @@ NUM_TEST_CASES=21
 NUM_PARAMETERS=$(grep "// #define" define.hpp | wc -l)
 PARAMETERS=$(grep "// #define" define.hpp)
 PARAMETERS=$(echo "$PARAMETERS" | sed -r 's/[a-z0-9/#\s]*//g')
-DATA_STRUCTURES=(SEGMENTVEC COMPACTVEC COARSEVEC STMVEC BOOSTEDVEC)
+DATA_STRUCTURES=(SEGMENTVEC COMPACTVEC STMVEC)
 
 # Redirect all local error messages to /dev/null (ie "process aborted" errors).
 exec 2> /dev/null
