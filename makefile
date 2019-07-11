@@ -1,6 +1,8 @@
 # Default compiler
 SGMTVEC = g++
+# Used to build CompactVector
 CMPTVEC = g++-5
+# Used to build GCC STM vector
 STMVEC  = g++-7
 DATA_STRUCTURE =
 
@@ -25,11 +27,6 @@ else
 		CC = $(STMVEC)
 	endif
 endif
-
-# Used to build CompactVector
-# CC = g++-5
-# Used to build GCC STM vector
-# CC = g++-7
 
 DEBUG_FLAGS = -std=c++14 -g -pthread -fgnu-tm -mcx16
 OPTIMAL_FLAGS = -std=c++14 -march=native -Ofast -pthread -fgnu-tm  -mcx16
