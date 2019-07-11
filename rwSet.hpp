@@ -21,6 +21,13 @@ class TransactionalVector;
 class CompactVector;
 class CompactElement;
 #endif
+#ifdef BOOSTEDVEC
+#include "boostedVector.hpp"
+class BoostedVector;
+class BoostedElement;
+#endif
+
+#if defined SEGMENTVEC || defined COMPACTVEC || defined BOOSTEDVEC
 
 class RWOperation;
 class Operation;
@@ -108,6 +115,24 @@ public:
 	// Print out a list of all locations with operations associated with them.
 	void printOps();
 #endif
+#ifdef BOOSTEDVEC
+	// Map vector locations to read/write operations.
+	std::map<size_t,
+			 RWOperation *,
+			 std::less<size_t>,
+			 MemAllocator<std::pair<size_t, RWOperation *>>>
+		operations;
+	bool hasSize = false;
+	size_t size;
+
+	// Return the index associated with a RW operation access.
+	static size_t access(size_t pos);
+	// Converts a transaction descriptor into a read/write set.
+	bool createSet(Desc *descriptor, BoostedVector *vector);
+	size_t getSize(BoostedVector *vector, Desc *descriptor = NULL);
+	// Get an op node from a map. Allocate it if it doesn't already exist.
+	bool getOp(RWOperation *&op, size_t index);
+#endif
 	// An absolute reserve position.
 	size_t maxReserveAbsolute = 0;
 
@@ -115,4 +140,5 @@ public:
 	~RWSet();
 };
 
+#endif
 #endif

@@ -225,11 +225,13 @@ void predicateFind(int threadNum)
 	Desc *desc = transactions.at(threadNum)->at(0);
 	// Execute the transaction.
 	transVector->executeTransaction(desc);
+#ifndef BOOSTEDVEC
 	if (desc->status.load() != Desc::TxStatus::committed)
 	{
 		printf("Error on thread %d. Transaction failed.\n", threadNum);
 		return;
 	}
+#endif
 	// Check for predicate matches.
 	size_t matchCount = 0;
 	for (size_t i = 0; i < desc->size; i++)
@@ -454,6 +456,9 @@ int main(int argc, char *argv[])
 #endif
 #ifdef COMPACTVEC
 	transVector = new CompactVector();
+#endif
+#ifdef BOOSTEDVEC
+	transVector = new BoostedVector();
 #endif
 #ifdef COARSEVEC
 	transVector = new CoarseTransVector();

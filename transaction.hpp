@@ -21,6 +21,9 @@ template <class T, size_t S>
 class Page;
 
 class RWSet;
+#ifdef BOOSTEDVEC
+class BoostedElement;
+#endif
 
 #ifdef HELP_FREE_READS
 // The global version counter.
@@ -84,6 +87,7 @@ struct Operation
 // This will be converted into an internal transaction to run on the shared datastructure.
 struct Desc
 {
+#ifndef BOOSTEDVEC
 	// The status of a transaction.
 	enum TxStatus
 	{
@@ -92,17 +96,22 @@ struct Desc
 		aborted
 	};
 
+	// The status of the transaction.
+	std::atomic<TxStatus> status;
+	std::atomic<RWSet *> set;
+#else
+	RWSet *set;
+	// A list of locks aquired that must be released when the transaction finishes.
+	std::vector<BoostedElement *> locks;
+#endif
 	// The number of operations in the transaction.
 	unsigned int size = 0;
 	// An array of the operations themselves.
 	Operation *ops;
-	// The status of the transaction.
-	std::atomic<TxStatus> status;
 #ifdef SEGMENTVEC
 	// A list of pages for the transaction to insert.
 	std::atomic<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *> pages;
 #endif
-	std::atomic<RWSet *> set;
 #ifdef HELP_FREE_READS
 	// Used to determine how to reorder help-free reads.
 	std::atomic<size_t> version;

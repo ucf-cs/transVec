@@ -30,6 +30,11 @@ CoarseTransVector *transVector;
 CompactVector *transVector;
 #endif
 
+#ifdef BOOSTEDVEC
+#include "boostedVector.hpp"
+BoostedVector *transVector;
+#endif
+
 std::vector<std::vector<Desc *>*> transactions;
 
 std::atomic<size_t> totalMatches;

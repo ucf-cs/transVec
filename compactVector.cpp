@@ -13,7 +13,12 @@ CompactElement::CompactElement() noexcept
 
 void CompactElement::print()
 {
-    printf("oldval: %du\tnewVal: %du\tdescriptor: %p", oldVal, newVal, descriptor);
+    printf("%5lu:\told: %10u\tnew: %10u\tselection: %s\tdesc: %p\n",
+               i,
+               elem.oldVal,
+               elem.newVal,
+               elem.descriptor == NULL ? "NULL  " : (elem.descriptor->status.load() == Desc::TxStatus::committed ? "commit" : "abort "),
+               elem.descriptor);
     return;
 }
 
@@ -276,12 +281,7 @@ void CompactVector::printContents()
         {
             break;
         }
-        printf("%5lu:\told: %10u\tnew: %10u\tselection: %s\tdesc: %p\n",
-               i,
-               elem.oldVal,
-               elem.newVal,
-               elem.descriptor == NULL ? "NULL  " : (elem.descriptor->status.load() == Desc::TxStatus::committed ? "commit" : "abort "),
-               elem.descriptor);
+        elem.print();
     }
     printf("\n");
     return;

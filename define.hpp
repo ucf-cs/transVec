@@ -4,7 +4,8 @@
 // These are used to switch between different vector implementations.
 // Only uncomment one of them at a time.
 //#define SEGMENTVEC
-#define COMPACTVEC
+//#define COMPACTVEC
+#define BOOSTEDVEC
 //#define COARSEVEC
 //#define STMVEC
 
