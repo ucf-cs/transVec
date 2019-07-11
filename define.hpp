@@ -4,7 +4,7 @@
 // These are used to switch between different vector implementations.
 // Only uncomment one of them at a time. **Make sure they're all commented if using the test-all.sh script**
 // **It's important to keep these comments as "//#define" instead of "// define"**
-#define SEGMENTVEC
+//#define SEGMENTVEC
 //#define COMPACTVEC
 //#define COARSEVEC
 //#define STMVEC
