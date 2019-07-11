@@ -164,7 +164,6 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 		}
 	}
 
-	// TODO: Add this to the paper.
 	// For each element in the page.
 	for (size_t i = 0; i < page->SEG_SIZE; i++)
 	{
@@ -180,10 +179,10 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 		VAL val = UNSET;
 		page->get(i, OLD_VAL, val);
 		// For each operation attempting to read the element.
-		for (size_t i = 0; i < op->readList.size(); i++)
+		for (size_t j = 0; j < op->readList.size(); j++)
 		{
 			// Assign the return values.
-			op->readList[i]->ret = val;
+			op->readList[j]->ret = val;
 		}
 	}
 
