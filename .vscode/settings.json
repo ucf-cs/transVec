@@ -51,6 +51,8 @@
         "numeric": "cpp",
         "cinttypes": "cpp",
         "typeindex": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "strstream": "cpp",
+        "valarray": "cpp"
     }
 }
