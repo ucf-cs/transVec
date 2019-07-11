@@ -19,17 +19,17 @@ extern TransactionalVector *transVector;
 
 #ifdef STMVEC
 #include "../vector.hpp"
-GCCSTMVector *transVector;
+extern GCCSTMVector *transVector;
 #endif
 
 #ifdef COARSEVEC
 #include "../vector.hpp"
-CoarseTransVector *transVector;
+extern CoarseTransVector *transVector;
 #endif
 
 #ifdef COMPACTVEC
 #include "../compactVector.hpp"
-CompactVector *transVector;
+extern CompactVector *transVector;
 #endif
 
 extern std::vector<Desc *> *transactions;

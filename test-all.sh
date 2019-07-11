@@ -20,6 +20,7 @@ NUM_TEST_CASES=21
 NUM_PARAMETERS=$(grep "// #define" define.hpp | wc -l)
 PARAMETERS=$(grep "// #define" define.hpp)
 PARAMETERS=$(echo "$PARAMETERS" | sed -r 's/[a-z0-9/#\s]*//g')
+DATA_STRUCTURES=(SEGMENTVEC COMPACTVEC COARSEVEC STMVEC BOOSTEDVEC)
 
 # Redirect all local error messages to /dev/null (ie "process aborted" errors).
 exec 2> /dev/null
@@ -57,60 +58,70 @@ echo "$MODEL"                                                        >> $REPORT
 echo "Total RAM on system: $RAM"                                     >> $REPORT
 echo                                                                 >> $REPORT
 
-# NUM_CORES will determine up to which value we go to for THREAD_COUNT
-for i in `seq 2 $NUM_CORES`
+# More grepping to get data that will be useful to print out
+NUM_TXN=$(grep "NUM_TRANSACTIONS" define.hpp | grep "[0-9]*" -o)
+SGMT_SIZE=$(grep "SGMT_SIZE" define.hpp | grep "(.*)" -o)
+
+# Each of the data structures will go through all these testcases
+for ds in $DATA_STRUCTURES
 do
-    # Test for TRANSACTION_SIZE from 1 - 5
-    for j in `seq 1 5`
+    # NUM_CORES will determine up to which value we go to for THREAD_COUNT
+    for i in `seq 2 $NUM_CORES`
     do
-        echo "=====================================================" >> $REPORT
-        echo "SGMT_SIZE        = 16    "                             >> $REPORT
-        echo "NUM_TRANSACTIONS = 250000"                             >> $REPORT
-        echo "THREAD_COUNT     = $i    "                             >> $REPORT
-        echo "TRANSACTION_SIZE = $j    "                             >> $REPORT
-        echo                                                         >> $REPORT
-
-        # Parsing the values that will be changed during compile time
-        TO_BE_PASSED="|THREAD_COUNT=$i|TRANSACTION_SIZE=$j"
-
-        #######################################################################
-        # Now we're actually going to start with the testcases.
-        #######################################################################
-        for k in `seq -f "%02g" 1 $NUM_TEST_CASES`;
+        # Test for TRANSACTION_SIZE from 1 - 5
+        for j in `seq 1 5`
         do
-            echo -e -n "\e[96mStarting testcase$k:"
-            echo -e -n " THRD_CNT = $i, TXN_SIZE = $j ... \e[0m"
-            echo -n "Testcase $k ... "                               >> $REPORT
+            echo "=====================================================" >> $REPORT
+            echo "DATA STRUCTURE   = $ds       "                         >> $REPORT
+            echo "SGMT_SIZE        = $SGMT_SIZE"                         >> $REPORT
+            echo "NUM_TRANSACTIONS = $NUM_TXN  "                         >> $REPORT
+            echo "THREAD_COUNT     = $i        "                         >> $REPORT
+            echo "TRANSACTION_SIZE = $j        "                         >> $REPORT
+            echo                                                         >> $REPORT
 
-            # Make the executable file with a different main file everytime
-            make MAIN=test_cases/testcase$k.cpp DEFINES=$TO_BE_PASSED -j$NUM_CORES
+            # Parsing the values that will be changed during compile time
+            TO_BE_PASSED="|THREAD_COUNT=$i|TRANSACTION_SIZE=$j"
 
-            # Check if it compiled correctly or not
-            compile_val=$?
-            if [[ $compile_val != 0 ]]; then
-                echo -e "\e[91m fail (failed to compile)\e[0m"                
-                echo "fail (failed to compile)"                      >> $REPORT
-                continue
-            fi
+            #######################################################################
+            # Now we're actually going to start with the testcases.
+            #######################################################################
+            for k in `seq -f "%02g" 1 $NUM_TEST_CASES`
+            do
+                echo -e -n "\e[93mStarting testcase$k: "
+                echo -e -n "\e[96mDS = \e[35m$ds\e[96m, THRD_CNT = \e[35m$i\e[96m,"
+                echo -e -n " TXN_SIZE = \e[35m$j\e[96m ... \e[0m"
+                echo -n "Testcase $k ... "                               >> $REPORT
 
-            # Run the executable and suppress all ouptut
-            ./transVec.out                                           >> $REPORT
+                # Make the executable file with a different main file everytime
+                make DATA_STRUCTURE=$ds MAIN=test_cases/testcase$k.cpp DEFINES=$TO_BE_PASSED -j$NUM_CORES
 
-            # Check if the program crashed or not                 
-            execution_val=$?
-            if [[ $execution_val != 0 ]]; then
-                echo -e "\e[91m fail (program crashed)\e[0m"                
-                echo "fail (program crashed)"                        >> $REPORT
-                continue
-            fi
+                # Check if it compiled correctly or not
+                compile_val=$?
+                if [[ $compile_val != 0 ]]; then
+                    echo -e "\e[91m fail (failed to compile)\e[0m"                
+                    echo "fail (failed to compile)"                      >> $REPORT
+                    continue
+                fi
 
-            echo -e "\e[94m Success!\e[0m"
+                # Run the executable and suppress all ouptut
+                ./transVec.out                                           >> $REPORT
+
+                # Check if the program crashed or not                 
+                execution_val=$?
+                if [[ $execution_val != 0 ]]; then
+                    echo -e "\e[91m fail (program crashed)\e[0m"                
+                    echo "fail (program crashed)"                        >> $REPORT
+                    continue
+                fi
+
+                echo -e "\e[92m Success!\e[0m"
+            done
+
+        # Clean all object files to prepare for the next round of testing
+        make clean
+            echo "====================================================="
+            echo                                                         >> $REPORT
         done
-
-    # Clean all object files to prepare for the next round of testing
-    make clean
-        echo "====================================================="
-        echo                                                         >> $REPORT
     done
 done
 

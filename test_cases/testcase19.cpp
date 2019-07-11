@@ -15,7 +15,7 @@ void createTransactions()
 		// Push random values into the vector.
 		ops[0].index = NUM_TRANSACTIONS / THREAD_COUNT;
 
-		Desc *desc = new Desc(NUM_TRANSACTIONS, ops);
+		Desc *desc = new Desc(1, ops);
 		transactions->push_back(desc);
 	}
 }

@@ -1,5 +1,5 @@
 #include "rwSet.hpp"
-
+#if defined(SEGMENTVEC) || defined(COMPACTVEC)
 RWSet::~RWSet()
 {
     operations.clear();
@@ -449,4 +449,6 @@ void RWSet::printOps()
     }
     return;
 }
+#endif
+
 #endif

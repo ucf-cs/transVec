@@ -10,13 +10,13 @@ std::vector<Desc *> *transactions = new std::vector<Desc *>();
 	TransactionalVector *transVector = new TransactionalVector();
 #endif
 #ifdef COMPACTVEC
-	transVector = new CompactVector();
+	CompactVector *transVector = new CompactVector();
 #endif
 #ifdef COARSEVEC
-	transVector = new CoarseTransVector();
+	CoarseTransVector *transVector = new CoarseTransVector();
 #endif
 #ifdef STMVEC
-	transVector = new GCCSTMVector();
+	GCCSTMVector *transVector = new GCCSTMVector();
 #endif
 
 // Input: 1- Array of threads that will execute a fucntion.

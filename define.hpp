@@ -2,7 +2,7 @@
 #define DEFINE_HPP
 
 // These are used to switch between different vector implementations.
-// Only uncomment one of them at a time.
+// Only uncomment one of them at a time. **Make sure they're all commented if using the test-all.sh script**
 // **It's important to keep these comments as "//#define" instead of "// define"**
 #define SEGMENTVEC
 //#define COMPACTVEC
@@ -24,7 +24,7 @@
 // TUNE
 #define SGMT_SIZE ((8 * 16) / (sizeof(VAL) * 2))
 // TUNE
-#define NUM_TRANSACTIONS 250000
+#define NUM_TRANSACTIONS 10000
 // TUNE
 // #define TRANSACTION_SIZE 5
 // TUNE

@@ -2,13 +2,28 @@
 SGMTVEC = g++
 CMPTVEC = g++-5
 STMVEC  = g++-7
+DATA_STRUCTURE =
 
-ifeq ($(shell head define.hpp | grep '\#define SEGMENTVEC' | wc -l), 1)
-	CC = $(SGMTVEC)
-else ifeq ($(shell head define.hpp | grep '\#define COMPACTVEC' | wc -l), 1)
-	CC = $(CMPTVEC)
+# If DATA_STRUCTURE is not defined, just go ahead and figure out which g++ to
+# use using grep. Else pick the g++ depending on what the value of DATA_STRUCUTURE is
+ifeq ($(DATA_STRUCTURE),)
+	DS =
+	ifeq ($(shell head define.hpp | grep "^\#define SEGMENTVEC" | wc -l), 1)
+		CC = $(SGMTVEC)
+	else ifeq ($(shell head define.hpp | grep "^\#define COMPACTVEC" | wc -l), 1)
+		CC = $(CMPTVEC)
+	else
+		CC = $(STMVEC)
+	endif
 else
-	CC = $(STMVEC)
+	DS = |$(DATA_STRUCTURE)
+	ifeq ($(DATA_STRUCTURE), SEGMENTVEC)
+		CC = $(SGMTVEC)
+	else ifeq ($(DATA_STRUCTURE), COMPACTVEC)
+		CC = $(CMPTVEC)
+	else
+		CC = $(STMVEC)
+	endif
 endif
 
 # Used to build CompactVector
@@ -32,7 +47,7 @@ CC_FLAGS = $(DEBUG_FLAGS)
 
 # File names
 EXEC    = transVec.out
-MAIN    = test_cases/testcase01.cpp
+MAIN    = test_cases/testcase19.cpp
 SOURCES = $(wildcard *.cpp) test_cases/main.cpp $(MAIN)
 OBJECTS = $(SOURCES:.cpp=.o)
 DEFINES = 
@@ -43,7 +58,7 @@ $(EXEC): $(OBJECTS)
 
 # To obtain object files
 %.o: %.cpp
-	@$(CC) -c $(CC_FLAGS) $(subst |, -D ,$(DEFINES)) -flto $< -o $@ 
+	@$(CC) -c $(CC_FLAGS) $(subst |, -D ,$(DS)) $(subst |, -D ,$(DEFINES)) -flto $< -o $@ 
 
 # To remove generated files
 clean:
