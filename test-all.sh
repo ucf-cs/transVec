@@ -21,6 +21,7 @@ NUM_PARAMETERS=$(grep "// #define" define.hpp | wc -l)
 PARAMETERS=$(grep "// #define" define.hpp)
 PARAMETERS=$(echo "$PARAMETERS" | sed -r 's/[a-z0-9/#\s]*//g')
 DATA_STRUCTURES=(SEGMENTVEC COMPACTVEC STMVEC)
+# DATA_STRUCTURES=(COMPACTVEC)
 
 # Redirect all local error messages to /dev/null (ie "process aborted" errors).
 exec 2> /dev/null
@@ -61,6 +62,24 @@ echo                                                                 >> $REPORT
 # More grepping to get data that will be useful to print out
 NUM_TXN=$(grep "NUM_TRANSACTIONS" define.hpp | grep "[0-9]*" -o)
 SGMT_SIZE=$(grep "SGMT_SIZE" define.hpp | grep "(.*)" -o)
+
+# Make sure that TRANSACTION_SIZE, THREAD_COUNT, and all the vector defines in define.hpp
+# are commented out. If the output is not 0, return from the program.
+g++ test_cases/sanity_check.cpp
+./a.out
+execution_val=$?
+if [[ $execution_val == 1 ]]; then
+    echo -e -n "\e[91mError!\e[0m Please make sure that TRANSACTION_SIZE and THREAD_COUNT"
+    echo " in define.hpp are commented out."
+    rm $REPORT
+    exit
+elif [[ $execution_val == 2 ]]; then
+    echo -e -n "\e[91mError!\e[0m Please make sure that all vector implementations"
+    echo " in define.hpp are commented out."
+    rm $REPORT
+    exit
+fi
+rm a.out
 
 # Each of the data structures will go through all these testcases
 for ds in $DATA_STRUCTURES
