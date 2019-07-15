@@ -1,6 +1,7 @@
 // THIRD TESTCASE - RANDOM TRANSACTION SIZE WITH RANDOM OPERATIONS
 // transactions of random length (determined by the rand() functions)
 // All operations are of equal chance to be chosen
+
 #include "main.hpp"
 
 void createTransactions()
@@ -17,8 +18,8 @@ void createTransactions()
 		for (size_t k = 0; k < txnSize; k++)
 		{
 			ops[k].type = Operation::OpType(rand() % 6);
-			ops[k].index = rand() % NUM_TRANSACTIONS;
-			ops[k].val = rand() % UNSET;
+			ops[k].index = rand() % NUM_TRANSACTIONS / 2;
+			ops[k].val = rand() % std::numeric_limits<VAL>::max();;
 		}
 
 		// Create a transaction containing these operations.

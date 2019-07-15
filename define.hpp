@@ -4,10 +4,10 @@
 // These are used to switch between different vector implementations.
 // Only uncomment one of them at a time. **Make sure they're all commented if using the test-all.sh script**
 // **It's important to keep these comments as "//#define" instead of "// define"**
-//#define SEGMENTVEC
-//#define COMPACTVEC
-//#define COARSEVEC
-//#define STMVEC
+#define SEGMENTVEC
+// #define COMPACTVEC
+// #define COARSEVEC
+// #define STMVEC
 
 // Change these to test different situations.
 // Makes sense to make this cache line size X associativity (perhaps at L2 level, so 8*16)
@@ -15,8 +15,8 @@
 // NOTE: This may break if division makes this resolve to 0.
 #define SGMT_SIZE ((8 * 16) / (sizeof(VAL) * 2))
 #define NUM_TRANSACTIONS 10000
-//#define TRANSACTION_SIZE 5
-//#define THREAD_COUNT 2
+#define TRANSACTION_SIZE 5
+#define THREAD_COUNT 4
 // Define this to enable the helping scheme.
 #define HELP
 
@@ -24,7 +24,7 @@
 // Define this to align SEGMENTVEC pages.
 //#define ALIGNED
 // Enable help-free reads and their associated overhead.
-//#define HELP_FREE_READS
+#define HELP_FREE_READS
 #endif
 
 // Compact vector requires 32-bit or smaller value types.
