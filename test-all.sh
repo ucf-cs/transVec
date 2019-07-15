@@ -63,10 +63,10 @@ NUM_TXN=$(grep "NUM_TRANSACTIONS" define.hpp | grep "[0-9]*" -o)
 SGMT_SIZE=$(grep "SGMT_SIZE" define.hpp | grep "(.*)" -o)
 
 # Each of the data structures will go through all these testcases
-for ds in $DATA_STRUCTURES
+for ds in "${DATA_STRUCTURES[@]}"
 do
     # NUM_CORES will determine up to which value we go to for THREAD_COUNT
-    for i in `seq 2 $NUM_CORES`
+    for i in `seq 1 $NUM_CORES`
     do
         # Test for TRANSACTION_SIZE from 1 - 5
         for j in `seq 1 5`

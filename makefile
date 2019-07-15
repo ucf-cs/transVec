@@ -30,7 +30,7 @@ endif
 
 DEBUG_FLAGS = -std=c++14 -g -pthread -fgnu-tm -mcx16
 OPTIMAL_FLAGS = -std=c++14 -march=native -Ofast -pthread -fgnu-tm  -mcx16
-CC_FLAGS = $(DEBUG_FLAGS)
+CC_FLAGS = $(OPTIMAL_FLAGS)
 
 # List vectorization at compile time
 #-fopt-info-vec-missed
