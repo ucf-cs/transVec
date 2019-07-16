@@ -121,7 +121,7 @@ public:
   static void report()
   {
     size_t count = Allocator<DataType>::count.load();
-    // printf("Used %lu allocations in this pool. About %lu allocations per thread\n", count, count / THREAD_COUNT);
+    //printf("Used %lu allocations in this pool of %lu byte objects. About %lu allocations per thread\n", count, sizeof(DataType), count / THREAD_COUNT);
     return;
   }
 };

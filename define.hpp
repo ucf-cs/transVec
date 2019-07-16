@@ -5,9 +5,10 @@
 // Only uncomment one of them at a time. **Make sure they're all commented if using the test-all.sh script**
 // **It's important to keep these comments as "//#define" instead of "// define"**
 #define SEGMENTVEC
-// #define COMPACTVEC
-// #define COARSEVEC
-// #define STMVEC
+//#define COMPACTVEC
+//#define BOOSTEDVEC
+//#define COARSEVEC
+//#define STMVEC
 
 // Change these to test different situations.
 // Makes sense to make this cache line size X associativity (perhaps at L2 level, so 8*16)

@@ -61,8 +61,8 @@ public:
         if (!isInit)
         {
             isInit = true;
-            // printf("Allocating an uninitialized object of type %s. ", typeid(T).name());
-            // printf("Will use default pool size or use malloc as a fallback.\n");
+            //printf("Allocating an uninitialized object of type %s and size %lu. ", typeid(T).name(), sizeof(T));
+            //printf("Will use default pool size or use malloc as a fallback.\n");
         }
 
         NUM_POOLS = THREAD_COUNT * 2;
@@ -75,7 +75,8 @@ public:
             // *2 to ensure we have pools for our two rounds of threads.
             size_t poolSize = sizeof(T) * NUM_POOLS * POOL_SIZE;
             newPool = (char *)memalign(objectSize, poolSize);
-            if(newPool == NULL){
+            if (newPool == NULL)
+            {
                 assert(false);
             }
             char *nullVal = NULL;
