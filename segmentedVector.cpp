@@ -172,7 +172,7 @@ template <typename T>
 #ifndef BOOSTEDVEC
 bool SegmentedVector<T>::read(size_t index, T &value)
 #else
-bool SegmentedVector<T>::read(size_t index, T *value)
+bool SegmentedVector<T>::read(size_t index, T *&value)
 #endif
 {
 	std::pair<size_t, size_t> indexes = access(index);

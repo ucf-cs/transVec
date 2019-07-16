@@ -29,7 +29,6 @@ BoostedVector::BoostedVector()
     return;
 }
 
-// TODO: Rework this.
 bool BoostedVector::insertElements(Desc *descriptor)
 {
     RWSet *set = descriptor->set;
@@ -38,7 +37,7 @@ bool BoostedVector::insertElements(Desc *descriptor)
 
     for (; iter != set->operations.rend(); ++iter)
     {
-        BoostedElement *elem;
+        BoostedElement *elem = NULL;
         if (!array->read(iter->first, elem))
         {
             return false;
@@ -66,23 +65,25 @@ bool BoostedVector::insertElements(Desc *descriptor)
 
 bool BoostedVector::prepareTransaction(Desc *descriptor)
 {
-    RWSet *set = descriptor->set;
-    set = Allocator<RWSet>::alloc();
+    descriptor->set = Allocator<RWSet>::alloc();
     // Create the read/write set.
-    set->createSet(descriptor, this);
+    descriptor->set->createSet(descriptor, this);
     // Ensure that we can fit all of the elements we plan to insert.
-    return reserve(set->maxReserveAbsolute > set->size ? set->maxReserveAbsolute : set->size);
+    return reserve(descriptor->set->maxReserveAbsolute > descriptor->set->size ? descriptor->set->maxReserveAbsolute : descriptor->set->size);
 }
 
 bool BoostedVector::executeTransaction(Desc *descriptor)
 {
-    return prepareTransaction(descriptor) && insertElements(descriptor);
+    bool ret = prepareTransaction(descriptor) && insertElements(descriptor);
+
     // As the transaction has completed, release all locks in the order obtained.
-    for (size_t i = 0; i < descriptor->locks.size(); i++)
+    // Always unlock, regardless of what the functions return.
+    // Otherwise, we would hold on to these locks forever.
+    for (auto &&lockElem : descriptor->locks)
     {
-        descriptor->locks[i]->lock.unlock();
+        lockElem->lock.unlock();
     }
-    return true;
+    return ret;
 }
 
 void BoostedVector::printContents()

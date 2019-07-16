@@ -38,10 +38,10 @@ size_t RWSet::access(size_t pos)
 bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
 #endif
 #ifdef COMPACTVEC
-bool RWSet::createSet(Desc *descriptor, CompactVector *vector)
+    bool RWSet::createSet(Desc *descriptor, CompactVector *vector)
 #endif
 #ifdef BOOSTEDVEC
-bool RWSet::createSet(Desc *descriptor, BoostedVector *vector)
+        bool RWSet::createSet(Desc *descriptor, BoostedVector *vector)
 #endif
 {
 #ifdef COMPACTVEC
@@ -463,6 +463,7 @@ size_t RWSet::getSize(BoostedVector *vector, Desc *descriptor)
     vector->sizeLock.lock.lock();
     descriptor->locks.push_back(&vector->sizeLock);
     size = vector->size;
+    hasSize = true;
     return size;
 }
 #endif

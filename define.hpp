@@ -33,9 +33,6 @@
 //#define HELP_FREE_READS
 #endif
 
-// TODO2: Maybe implement this.
-//#define POINTER_ONLY
-
 // Compact vector requires 32-bit or smaller value types.
 #ifdef COMPACTVEC
 // Use this typedef to quickly change what type of objects we're working with.

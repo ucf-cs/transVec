@@ -27,7 +27,8 @@ void inline threadAllocatorInit(int threadNum)
 #ifdef COMPACTVEC
 	Allocator<CompactElement>::threadInit(threadNum);
 #endif
-#if defined(SEGMENTVEC) || defined(COMPACTVEC)
+
+#if defined(SEGMENTVEC) || defined(COMPACTVEC) || defined(BOOSTEDVEC)
 	Allocator<RWOperation>::threadInit(threadNum);
 	Allocator<RWSet>::threadInit(threadNum);
 #endif
@@ -260,10 +261,10 @@ void predicateSearch()
 	threadRunner(threads, predicatePreinsert);
 	printf("Completed preinsertion!\n\n\n");
 
-	std::vector<Desc *> *threadTransactions = new std::vector<Desc *>();
 	// Prepare read transactions for each thread.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
 	{
+		std::vector<Desc *> *threadTransactions = new std::vector<Desc *>();
 		Operation *ops = new Operation[NUM_TRANSACTIONS];
 		// Prepare to read the entire vector.
 		for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
@@ -274,8 +275,8 @@ void predicateSearch()
 		}
 		Desc *desc = new Desc(NUM_TRANSACTIONS, ops);
 		threadTransactions->push_back(desc);
+		transactions.push_back(threadTransactions);
 	}
-	transactions.push_back(threadTransactions);
 
 	// Get the current time.
 	auto start = std::chrono::system_clock::now();
@@ -407,10 +408,10 @@ void allocatorInit()
 	// Preallocate the RWOperation elements.
 	printf("sizeof(RWOperation)=%lu\n", sizeof(RWOperation));
 	Allocator<RWOperation>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT * THREAD_COUNT);
-#elif defined(SEGMENTVEC)
+#elif defined(SEGMENTVEC) || defined(BOOSTEDVEC)
 	Allocator<RWOperation>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
 #endif
-#if defined(SEGMENTVEC) || defined(COMPACTVEC)
+#if defined(SEGMENTVEC) || defined(COMPACTVEC) || defined(BOOSTEDVEC)
 	// Preallocate the RWSet elements.
 	printf("sizeof(RWSet)=%lu\n", sizeof(RWSet));
 	Allocator<RWSet>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
@@ -429,7 +430,7 @@ void allocatorReport()
 	Allocator<Page<size_t, 1>>::report();
 	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::report();
 #endif
-#if defined(SEGMENTVEC) || defined(COMPACTVEC)
+#if defined(SEGMENTVEC) || defined(COMPACTVEC) || defined(BOOSTEDVEC)
 	Allocator<RWOperation>::report();
 	Allocator<RWSet>::report();
 #endif

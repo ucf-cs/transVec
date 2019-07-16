@@ -64,7 +64,7 @@ public:
 #ifndef BOOSTEDVEC
 	bool read(size_t index, T &value);
 #else
-	bool read(size_t index, T *value);
+	bool read(size_t index, T *&value);
 #endif
 #ifndef BOOSTEDVEC
 	// Atomic write at a target location.
