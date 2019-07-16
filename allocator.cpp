@@ -12,7 +12,7 @@ void threadAllocatorInit(int threadNum)
 #ifdef COMPACTVEC
 	Allocator<CompactElement>::threadInit(threadNum);
 #endif
-#if defined(SEGMENTVEC) || defined(COMPACTVEC)
+#if defined(SEGMENTVEC) || defined(COMPACTVEC) || defined(BOOSTEDVEC)
 	Allocator<RWOperation>::threadInit(threadNum);
 	Allocator<RWSet>::threadInit(threadNum);
 #endif
@@ -49,10 +49,10 @@ void allocatorInit()
 	// Preallocate the RWOperation elements.
 	printf("sizeof(RWOperation)=%lu\n", sizeof(RWOperation));
 	Allocator<RWOperation>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT * THREAD_COUNT);
-#elif defined(SEGMENTVEC)
+#elif defined(SEGMENTVEC) || defined(BOOSTEDVEC)
 	Allocator<RWOperation>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
 #endif
-#if defined(SEGMENTVEC) || defined(COMPACTVEC)
+#if defined(SEGMENTVEC) || defined(COMPACTVEC) || defined(BOOSTEDVEC)
 	// Preallocate the RWSet elements.
 	// printf("sizeof(RWSet)=%lu\n", sizeof(RWSet));
 	Allocator<RWSet>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
@@ -71,7 +71,7 @@ void allocatorReport()
 	Allocator<Page<size_t, 1>>::report();
 	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::report();
 #endif
-#if defined(SEGMENTVEC) || defined(COMPACTVEC)
+#if defined(SEGMENTVEC) || defined(COMPACTVEC) || defined(BOOSTEDVEC)
 	Allocator<RWOperation>::report();
 	Allocator<RWSet>::report();
 #endif

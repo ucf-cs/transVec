@@ -4,19 +4,23 @@
 
 // All global variables are initialized here
 // Preallocate the random number generator.
-RandomNumberPool *numPool = new RandomNumberPool(THREAD_COUNT, NUM_TRANSACTIONS * (2 + 3 * TRANSACTION_SIZE));
+RandomNumberPool *numPool = new RandomNumberPool(THREAD_COUNT, NUM_TRANSACTIONS *(2 + 3 * TRANSACTION_SIZE));
 std::vector<Desc *> *transactions = new std::vector<Desc *>();
 #ifdef SEGMENTVEC
-	TransactionalVector *transVector = new TransactionalVector();
+TransactionalVector *transVector = new TransactionalVector();
 #endif
 #ifdef COMPACTVEC
-	CompactVector *transVector = new CompactVector();
+CompactVector *transVector = new CompactVector();
 #endif
-#ifdef COARSEVEC
-	CoarseTransVector *transVector = new CoarseTransVector();
+#ifdef BOOSTEDVEC
+BoostedVector *transVector = new BoostedVector();
+std::atomic<size_t> abortCount(0);
 #endif
 #ifdef STMVEC
-	GCCSTMVector *transVector = new GCCSTMVector();
+GCCSTMVector *transVector = new GCCSTMVector();
+#endif
+#ifdef COARSEVEC
+CoarseTransVector *transVector = new CoarseTransVector();
 #endif
 
 // Input: 1- Array of threads that will execute a fucntion.
@@ -47,12 +51,14 @@ void executeTransactions(int threadNum)
 	for (int i = start; i < end; i++)
 	{
 		Desc *desc = transactions->at(i);
+#ifndef BOOSTEDVEC
 		transVector->executeTransaction(desc);
-
-		if (desc->status.load() != Desc::TxStatus::committed)
+#else
+		if (transVector->executeTransaction(desc))
 		{
-			continue;
+			abortCount.fetch_add(1);
 		}
+#endif
 	}
 }
 
@@ -86,22 +92,32 @@ void preinsert(int threadNum)
 	// Create a transaction containing the these operations.
 	Desc *pushDesc = new Desc(opsPerThread, pushOps);
 
-	// Execute the transaction.
+// Execute the transaction.
+#ifndef BOOSTEDVEC
 	transVector->executeTransaction(pushDesc);
+	if (desc->status.load() != Desc::TxStatus::committed)
+	{
+		printf("Preinsert failed.\n");
+		return;
+	}
+#endif
 
 	return;
 }
 
-int countAborts(std::vector<Desc *> *transactions)
+size_t countAborts(std::vector<Desc *> *transactions)
 {
-	int retVal = 0;
-	for (int i = 0; i < transactions->size(); i++)
+#ifdef BOOSTEDVEC
+	return abortCount.load();
+#else
+	size_t retVal = 0;
+	for (size_t i = 0; i < transactions->size(); i++)
 	{
 		Desc *desc = transactions->at(i);
 
 		if (desc->status.load() == Desc::TxStatus::aborted)
 			retVal++;
 	}
-
 	return retVal;
+#endif
 }
