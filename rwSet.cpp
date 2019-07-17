@@ -149,10 +149,10 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             {
 #ifndef BOOSTEDVEC
                 descriptor->status.store(Desc::TxStatus::aborted);
+#endif
                 // DEBUG: Abort reporting.
                 //fprintf(stderr, "Aborted!\n");
                 return false;
-#endif
             }
             indexes = access(--size);
 
@@ -228,6 +228,8 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
     if (hasSize)
     {
         vector->size = size;
+        // DEBUG:
+        //printf("to %lu\n", vector->size);
     }
 #endif
     return true;
@@ -464,6 +466,8 @@ size_t RWSet::getSize(BoostedVector *vector, Desc *descriptor)
     vector->sizeLock.lock.lock();
     descriptor->locks.push_back(&vector->sizeLock);
     size = vector->size;
+    // DEBUG:
+    //printf("Size changed from %lu ", vector->size);
     hasSize = true;
     return size;
 }

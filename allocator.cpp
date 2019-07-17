@@ -55,7 +55,7 @@ void allocatorInit()
 #if defined(SEGMENTVEC) || defined(COMPACTVEC) || defined(BOOSTEDVEC)
 	// Preallocate the RWSet elements.
 	// printf("sizeof(RWSet)=%lu\n", sizeof(RWSet));
-	Allocator<RWSet>::init(NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
+	Allocator<RWSet>::init(NUM_TRANSACTIONS * THREAD_COUNT);
 #endif
 	return;
 }

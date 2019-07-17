@@ -54,7 +54,7 @@ void executeTransactions(int threadNum)
 #ifndef BOOSTEDVEC
 		transVector->executeTransaction(desc);
 #else
-		if (transVector->executeTransaction(desc))
+		if (!transVector->executeTransaction(desc))
 		{
 			abortCount.fetch_add(1);
 		}
@@ -95,13 +95,18 @@ void preinsert(int threadNum)
 // Execute the transaction.
 #ifndef BOOSTEDVEC
 	transVector->executeTransaction(pushDesc);
-	if (desc->status.load() != Desc::TxStatus::committed)
+	if (pushDesc->status.load() != Desc::TxStatus::committed)
+	{
+		printf("Preinsert failed.\n");
+		return;
+	}
+#else
+	if (!transVector->executeTransaction(pushDesc))
 	{
 		printf("Preinsert failed.\n");
 		return;
 	}
 #endif
-
 	return;
 }
 

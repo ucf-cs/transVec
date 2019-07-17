@@ -1,7 +1,7 @@
 #include "segmentedVector.hpp"
 
 template <typename T>
-size_t SegmentedVector<T>::highestBit(size_t val)
+size_t SegmentedVector<T>::highestBit(unsigned int val)
 {
 	// Subtract 1 so the rightmost position is 0 instead of 1.
 	return (sizeof(val) * 8) - __builtin_clz(val | 1) - 1;
@@ -56,7 +56,7 @@ bool SegmentedVector<T>::allocBucket(size_t bucket)
 	}
 	// The size of the bucket we are allocating.
 	// firstBucketSize^(bucket+1)
-	size_t bucketSize = 1 << (highestBit(firstBucketSize) * (bucket + 1));
+	size_t bucketSize = (size_t)1 << (highestBit(firstBucketSize) * (bucket + 1));
 	// Allocate the new segment.
 #ifndef BOOSTEDVEC
 	std::atomic<T> *mem = new std::atomic<T>[bucketSize]();

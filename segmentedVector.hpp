@@ -39,7 +39,7 @@ private:
 	// The maximum bit returnable for the highest bit.
 	const size_t max = 8 * sizeof(size_t) - 1;
 	// Returns the position of the highest bit used in the binary representation of val.
-	size_t highestBit(size_t val);
+	size_t highestBit(unsigned int val);
 	// Retrieves the bucket.
 	size_t getBucket(size_t hiBit);
 	// Retrieves the index.
