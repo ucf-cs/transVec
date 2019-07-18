@@ -79,7 +79,7 @@ public:
 	unsigned int size = 0;
 	// A replacement size element, used by this RWSet.
 	// Must be a pointer because CompactElement was forward declared.
-	CompactElement *sizeElement;
+	CompactElement *sizeElement = NULL;
 
 	// Return the index associated with a RW operation access.
 	static size_t access(unsigned int pos);

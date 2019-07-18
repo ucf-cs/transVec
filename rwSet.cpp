@@ -384,6 +384,7 @@ unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
     CompactElement oldSizeElement;
     do
     {
+    start:
         oldSizeElement = vector->size.load();
 
         // Quit if the transaction is no longer active.
@@ -420,7 +421,7 @@ unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
                 // Help the active transaction.
                 vector->sizeHelp(oldSizeElement.descriptor);
                 // Start the loop over again.
-                continue;
+                goto start;
             }
 #else
             // Busy wait for the conflicting thread to complete.
