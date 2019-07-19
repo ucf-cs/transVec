@@ -1,6 +1,6 @@
-// FIRST TESTCASE - RANGED READS (predicateFind)
-// This test case inserts a bunch of random elements and then reads then reads the entire
-// vector and counts for even numbers. See transaction.cpp for more detail on "read"
+// TESTCASE 1
+// RNGD-READ
+// MIX: NA
 
 #include "main.hpp"
 

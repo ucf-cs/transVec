@@ -1,4 +1,6 @@
-// TWENTIETH TESTCASE - RANGED HELPFREE READS (predicateFind)
+// TESTCASE 20
+// RANGED HELPFREE READS
+// MIX: NA
 // This test case inserts a bunch of random elements and then reads then reads the entire
 // vector and counts for even numbers. See transaction.cpp for more detail on "read"
 

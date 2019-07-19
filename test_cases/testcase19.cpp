@@ -1,4 +1,6 @@
-// NINETEENTH TESTCASE - One major txn with a huge reserve. Each thread gets a txn
+// TESTCASE 19
+// MEM RESERVE
+// MIX: NA
 // We're not preinserting for this testcase
 
 #include "main.hpp"

@@ -1,4 +1,6 @@
-// SIXTH TESTCASE - RANDOM READS AND WRITES (50-50 ratio)
+// TESTCASE 6
+// READ-WRITE
+// MIX: 50 50
 
 #include "main.hpp"
 
@@ -13,7 +15,7 @@ void createTransactions()
 		{
 			// We'll get the 50/50 ratio by checking for even or odd
 			// If even, make a write operation, else make a read operation
-			if (rand() % 2 < 0)
+			if (rand() % 2 == 0)
 			{
 				// All operations are writes.
 				ops[k].type  = Operation::OpType::write;

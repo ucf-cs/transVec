@@ -1,4 +1,6 @@
-// EIGHTEENTH TESTCASE - Only push/pops (25-75)
+// TESTCASE 18
+// PUSH-POP
+// MIX: 25-75
 
 #include "main.hpp"
 

@@ -1,6 +1,6 @@
-// THIRD TESTCASE - RANDOM TRANSACTION SIZE WITH RANDOM OPERATIONS
-// transactions of random length (determined by the rand() functions)
-// All operations are of equal chance to be chosen
+// TESTCASE 3
+// RNDM-TXNs
+// MIX: EQL
 
 #include "main.hpp"
 

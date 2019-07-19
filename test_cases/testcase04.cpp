@@ -1,5 +1,6 @@
-// FOURTH TESTCASE - RANDOM READS
-// Creats a bunch of only read operations at random places in the vector
+// TESTCASE 4
+// RNDM-READ
+// MIX: NA
 
 #include "main.hpp"
 

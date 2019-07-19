@@ -1,7 +1,6 @@
-// TWELVTH TESTCASE - RANDOM "SLOW" (push, pop, write) and "FAST" (read, write) operations
-// There will be a 66-33 ratio of slow to fast operations
-// The slow operations will be 33-33-33 ratio
-// the fast operations will be 50-50
+// TESTCASE 12
+// SLOW-FAST
+// MIX: 66-33
 
 #include "main.hpp"
 

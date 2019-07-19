@@ -1,6 +1,6 @@
-// SECOND TESTCASE - RANGED WRITES (predicateFind)
-// Preallocate a bunch of nodes and then preform a ranged series of writes
-// See transaction.cpp for more detail on "write"
+// TESTCASE 2
+// RNGD-WRITE
+// MIX: NA
 
 #include "main.hpp"
 

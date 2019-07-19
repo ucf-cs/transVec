@@ -1,7 +1,6 @@
-// THIRTEENTH TESTCASE - RANDOM "SLOW" (push, pop, write) and "FAST" (read, write) operations
-// There will be a 75-25 ratio of slow to fast operations
-// The slow operations will be 33-33-33 ratio
-// the fast operations will be 50-50
+// TESTCASE 13
+// SLOW-FAST
+// MIX 75-25
 
 #include "main.hpp"
 

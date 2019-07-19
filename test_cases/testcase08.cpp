@@ -1,6 +1,7 @@
-// EIGHTH TESTCASE - RANDOM READS AND WRITES (33-66 ratio)
-// Preallocate a bunch of nodes and then preform a ranged series of writes
-// See transaction.cpp for more detail on "write"
+// TESTCASE 8
+// READ-WRITE
+// MIX: 33-66
+
 #include "main.hpp"
 
 void createTransactions()

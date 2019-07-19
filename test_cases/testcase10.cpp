@@ -1,4 +1,6 @@
-// TENTH TESTCASE - RANDOM READS AND WRITES (25-75 ratio)
+// TESTCASE 10
+// READ-WRITE
+// MIX: 25-75
 
 #include "main.hpp"
 

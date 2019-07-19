@@ -1,6 +1,7 @@
 // FIRST TESTCASE - RANDOM WRITES (predicateFind)
-// Preallocate a bunch of nodes and then preform random writes
-// See transaction.cpp for more detail on "write"
+// TESTCASE 5
+// RNDM-WRITE
+// MIX: NA
 
 #include "main.hpp"
 
