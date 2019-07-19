@@ -1,5 +1,7 @@
 #include "rwSet.hpp"
-#if defined(SEGMENTVEC) || defined(COMPACTVEC)
+
+#if defined SEGMENTVEC || defined COMPACTVEC || defined BOOSTEDVEC
+
 RWSet::~RWSet()
 {
     operations.clear();
@@ -25,12 +27,21 @@ size_t RWSet::access(unsigned int pos)
     return pos;
 }
 #endif
+#ifdef BOOSTEDVEC
+size_t RWSet::access(size_t pos)
+{
+    return pos;
+}
+#endif
 
 #ifdef SEGMENTVEC
 bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
 #endif
 #ifdef COMPACTVEC
     bool RWSet::createSet(Desc *descriptor, CompactVector *vector)
+#endif
+#ifdef BOOSTEDVEC
+        bool RWSet::createSet(Desc *descriptor, BoostedVector *vector)
 #endif
 {
 #ifdef COMPACTVEC
@@ -46,6 +57,9 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
 #ifdef COMPACTVEC
         unsigned int indexes;
 #endif
+#ifdef BOOSTEDVEC
+        size_t indexes;
+#endif
         RWOperation *op = NULL;
         switch (descriptor->ops[i].type)
         {
@@ -60,9 +74,11 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
                 // If the value was unset (internal pop?), then our transaction fails.
                 if (op->lastWriteOp->val == UNSET)
                 {
+#ifndef BOOSTEDVEC
                     descriptor->status.store(Desc::TxStatus::aborted);
                     // DEBUG: Abort reporting.
                     //fprintf(stderr, "Aborted!\n");
+#endif
                     return false;
                 }
             }
@@ -87,9 +103,11 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
                 // If the value was unset (internal pop?), then our transaction fails.
                 if (op->lastWriteOp->val == UNSET)
                 {
+#ifndef BOOSTEDVEC
                     descriptor->status.store(Desc::TxStatus::aborted);
                     // DEBUG: Abort reporting.
                     //fprintf(stderr, "Aborted!\n");
+#endif
                     return false;
                 }
             }
@@ -108,9 +126,11 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             // This should never happen, but make sure we don't have an integer overflow.
             if (size == std::numeric_limits<decltype(size)>::max())
             {
+#ifndef BOOSTEDVEC
                 descriptor->status.store(Desc::TxStatus::aborted);
                 // DEBUG: Abort reporting.
                 //fprintf(stderr, "Aborted!\n");
+#endif
                 return false;
             }
             indexes = access(size++);
@@ -127,7 +147,9 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             // Prevent popping past the bottom of the stack.
             if (size < 1)
             {
+#ifndef BOOSTEDVEC
                 descriptor->status.store(Desc::TxStatus::aborted);
+#endif
                 // DEBUG: Abort reporting.
                 //fprintf(stderr, "Aborted!\n");
                 return false;
@@ -200,6 +222,14 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
         // Attempt to update the vector's size to contain the new value.
         // If this CAS fails, then either the final size value was already set by a helper or a new transaction was associated with size and our transaction already completed long ago.
         vector->size.compare_exchange_strong(*sizeElement, newSizeElement);
+    }
+#endif
+#ifdef BOOSTEDVEC
+    if (hasSize)
+    {
+        vector->size = size;
+        // DEBUG:
+        //printf("to %lu\n", vector->size);
     }
 #endif
     return true;
@@ -354,6 +384,7 @@ unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
     CompactElement oldSizeElement;
     do
     {
+    start:
         oldSizeElement = vector->size.load();
 
         // Quit if the transaction is no longer active.
@@ -390,7 +421,7 @@ unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
                 // Help the active transaction.
                 vector->sizeHelp(oldSizeElement.descriptor);
                 // Start the loop over again.
-                continue;
+                goto start;
             }
 #else
             // Busy wait for the conflicting thread to complete.
@@ -425,6 +456,23 @@ unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
     return size;
 }
 #endif
+#ifdef BOOSTEDVEC
+// Special way to retrieve the current size.
+size_t RWSet::getSize(BoostedVector *vector, Desc *descriptor)
+{
+    if (hasSize)
+    {
+        return size;
+    }
+    vector->sizeLock.lock.lock();
+    descriptor->locks.push_back(&vector->sizeLock);
+    size = vector->size;
+    // DEBUG:
+    //printf("Size changed from %lu ", vector->size);
+    hasSize = true;
+    return size;
+}
+#endif
 
 #ifdef SEGMENTVEC
 void RWSet::getOp(RWOperation *&op, std::pair<size_t, size_t> indexes)
@@ -439,7 +487,7 @@ void RWSet::getOp(RWOperation *&op, std::pair<size_t, size_t> indexes)
     return;
 }
 #endif
-#ifdef COMPACTVEC
+#if defined(COMPACTVEC) || defined(BOOSTEDVEC)
 // Get an op node from a map. Allocate it if it doesn't already exist.
 bool RWSet::getOp(RWOperation *&op, size_t index)
 {
@@ -472,5 +520,4 @@ void RWSet::printOps()
     return;
 }
 #endif
-
 #endif

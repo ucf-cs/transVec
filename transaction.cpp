@@ -4,14 +4,18 @@ Desc::Desc(unsigned int size, Operation *ops)
 {
 	this->size = size;
 	this->ops = ops;
-	// Transactions are always active at start.
-	status.store(active);
 #ifdef SEGMENTVEC
 	// The page map always starts out empty.
 	pages.store(NULL);
 #endif
+#ifndef BOOSTEDVEC
+	// Transactions are always active at start.
+	status.store(active);
 	// The RWSet always starts out empty.
 	set.store(NULL);
+#else
+	set = NULL;
+#endif
 #ifdef HELP_FREE_READS
 	// Initialize the time to the lowest possbile value.
 	// This way, we know if it has been set yet.
@@ -33,15 +37,18 @@ VAL *Desc::getResult(size_t index)
 	{
 		return NULL;
 	}
+#ifndef BOOSTEDVEC
 	// If the transaction has not yet committed.
 	if (status.load() != committed)
 	{
 		return NULL;
 	}
+#endif
 	// Return the value returned by the operation.
 	return &(ops[index].ret);
 }
 
+#ifndef BOOSTEDVEC
 void Desc::print()
 {
 	const char *statusStrList[] = {"active", "committed", "aborted"};
@@ -67,6 +74,7 @@ void Desc::print()
 		printf("\n");
 	}
 }
+#endif
 
 void Operation::print()
 {

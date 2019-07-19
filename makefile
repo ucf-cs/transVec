@@ -29,7 +29,7 @@ else
 endif
 
 DEBUG_FLAGS = -std=c++14 -g -pthread -fgnu-tm -mcx16
-OPTIMAL_FLAGS = -std=c++14 -march=native -Ofast -pthread -fgnu-tm  -mcx16
+OPTIMAL_FLAGS = -std=c++14 -march=native -Ofast -pthread -fgnu-tm -mcx16
 CC_FLAGS = $(OPTIMAL_FLAGS)
 
 # List vectorization at compile time
@@ -44,7 +44,7 @@ CC_FLAGS = $(OPTIMAL_FLAGS)
 
 # File names
 EXEC    = transVec.out
-MAIN    = test_cases/testcase21.cpp
+MAIN    = test_cases/testcase01.cpp
 SOURCES = $(wildcard *.cpp) test_cases/main.cpp $(MAIN)
 OBJECTS = $(SOURCES:.cpp=.o)
 DEFINES = 

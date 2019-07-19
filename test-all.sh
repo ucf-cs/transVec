@@ -20,7 +20,7 @@ NUM_TEST_CASES=21
 NUM_PARAMETERS=$(grep "// #define" define.hpp | wc -l)
 PARAMETERS=$(grep "// #define" define.hpp)
 PARAMETERS=$(echo "$PARAMETERS" | sed -r 's/[a-z0-9/#\s]*//g')
-DATA_STRUCTURES=(SEGMENTVEC COMPACTVEC STMVEC)
+DATA_STRUCTURES=(SEGMENTVEC COMPACTVEC BOOSTEDVEC STMVEC)
 # DATA_STRUCTURES=(COMPACTVEC)
 
 # Redirect all local error messages to /dev/null (ie "process aborted" errors).
@@ -82,10 +82,10 @@ fi
 rm a.out
 
 # Each of the data structures will go through all these testcases
-for ds in $DATA_STRUCTURES
+for ds in "${DATA_STRUCTURES[@]}"
 do
     # NUM_CORES will determine up to which value we go to for THREAD_COUNT
-    for i in `seq 2 $NUM_CORES`
+    for i in `seq 1 $NUM_CORES`
     do
         # Test for TRANSACTION_SIZE from 1 - 5
         for j in `seq 1 5`

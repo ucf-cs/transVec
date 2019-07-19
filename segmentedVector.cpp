@@ -1,7 +1,7 @@
 #include "segmentedVector.hpp"
 
 template <typename T>
-size_t SegmentedVector<T>::highestBit(size_t val)
+size_t SegmentedVector<T>::highestBit(unsigned int val)
 {
 	// Subtract 1 so the rightmost position is 0 instead of 1.
 	return (sizeof(val) * 8) - __builtin_clz(val | 1) - 1;
@@ -56,9 +56,13 @@ bool SegmentedVector<T>::allocBucket(size_t bucket)
 	}
 	// The size of the bucket we are allocating.
 	// firstBucketSize^(bucket+1)
-	size_t bucketSize = 1 << (highestBit(firstBucketSize) * (bucket + 1));
+	size_t bucketSize = (size_t)1 << (highestBit(firstBucketSize) * (bucket + 1));
 	// Allocate the new segment.
+#ifndef BOOSTEDVEC
 	std::atomic<T> *mem = new std::atomic<T>[bucketSize]();
+#else
+	T *mem = new T[bucketSize]();
+#endif
 // Only do this if T is a pointer type.
 #ifdef SEGMENTVEC
 	// Ensure the segment is initialized to NULL.
@@ -67,6 +71,7 @@ bool SegmentedVector<T>::allocBucket(size_t bucket)
 		mem[i].store(NULL);
 	}
 #endif
+#ifndef BOOSTEDVEC
 	// We need to initialize the NULL pointer if we want to CAS.
 	std::atomic<T> *null = NULL;
 	// Attempt to place the segment in shared memory.
@@ -76,6 +81,9 @@ bool SegmentedVector<T>::allocBucket(size_t bucket)
 		// Deallocate the memory allocated by this thread.
 		delete[] mem;
 	}
+#else
+	bucketArray[bucket] = mem;
+#endif
 	return true;
 }
 
@@ -102,7 +110,11 @@ template <typename T>
 SegmentedVector<T>::SegmentedVector()
 {
 	// Initialize the first level of the array.
+#ifndef BOOSTEDVEC
 	bucketArray = new std::atomic<std::atomic<T> *>[buckets]();
+#else
+	bucketArray = new std::atomic<T *>[buckets]();
+#endif
 	// Ensure the array is entirely NULL by default to avoid undefined behavior.
 	// NOTE: No need to do this because the array should always be NULL by default.
 	/*
@@ -113,8 +125,10 @@ SegmentedVector<T>::SegmentedVector()
 	*/
 	// Initialize the first segment in the second level.
 	reserve(1);
+#ifndef BOOSTEDVEC
 	// Ensure that the objects in this vector are actually lock-free.
 	assert(bucketArray[0].load()[0].is_lock_free());
+#endif
 	return;
 }
 
@@ -155,7 +169,44 @@ bool SegmentedVector<T>::reserve(size_t size)
 
 template <typename T>
 // Typically fails if an invalid read or write occurs.
+#ifndef BOOSTEDVEC
 bool SegmentedVector<T>::read(size_t index, T &value)
+#else
+bool SegmentedVector<T>::read(size_t index, T *&value)
+#endif
+{
+	std::pair<size_t, size_t> indexes = access(index);
+	// Requested a bucket out of bounds.
+	if (indexes.first > buckets)
+	{
+		return false;
+	}
+#ifndef BOOSTEDVEC
+	std::atomic<T> *bucket = bucketArray[indexes.first].load();
+#else
+	T *bucket = bucketArray[indexes.first].load();
+#endif
+	// Loaded a bucket that isn't allocated.
+	if (bucket == NULL)
+	{
+		return false;
+	}
+	// Requested an index out of range of the current bucket.
+	if (indexes.second > (1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
+	{
+		return false;
+	}
+#ifndef BOOSTEDVEC
+	value = bucket[indexes.second].load();
+#else
+	value = &bucket[indexes.second];
+#endif
+	return true;
+}
+
+#ifndef BOOSTEDVEC
+template <typename T>
+bool SegmentedVector<T>::write(size_t index, T val)
 {
 	std::pair<size_t, size_t> indexes = access(index);
 	// Requested a bucket out of bounds.
@@ -174,27 +225,6 @@ bool SegmentedVector<T>::read(size_t index, T &value)
 	{
 		return false;
 	}
-	value = bucket[indexes.second].load();
-	return true;
-}
-
-template <typename T>
-bool SegmentedVector<T>::write(size_t index, T val)
-{
-	std::pair<size_t, size_t> indexes = access(index);
-	if (indexes.first > buckets)
-	{
-		return false;
-	}
-	std::atomic<T> *bucket = bucketArray[indexes.first].load();
-	if (bucket == NULL)
-	{
-		return false;
-	}
-	if (indexes.second > (1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
-	{
-		return false;
-	}
 	bucket[indexes.second].store(val);
 	return true;
 }
@@ -203,21 +233,25 @@ template <typename T>
 bool SegmentedVector<T>::tryWrite(size_t index, T oldVal, T newVal)
 {
 	std::pair<size_t, size_t> indexes = access(index);
+	// Requested a bucket out of bounds.
 	if (indexes.first > buckets)
 	{
 		return false;
 	}
 	std::atomic<T> *bucket = bucketArray[indexes.first].load();
+	// Loaded a bucket that isn't allocated.
 	if (bucket == NULL)
 	{
 		return false;
 	}
+	// Requested an index out of range of the current bucket.
 	if (indexes.second > (1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
 	{
 		return false;
 	}
 	return bucket[indexes.second].compare_exchange_strong(oldVal, newVal);
 }
+#endif
 
 template <typename T>
 void SegmentedVector<T>::printBuckets()
@@ -250,4 +284,7 @@ template class SegmentedVector<Page<VAL, SGMT_SIZE> *>;
 #endif
 #ifdef COMPACTVEC
 template class SegmentedVector<CompactElement>;
+#endif
+#ifdef BOOSTEDVEC
+template class SegmentedVector<BoostedElement>;
 #endif

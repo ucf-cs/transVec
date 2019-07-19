@@ -17,6 +17,17 @@
 extern TransactionalVector *transVector;
 #endif
 
+#ifdef COMPACTVEC
+#include "../compactVector.hpp"
+extern CompactVector *transVector;
+#endif
+
+#ifdef BOOSTEDVEC
+#include "../boostedVector.hpp"
+extern BoostedVector *transVector;
+extern std::atomic<size_t> abortCount;
+#endif
+
 #ifdef STMVEC
 #include "../vector.hpp"
 extern GCCSTMVector *transVector;
@@ -25,11 +36,6 @@ extern GCCSTMVector *transVector;
 #ifdef COARSEVEC
 #include "../vector.hpp"
 extern CoarseTransVector *transVector;
-#endif
-
-#ifdef COMPACTVEC
-#include "../compactVector.hpp"
-extern CompactVector *transVector;
 #endif
 
 extern std::vector<Desc *> *transactions;
@@ -44,6 +50,6 @@ void preinsert(int threadNum);
 
 void createTransactions(int threadNum);
 
-int countAborts(std::vector<Desc *> *transactions);
+size_t countAborts(std::vector<Desc *> *transactions);
 
 #endif

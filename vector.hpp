@@ -60,7 +60,7 @@ public:
     }
     bool popBack(VAL &val)
     {
-        if (size - 1 < 0)
+        if (size <= 0)
         {
             return false;
         }
