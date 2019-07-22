@@ -16,8 +16,8 @@
 // NOTE: This may break if division makes this resolve to 0.
 #define SGMT_SIZE ((8 * 16) / (sizeof(VAL) * 2))
 #define NUM_TRANSACTIONS 10000
-//#define TRANSACTION_SIZE 5
-//#define THREAD_COUNT 2
+// #define TRANSACTION_SIZE 5
+// #define THREAD_COUNT 2
 // Define this to enable the helping scheme.
 #define HELP
 
