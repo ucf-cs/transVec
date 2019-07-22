@@ -78,7 +78,7 @@ rm a.out
 for ds in "${DATA_STRUCTURES[@]}"
 do
     # NUM_CORES will determine up to which value we go to for THREAD_COUNT
-    for i in `seq 2 $NUM_CORES`
+    for i in `seq 1 $NUM_CORES`
     do
         # Test for TRANSACTION_SIZE from 1 - 5
         for j in `seq 1 5`
