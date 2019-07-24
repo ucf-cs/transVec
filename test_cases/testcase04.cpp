@@ -1,5 +1,6 @@
-// FOURTH TESTCASE - RANDOM READS
-// Creats a bunch of only read operations at random places in the vector
+// TESTCASE 4
+// RANDOM READS
+// MIX: NA
 
 #include "main.hpp"
 
@@ -50,8 +51,10 @@ int main(void)
 
 	// Get end time and count abort(s)
 	auto finish = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count();
-	std::cout << "ns with " << countAborts(transactions) << " abort(s)\n";
+	std::cout << SGMT_SIZE << "\t" << NUM_TRANSACTIONS << "\t";
+	std::cout << TRANSACTION_SIZE << "\t" << THREAD_COUNT << "\t";
+    std::cout << std::chrono::duration_cast<std::chrono::TIME_UNIT>(finish-start).count();
+	std::cout << "\t" << countAborts(transactions) << "\n";
 
 	// Report on allocator issues.
 	allocatorReport();

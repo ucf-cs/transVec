@@ -1,4 +1,6 @@
-// SIXTH TESTCASE - RANDOM READS AND WRITES (50-50 ratio)
+// TESTCASE 6
+// READ-WRITE
+// MIX: 50 50
 
 #include "main.hpp"
 
@@ -13,7 +15,7 @@ void createTransactions()
 		{
 			// We'll get the 50/50 ratio by checking for even or odd
 			// If even, make a write operation, else make a read operation
-			if (rand() % 2 < 0)
+			if (rand() % 2 == 0)
 			{
 				// All operations are writes.
 				ops[k].type  = Operation::OpType::write;
@@ -61,8 +63,10 @@ int main(void)
 
 	// Get end time and count abort(s)
 	auto finish = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count();
-	std::cout << "ns with " << countAborts(transactions) << " abort(s)\n";
+	std::cout << SGMT_SIZE << "\t" << NUM_TRANSACTIONS << "\t";
+	std::cout << TRANSACTION_SIZE << "\t" << THREAD_COUNT << "\t";
+    std::cout << std::chrono::duration_cast<std::chrono::TIME_UNIT>(finish-start).count();
+	std::cout << "\t" << countAborts(transactions) << "\n";
 
 	// Report on allocator issues.
 	allocatorReport();

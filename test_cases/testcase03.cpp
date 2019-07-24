@@ -1,6 +1,6 @@
-// THIRD TESTCASE - RANDOM TRANSACTION SIZE WITH RANDOM OPERATIONS
-// transactions of random length (determined by the rand() functions)
-// All operations are of equal chance to be chosen
+// TESTCASE 3
+// COMPLETE RANDOMNESS (Random Op and Random TXN_SIZE)
+// MIX: Everything is of equal chance to happen
 
 #include "main.hpp"
 
@@ -58,8 +58,10 @@ int main(void)
 
 	// Get end time and count abort(s)
 	auto finish = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count();
-	std::cout << "ns with " << countAborts(transactions) << " abort(s)\n";
+	std::cout << SGMT_SIZE << "\t" << NUM_TRANSACTIONS << "\t";
+	std::cout << TRANSACTION_SIZE << "\t" << THREAD_COUNT << "\t";
+    std::cout << std::chrono::duration_cast<std::chrono::TIME_UNIT>(finish-start).count();
+	std::cout << "\t" << countAborts(transactions) << "\n";
 
 	// Report on allocator issues.
 	allocatorReport();

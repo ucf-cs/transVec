@@ -1,6 +1,8 @@
 #ifndef __MAIN_HEADER__
 #define __MAIN_HEADER__
 
+#define TIME_UNIT milliseconds
+
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
