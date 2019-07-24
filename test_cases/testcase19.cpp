@@ -51,5 +51,8 @@ int main(void)
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count();
 	std::cout << "ns with " << countAborts(transactions) << " abort(s)\n";
 
+	// Report on allocator issues.
+	allocatorReport();
+
 	return 0;
 }

@@ -24,8 +24,10 @@ private:
     static size_t POOL_SIZE;
     // Used to determine if we missed any pools.
     static bool isInit;
-    // DEBUG: A counter used to keep track of allocations. Use this to tune allocation sizes.
+#ifdef ALLOC_COUNT
+    // A counter used to keep track of allocations. Use this to tune allocation sizes.
     static std::atomic<size_t> count;
+#endif
 
     // Offset in the pool for this thread's access.
     thread_local static char *base;
@@ -61,8 +63,10 @@ public:
         if (!isInit)
         {
             isInit = true;
-            //printf("Allocating an uninitialized object of type %s and size %lu. ", typeid(T).name(), sizeof(T));
-            //printf("Will use default pool size or use malloc as a fallback.\n");
+#ifdef ALLOC_COUNT
+            printf("Allocating an uninitialized object of type %s and size %lu.\n", typeid(T).name(), sizeof(T));
+//printf("Will use default pool size or use malloc as a fallback.\n");
+#endif
         }
 
         NUM_POOLS = THREAD_COUNT * 2;
@@ -95,8 +99,10 @@ public:
     // Use pointer if pointer is not a value_type*
     value_type *allocate(std::size_t n)
     {
-        // DEBUG: Allocation counter.
+#ifdef ALLOC_COUNT
+        // Increment counter.
         count.fetch_add(n);
+#endif
 
         // Ensure everything needed is allocated.
         MemAllocator();
@@ -154,7 +160,9 @@ public:
     // Print out allocator usage statistics.
     static void report()
     {
-        // printf("Used %lu allocations for %lu pools.\n", count.load(), NUM_POOLS);
+#ifdef ALLOC_COUNT
+        printf("Used %lu allocations for %lu pools.\n", count.load(), NUM_POOLS);
+#endif
         return;
     }
 
@@ -219,8 +227,10 @@ size_t MemAllocator<T>::POOL_SIZE(2200000);
 template <typename T>
 bool MemAllocator<T>::isInit(false);
 
+#ifdef ALLOC_COUNT
 template <typename T>
 std::atomic<size_t> MemAllocator<T>::count(0);
+#endif
 
 template <typename T>
 thread_local char *MemAllocator<T>::base(NULL);

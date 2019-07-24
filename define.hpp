@@ -15,11 +15,13 @@
 // Divide by the size of the elements in the segment an by 2, so we can hold old and new values on the same cache line.
 // NOTE: This may break if division makes this resolve to 0.
 #define SGMT_SIZE ((8 * 16) / (sizeof(VAL) * 2))
-#define NUM_TRANSACTIONS 10000
-//#define TRANSACTION_SIZE 5
-//#define THREAD_COUNT 2
+#define NUM_TRANSACTIONS 1000
+//#define THREAD_COUNT 1
+//#define TRANSACTION_SIZE 1
 // Define this to enable the helping scheme.
 #define HELP
+// Define this to debug allocation counting.
+//#define ALLOC_COUNT
 
 #ifdef SEGMENTVEC
 // Define this to align SEGMENTVEC pages.

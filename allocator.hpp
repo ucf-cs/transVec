@@ -28,8 +28,10 @@ public:
   thread_local static size_t threadNum;
   // The pool of objects.
   static std::vector<std::vector<DataType *> *> pool;
-  // DEBUG: A counter used to keep track of allocations. Use this to tune allocation sizes.
+#ifdef ALLOC_COUNT
+  // A counter used to keep track of allocations. Use this to tune allocation sizes.
   static std::atomic<size_t> count;
+#endif
 
   // Initialize the allocator.
   static void init(size_t poolSize = 0)
@@ -79,8 +81,10 @@ public:
   // Get a delta page with the appropriate size.
   static DataType *alloc()
   {
-    // DEBUG: Allocation counter.
+#ifdef ALLOC_COUNT
+    // Increment counter.
     Allocator<DataType>::count.fetch_add(1);
+#endif
 
     if (threadNum == SIZE_MAX)
     {
@@ -120,8 +124,10 @@ public:
   // Report how many times the pool was used.
   static void report()
   {
+#ifdef ALLOC_COUNT
     size_t count = Allocator<DataType>::count.load();
-    //printf("Used %lu allocations in this pool of %lu byte objects. About %lu allocations per thread\n", count, sizeof(DataType), count / THREAD_COUNT);
+    printf("Used %lu allocations in this pool of %lu byte objects. About %lu allocations per thread\n", count, sizeof(DataType), count / THREAD_COUNT);
+#endif
     return;
   }
 };
@@ -135,8 +141,10 @@ thread_local size_t Allocator<DataType>::threadNum = SIZE_MAX;
 template <typename DataType>
 std::vector<std::vector<DataType *> *> Allocator<DataType>::pool;
 
+#ifdef ALLOC_COUNT
 template <typename DataType>
 std::atomic<size_t> Allocator<DataType>::count(0);
+#endif
 
 void threadAllocatorInit(int threadNum);
 
