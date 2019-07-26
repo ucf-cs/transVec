@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <map>
 #include <ostream>
+#include <set>
 
 #include "allocator.hpp"
 #include "define.hpp"

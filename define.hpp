@@ -27,7 +27,7 @@
 // Define this to align SEGMENTVEC pages.
 //#define ALIGNED
 // Enable help-free reads and their associated overhead.
-#define HELP_FREE_READS
+//#define HELP_FREE_READS
 #endif
 
 // Compact vector requires 32-bit or smaller value types.

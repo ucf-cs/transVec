@@ -364,10 +364,16 @@ void TransactionalVector::executeHelpFreeReads(Desc *descriptor)
 	// Validate that this is actually a purely help-free read transaction.
 	// This step can be skipped for performance, but should happen for validation.
 	// We start at 1 since executeTransaction already validated the operation at index 0.
+	/*
 	for (size_t i = 1; i < descriptor->size; i++)
 	{
 		assert(descriptor->ops[i].type == Operation::OpType::hfRead);
 	}
+	*/
+
+	// The set of all transactions ignored by this help-free read transaction.
+	// Used to interpret transactions consistently in a rare edge case.
+	std::set<Desc *> ignoredTransactions;
 
 	// Perform the reads.
 	for (size_t i = 0; i < descriptor->size; i++)
@@ -401,47 +407,62 @@ void TransactionalVector::executeHelpFreeReads(Desc *descriptor)
 				currentPage = endPage;
 			}
 
-			// If this page read or wrote to this location.
-			if ((currentPage->bitset.read[indexes.second] || currentPage->bitset.write[indexes.second]) != 0)
+			// If the associated transaction is in the ignore list, ignore this page.
+			if (ignoredTransactions.count(currentPage->transaction))
 			{
-				// NOTE: Continue traversal only if the page is active or the timestamp is too late.
-				// Otherwise, we have found a value to return.
-
-				// The element's logical status is based on the page's transaction status.
-				switch (currentPage->transaction->status.load())
-				{
-				case Desc::TxStatus::active:
-					break;
-				case Desc::TxStatus::committed:
-					// If this transaction completed before the help-free read transaction started.
-					if (currentPage->transaction->version.load() < descriptor->version.load())
-					{
-						// If a write committed.
-						if (currentPage->bitset.write[indexes.second] != 0)
-						{
-							currentPage->get(indexes.second, NEW_VAL, descriptor->ops[i].ret);
-						}
-						// If a read committed.
-						else
-						{
-							currentPage->get(indexes.second, OLD_VAL, descriptor->ops[i].ret);
-						}
-						traverse = false;
-					}
-					break;
-				case Desc::TxStatus::aborted:
-					// If this transaction completed before the help-free read transaction started.
-					if (currentPage->transaction->version.load() < descriptor->version.load())
-					{
-						currentPage->get(indexes.second, OLD_VAL, descriptor->ops[i].ret);
-						traverse = false;
-					}
-					break;
-				default:
-					assert(false);
-					break;
-				}
+				// Go to the next page.
+				currentPage = currentPage->next;
+				continue;
 			}
+
+			// If this page did not read or write to this location.
+			if ((currentPage->bitset.read[indexes.second] || currentPage->bitset.write[indexes.second]) == 0)
+			{
+				// Go to the next page.
+				currentPage = currentPage->next;
+				continue;
+			}
+
+			// NOTE: Continue traversal only if the page is active or the timestamp is too late.
+			// Otherwise, we have found a value to return.
+
+			// If this page too new.
+			if (currentPage->transaction->version.load() > descriptor->version.load())
+			{
+				// Go to the next page.
+				currentPage = currentPage->next;
+				continue;
+			}
+
+			// The element's logical status is based on the page's transaction status.
+			switch (currentPage->transaction->status.load())
+			{
+			case Desc::TxStatus::active:
+				// Add this transaction to the ignore list, so we can interpret its state consistently.
+				ignoredTransactions.insert(currentPage->transaction);
+				break;
+			case Desc::TxStatus::committed:
+				// If a write committed.
+				if (currentPage->bitset.write[indexes.second] != 0)
+				{
+					currentPage->get(indexes.second, NEW_VAL, descriptor->ops[i].ret);
+				}
+				// If a read committed.
+				else
+				{
+					currentPage->get(indexes.second, OLD_VAL, descriptor->ops[i].ret);
+				}
+				traverse = false;
+				break;
+			case Desc::TxStatus::aborted:
+				currentPage->get(indexes.second, OLD_VAL, descriptor->ops[i].ret);
+				traverse = false;
+				break;
+			default:
+				assert(false);
+				break;
+			}
+
 			// Go to the next page.
 			currentPage = currentPage->next;
 		}

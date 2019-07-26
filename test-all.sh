@@ -74,14 +74,14 @@ fi
 rm a.out
 
 # Now that housekeeping is done, begin the testing.
-# Each of the data structures will go through all these testcases
-for ds in "${DATA_STRUCTURES[@]}"
+# NUM_CORES will determine up to which value we go to for THREAD_COUNT
+for i in `seq 1 $NUM_CORES`
 do
-    # NUM_CORES will determine up to which value we go to for THREAD_COUNT
-    for i in `seq 1 $NUM_CORES`
+    # Test for TRANSACTION_SIZE from 1 - 5
+    for j in `seq 1 5`
     do
-        # Test for TRANSACTION_SIZE from 1 - 5
-        for j in `seq 1 5`
+        # Each of the data structures will go through all these testcases
+        for ds in "${DATA_STRUCTURES[@]}"
         do
             # echo "SGMT_SIZE        = $SGMT_SIZE"                         >> $REPORT
             # echo "NUM_TRANSACTIONS = $NUM_TXN  "                         >> $REPORT
