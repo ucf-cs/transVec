@@ -1,7 +1,7 @@
 #ifndef __MAIN_HEADER__
 #define __MAIN_HEADER__
 
-#define TIME_UNIT milliseconds
+#define TIME_UNIT nanoseconds
 
 #include <chrono>
 #include <cstdlib>
@@ -9,7 +9,7 @@
 #include <thread>
 
 #include "../define.hpp"
-#include "../randomPool.hpp"
+//#include "../randomPool.hpp"
 #include "../transaction.hpp"
 #include "../allocator.hpp"
 
@@ -41,8 +41,6 @@ extern CoarseTransVector *transVector;
 #endif
 
 extern std::vector<Desc *> *transactions;
-
-extern RandomNumberPool *numPool;
 
 void executeTransactions(int threadNum);
 

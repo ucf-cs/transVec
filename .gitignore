@@ -6,3 +6,5 @@
 .vscode/ipch
 # Ignore output file
 output.txt
+# Ignore reports directory contents
+reports/*

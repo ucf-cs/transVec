@@ -20,37 +20,53 @@ void threadAllocatorInit(int threadNum)
 
 void allocatorInit()
 {
-	// printf("Initializing the memory allocators.\n");
-	// printf("Operation* allocator.\n");
-	MemAllocator<Operation *>::init();
-	// NOTE: Other MemAllocators are implicitly initialized.
-	// Would be better to initialize them in advance for performance.
-	// It's not a big deal if we pre-fill the vector first.
-	// printf("Finished initializing the memory allocators.\n\n");
+#ifdef ALLOC_COUNT
+	printf("Initializing the memory allocators.\n");
+	printf("sizeof(Operation *)=%lu\n", sizeof(Operation *));
+#endif
+	MemAllocator<Operation *>::init((NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT)+1);
+// NOTE: Other MemAllocators are implicitly initialized.
+// Would be better to initialize them in advance for performance.
+// It's not a big deal if we pre-fill the vector first.
+#ifdef ALLOC_COUNT
+	printf("Finished initializing the memory allocators.\n\n");
+#endif
 
 #ifdef SEGMENTVEC
-	// Preallocate the pages.
-	// printf("sizeof(Page<VAL, SGMT_SIZE>)=%lu\n", sizeof(Page<VAL, SGMT_SIZE>));
-	Allocator<Page<VAL, SGMT_SIZE>>::init((NUM_TRANSACTIONS + 64) * TRANSACTION_SIZE * THREAD_COUNT);
-	// Preallocate the size pages.
-	// printf("sizeof(Page<VAL, SGMT_SIZE>)=%lu\n", sizeof(Page<size_t, 1>));
-	Allocator<Page<size_t, 1>>::init((NUM_TRANSACTIONS + 1) * TRANSACTION_SIZE * THREAD_COUNT);
-	// Preallocate page maps.
-	// printf("sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>)=%lu\n", sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>));
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::init((NUM_TRANSACTIONS + 1) * TRANSACTION_SIZE * THREAD_COUNT);
+// Preallocate the pages.
+#ifdef ALLOC_COUNT
+	printf("sizeof(Page<VAL, SGMT_SIZE>)=%lu\n", sizeof(Page<VAL, SGMT_SIZE>));
+#endif
+	Allocator<Page<VAL, SGMT_SIZE>>::init((size_t)(NUM_TRANSACTIONS * 1.064) * TRANSACTION_SIZE);
+// Preallocate the size pages.
+#ifdef ALLOC_COUNT
+	printf("sizeof(Page<size_t, 1>)=%lu\n", sizeof(Page<size_t, 1>));
+#endif
+	Allocator<Page<size_t, 1>>::init((NUM_TRANSACTIONS + 1) * TRANSACTION_SIZE);
+// Preallocate page maps.
+#ifdef ALLOC_COUNT
+	printf("sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>)=%lu\n", sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>));
+#endif
+	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::init((NUM_TRANSACTIONS + 1) * TRANSACTION_SIZE);
 #endif
 #ifdef COMPACTVEC
-	// Preallocate compact elements.
-	//printf("sizeof(CompactElement)=%lu\n", sizeof(CompactElement));
-	Allocator<CompactElement>::init((NUM_TRANSACTIONS + 1) * TRANSACTION_SIZE * THREAD_COUNT);
+// Preallocate compact elements.
+#ifdef ALLOC_COUNT
+	printf("sizeof(CompactElement)=%lu\n", sizeof(CompactElement));
+#endif
+	Allocator<CompactElement>::init((NUM_TRANSACTIONS + 1) * TRANSACTION_SIZE);
 #endif
 #if defined(SEGMENTVEC) || defined(COMPACTVEC) || defined(BOOSTEDVEC)
-	// Preallocate the RWOperation elements.
-	//printf("sizeof(RWOperation)=%lu\n", sizeof(RWOperation));
-	Allocator<RWOperation>::init(2 * NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT * THREAD_COUNT);
-	// Preallocate the RWSet elements.
-	// printf("sizeof(RWSet)=%lu\n", sizeof(RWSet));
-	Allocator<RWSet>::init((1 + NUM_TRANSACTIONS) * THREAD_COUNT * THREAD_COUNT);
+// Preallocate the RWOperation elements.
+#ifdef ALLOC_COUNT
+	printf("sizeof(RWOperation)=%lu\n", sizeof(RWOperation));
+#endif
+	Allocator<RWOperation>::init(2 * NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT);
+// Preallocate the RWSet elements.
+#ifdef ALLOC_COUNT
+	printf("sizeof(RWSet)=%lu\n", sizeof(RWSet));
+#endif
+	Allocator<RWSet>::init((1 + NUM_TRANSACTIONS) * THREAD_COUNT);
 #endif
 	return;
 }
@@ -67,8 +83,10 @@ void allocatorReport()
 	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::report();
 #endif
 #ifdef COMPACTVEC
-	// Preallocate compact elements.
-	//printf("sizeof(CompactElement)=%lu\n", sizeof(CompactElement));
+// Preallocate compact elements.
+#ifdef ALLOC_COUNT
+	printf("sizeof(CompactElement)=%lu\n", sizeof(CompactElement));
+#endif
 	Allocator<CompactElement>::report();
 #endif
 #if defined(SEGMENTVEC) || defined(COMPACTVEC) || defined(BOOSTEDVEC)

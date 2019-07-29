@@ -127,6 +127,7 @@ public:
         freeIndex += n * sizeof(value_type);
         if (ret == NULL || freeIndex >= (sizeof(T) * POOL_SIZE))
         {
+            printf("Pool for thread ID %lu ran out of elements of size %lu.\n", threadId, sizeof(T));
             // Can use malloc as a fallback.
             ret = (T *)malloc(sizeof(T) * n);
             assert(ret != NULL && "Failed to malloc.");
@@ -146,8 +147,9 @@ public:
 
     // Initialize the memory pool.
     // TUNE
-    static void init(size_t size = 22000000)
+    static void init(size_t size = 0)
     {
+        assert(size != 0);
         // Set a per-template instance pool size.
         POOL_SIZE = size;
         // Indicate that the pool has been properly initialized.
@@ -161,7 +163,7 @@ public:
     static void report()
     {
 #ifdef ALLOC_COUNT
-        printf("Used %lu allocations for %lu pools.\n", count.load(), NUM_POOLS);
+        printf("Used %lu allocations for %lu pools for elements of size %lu.\n", count.load(), NUM_POOLS, sizeof(T));
 #endif
         return;
     }
