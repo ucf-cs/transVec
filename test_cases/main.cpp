@@ -60,6 +60,22 @@ void executeTransactions(int threadNum)
 	}
 }
 
+void executeRangedTransactions(int threadNum)
+{
+	// Initialize the allocators.
+	threadAllocatorInit(threadNum);
+
+	Desc *desc = transactions->at(threadNum);
+#ifndef BOOSTEDVEC
+	transVector->executeTransaction(desc);
+#else
+	if (!transVector->executeTransaction(desc))
+	{
+		abortCount.fetch_add(1);
+	}
+#endif
+}
+
 // Prepushes a bunch of objects into the vector
 void preinsert(int threadNum)
 {
@@ -72,7 +88,7 @@ void preinsert(int threadNum)
 	Operation *pushOps = new Operation[opsPerThread];
 
 	// For each operation.
-	for (size_t j = 0; j < opsPerThread; j++)
+	for (int j = 0; j < opsPerThread; j++)
 	{
 		// All operations are pushes.
 		pushOps[j].type = Operation::OpType::pushBack;

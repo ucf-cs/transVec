@@ -491,16 +491,12 @@ void RWSet::getOp(RWOperation *&op, std::pair<size_t, size_t> indexes)
 // Get an op node from a map. Allocate it if it doesn't already exist.
 bool RWSet::getOp(RWOperation *&op, size_t index)
 {
-    try
-    {
-        op = operations.at(index);
-    }
-    catch (std::out_of_range)
+    op = operations[index];
+    if (op == NULL)
     {
         op = Allocator<RWOperation>::alloc();
-        assert(op != NULL);
-        operations.insert(std::pair<size_t, RWOperation *>(index, op));
     }
+    operations[index] = op;
     return true;
 }
 #endif

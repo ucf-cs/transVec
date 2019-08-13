@@ -192,7 +192,7 @@ bool SegmentedVector<T>::read(size_t index, T *&value)
 		return false;
 	}
 	// Requested an index out of range of the current bucket.
-	if (indexes.second > (1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
+	if (indexes.second > (size_t)(1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
 	{
 		return false;
 	}
@@ -221,7 +221,7 @@ bool SegmentedVector<T>::write(size_t index, T val)
 		return false;
 	}
 	// Requested an index out of range of the current bucket.
-	if (indexes.second > (1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
+	if (indexes.second > (size_t)(1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
 	{
 		return false;
 	}
@@ -245,7 +245,7 @@ bool SegmentedVector<T>::tryWrite(size_t index, T oldVal, T newVal)
 		return false;
 	}
 	// Requested an index out of range of the current bucket.
-	if (indexes.second > (1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
+	if (indexes.second > (size_t)(1 << (highestBit(firstBucketSize) * (indexes.first + 1))))
 	{
 		return false;
 	}

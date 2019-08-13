@@ -135,14 +135,14 @@ public:
         return ret;
     }
 
-    void
-    deallocate(value_type *p, std::size_t n) noexcept // Use pointer if pointer is not a value_type*
+    void deallocate(value_type *p, std::size_t n) noexcept // Use pointer if pointer is not a value_type*
     {
         // Do nothing. Difficult to deallocate with this setup, so just don't do it.
 
         //freeIndex -= n;
         //assert(freeIndex<T> > base);
         //memccpy(freeIndex, p, n);
+        return;
     }
 
     // Initialize the memory pool.

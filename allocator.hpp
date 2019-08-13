@@ -67,7 +67,7 @@ public:
   // Initialize the thread-local allocator pool.
   static void threadInit(int threadNum = -1)
   {
-    if (threadNum > pool.size() || threadNum < 0)
+    if ((size_t)threadNum > pool.size() || threadNum < 0)
     {
       printf("Requested pool %d when %lu pools are allocated.\n", threadNum, pool.size());
       return;

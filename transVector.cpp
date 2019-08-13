@@ -522,7 +522,6 @@ void TransactionalVector::printContents()
 		Page<VAL, SGMT_SIZE> *currentPage = rootPage;
 		VAL oldElements[SGMT_SIZE];
 		VAL newElements[SGMT_SIZE];
-		bool newElement = false;
 		std::bitset<SGMT_SIZE> targetBits;
 		targetBits.set();
 		// Traverse down the existing delta updates, collecting old values as we go.
@@ -558,18 +557,6 @@ void TransactionalVector::printContents()
 					{
 						currentPage->get(j, OLD_VAL, oldElements[j]);
 						currentPage->get(j, NEW_VAL, newElements[j]);
-
-						// We only get the new value if it was write committed.
-						if (status == Desc::TxStatus::committed && currentPage->bitset.write[j])
-						{
-							newElement = true;
-						}
-						// Transaction was aborted or operation was a read.
-						// Grab the old page's old value.
-						else
-						{
-							newElement = false;
-						}
 					}
 				}
 			}

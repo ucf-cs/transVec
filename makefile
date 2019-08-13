@@ -28,8 +28,8 @@ else
 	endif
 endif
 
-DEBUG_FLAGS = -std=c++14 -g -pthread -fgnu-tm -mcx16
-OPTIMAL_FLAGS = -std=c++14 -march=native -Ofast -pthread -fgnu-tm -mcx16
+DEBUG_FLAGS = -std=c++14 -g -pthread -fgnu-tm -mcx16 -Wall -Wextra
+OPTIMAL_FLAGS = -std=c++14 -march=native -Ofast -flto -pthread -fgnu-tm -mcx16 -Wall -Wextra
 CC_FLAGS = $(OPTIMAL_FLAGS)
 
 # List vectorization at compile time
@@ -55,7 +55,7 @@ $(EXEC): $(OBJECTS)
 
 # To obtain object files
 %.o: %.cpp
-	@$(CC) -c $(CC_FLAGS) $(subst |, -D ,$(DS)) $(subst |, -D ,$(DEFINES)) -flto $< -o $@ 
+	@$(CC) -c $(CC_FLAGS) $(subst |, -D ,$(DS)) $(subst |, -D ,$(DEFINES)) $< -o $@ 
 
 # To remove generated files
 clean:

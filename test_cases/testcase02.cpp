@@ -6,20 +6,23 @@
 
 void createTransactions()
 {
-	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
+	// One transaction per thread.
+	for (size_t i = 0; i < THREAD_COUNT; i++)
 	{
-		Operation *ops = new Operation[TRANSACTION_SIZE];
-
-		// Each transaction will be of this size and only made of reads
-		for (size_t k = 0; k < TRANSACTION_SIZE; k++)
+		size_t numOps = NUM_TRANSACTIONS * TRANSACTION_SIZE;
+		Operation *ops = new Operation[numOps];
+		// Generate the operations.
+		for (size_t j = 0; j < numOps; j++)
 		{
-			// All operations are writes.
-			ops[k].type  = Operation::OpType::write;
-			ops[k].val   = 0;
-			ops[k].index = (j + k) % NUM_TRANSACTIONS;
+			// Read all elements, split among threads.
+			ops[j].type = Operation::OpType::write;
+			// Ensure each operation accesses a unique, contiguous index.
+			ops[j].index = i * numOps + j;
+			// Value doesn't really matter, but we might as well keep them unique.
+			ops[j].val = i * numOps + j;
 		}
 
-		Desc *desc = new Desc(TRANSACTION_SIZE, ops);
+		Desc *desc = new Desc(numOps, ops);
 		transactions->push_back(desc);
 	}
 }
@@ -48,13 +51,13 @@ int main(void)
 	auto start = std::chrono::high_resolution_clock::now();
 
 	// Execute the transactions
-	threadRunner(threads, executeTransactions);
+	threadRunner(threads, executeRangedTransactions);
 
 	// Get end time and count abort(s)
 	auto finish = std::chrono::high_resolution_clock::now();
 	std::cout << SGMT_SIZE << "\t" << NUM_TRANSACTIONS << "\t";
 	std::cout << TRANSACTION_SIZE << "\t" << THREAD_COUNT << "\t";
-    std::cout << std::chrono::duration_cast<std::chrono::TIME_UNIT>(finish-start).count();
+	std::cout << std::chrono::duration_cast<std::chrono::TIME_UNIT>(finish - start).count();
 	std::cout << "\t" << countAborts(transactions) << "\n";
 
 	// Report on allocator issues.
