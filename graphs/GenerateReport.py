@@ -35,17 +35,12 @@ for d in structures:
     for s in systems:
         for i in range(1, 22):
             for j in range(1, 6):
-                # Filter the data to extract similar data
-                fil = df.loc[(df['DS']==d) & (df['SYSTEM']==s) & (df['TESTCASE']==i) & (df['TXN_SIZE']==j)]
-
                 # null check
-                if fil.empty:
+                if df.loc[(df['DS']==d) & (df['SYSTEM']==s) & (df['TESTCASE']==i) & (df['TXN_SIZE']==j)].empty:
                     continue
                 
                 # Extract the time it took for 1 thread to complete
                 rel = df.loc[(df['DS']==d) & (df['SYSTEM']==s) & (df['TESTCASE']==i) & (df['TXN_SIZE']==j)].iloc[0, 9]
-                # print(rel)
-                # print(type(rel))
 
                 # Calculate the RELATIVE column and add it for every case
                 df.loc[(df['DS']==d) & (df['SYSTEM']==s) & (df['TESTCASE']==i) & (df['TXN_SIZE']==j), 'RELATIVE'] = \
