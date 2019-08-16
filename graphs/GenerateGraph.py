@@ -18,31 +18,31 @@ col = ['DS', 'TESTCASE', 'SGMT_SIZE', 'NUM_TXN', 'TXN_SIZE', 'THRD_CNT', 'TIME',
 df  = pd.read_csv('all_systems_final.txt', sep='\t', names=col, skiprows=1)
 
 # The plot settings (There are a few settings you can mess around with. They're all on Google. I'll be using the defaults)
-sns.set()
+sns.set(rc={'figure.figsize':(7.5,5)})
 
 # Filter the data (Add or remove as many parameters as you want)
-# fil = df.loc[(df['SYSTEM']=='ARM') & (df['TESTCASE']==17) & (df['TXN_SIZE']==5)]
+fil = df.loc[(df['SYSTEM']=='ARM') & (df['TESTCASE']==17) & (df['TXN_SIZE']==5)]
 
-# # There's normally a grey-ish background for some reason. This makes it completely white
-# sns.set_style(style='white')
+# There's normally a grey-ish background for some reason. This makes it completely white
+sns.set_style(style='white')
 
-# # Plot the data. The seaborn.lineplot documentation (Google) gives descriptions of each of these paramters (and more)
-# g = sns.lineplot(data=fil, x='THRD_CNT', y='THRUPUT', hue='DS', style='SYSTEM', err_style=None, markers=True, dashes=False)
+# Plot the data. The seaborn.lineplot documentation (Google) gives descriptions of each of these paramters (and more)
+g = sns.lineplot(data=fil, x='THRD_CNT', y='THRUPUT', hue='DS', style='SYSTEM', err_style=None, markers=True, dashes=False)
 
-# # Label the axes
-# plt.xlabel('Threads')
-# plt.ylabel('Throughput (OP/s)')
-# plt.title("Test")
+# Label the axes
+plt.xlabel('Threads')
+plt.ylabel('Throughput (OP/s)')
+plt.title("Test")
 
-# ##### From stack overflow. no idea how or why this block of code works #####
-# plt.gca()
-# yfmt = ScalarFormatterForceFormat()
-# yfmt.set_powerlimits((0,0))
-# plt.gca().yaxis.set_major_formatter(yfmt)
-# ############################################################################
+##### From stack overflow. no idea how or why this block of code works #####
+plt.gca()
+yfmt = ScalarFormatterForceFormat()
+yfmt.set_powerlimits((0,0))
+plt.gca().yaxis.set_major_formatter(yfmt)
+############################################################################
 
-# # Finally, display the graph
-# plt.show()
+# Finally, display the graph
+plt.show()
 
 
 # Looping and outputting a buttload of graphs
@@ -59,17 +59,16 @@ sns.set()
 #             g.get_figure().savefig("output/" + s + "_tc" + str(i) + "txn" + str(j) + ".pdf")
 #             plt.clf()
 
-# Looping and outputting a buttload of graphs
-for d in structures:
-    for i in range(1, 22):
-        for j in range(1, 6):
-            # Filter the data
-            fil = df.loc[(df['DS']==d) & (df['TESTCASE']==i) & (df['TXN_SIZE']==j)]
-            sns.set_style(style='white')
-            g = sns.lineplot(data=fil, x='THRD_CNT', y='THRUPUT', hue='SYSTEM', style='SYSTEM', markers=True, dashes=False)
-            plt.xlabel('Threads')
-            plt.ylabel('Throughput (OP/s)')
-            g.set(yscale='log')
-            g.get_figure().savefig("output/" + d + "_tc" + str(i) + "txn" + str(j) + ".pdf")
-            plt.clf()
-
+# # Looping and outputting a buttload of graphs
+# for d in structures:
+#     for i in range(1, 22):
+#         for j in range(1, 6):
+#             # Filter the data
+#             fil = df.loc[(df['DS']==d) & (df['TESTCASE']==i) & (df['TXN_SIZE']==j)]
+#             sns.set_style(style='white')
+#             g = sns.lineplot(data=fil, x='THRD_CNT', y='THRUPUT', hue='SYSTEM', style='SYSTEM', markers=True, dashes=False)
+#             plt.xlabel('Threads')
+#             plt.ylabel('Throughput (OP/s)')
+#             g.set(yscale='log')
+#             g.get_figure().savefig("output/" + d + "_tc" + str(i) + "txn" + str(j) + ".pdf")
+#             plt.clf()
