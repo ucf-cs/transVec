@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
-import numpy as np
+import numpy as np 
 import pandas as pd
 import seaborn as sns
 import sys
