@@ -1,9 +1,12 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
-import numpy as np
+import numpy as np 
 import pandas as pd
 import seaborn as sns
 import sys
+
+structures = ['SEGME', 'COMPA', 'BOOST', 'STMVE']
+systems    = ['INTEL', 'AMD', 'ARM']
 
 # Took this off stack overflow, not really sure how it works, but it keeps the y-axis in scientific notation
 class ScalarFormatterForceFormat(ScalarFormatter):
@@ -15,7 +18,7 @@ col = ['DS', 'TESTCASE', 'SGMT_SIZE', 'NUM_TXN', 'TXN_SIZE', 'THRD_CNT', 'TIME',
 df  = pd.read_csv('all_systems_final.txt', sep='\t', names=col, skiprows=1)
 
 # The plot settings (There are a few settings you can mess around with. They're all on Google. I'll be using the defaults)
-sns.set()
+sns.set(rc={'figure.figsize':(7.5,5)})
 
 # Filter the data (Add or remove as many parameters as you want)
 fil = df.loc[ \
@@ -61,3 +64,32 @@ plt.gca().yaxis.set_major_formatter(yfmt)
 
 # Finally, display the graph
 plt.show()
+
+
+# Looping and outputting a buttload of graphs
+# for s in systems:
+#     for i in range(1, 22):
+#         for j in range(1, 6):
+#             # Filter the data
+#             fil = df.loc[(df['SYSTEM']==s) & (df['TESTCASE']==i) & (df['TXN_SIZE']==j)]
+#             sns.set_style(style='white')
+#             g = sns.lineplot(data=fil, x='THRD_CNT', y='THRUPUT', hue='DS', style='DS', markers=True, dashes=False)
+#             plt.xlabel('Threads')
+#             plt.ylabel('Throughput (OP/s)')
+#             g.set(yscale='log')
+#             g.get_figure().savefig("output/" + s + "_tc" + str(i) + "txn" + str(j) + ".pdf")
+#             plt.clf()
+
+# # Looping and outputting a buttload of graphs
+# for d in structures:
+#     for i in range(1, 22):
+#         for j in range(1, 6):
+#             # Filter the data
+#             fil = df.loc[(df['DS']==d) & (df['TESTCASE']==i) & (df['TXN_SIZE']==j)]
+#             sns.set_style(style='white')
+#             g = sns.lineplot(data=fil, x='THRD_CNT', y='THRUPUT', hue='SYSTEM', style='SYSTEM', markers=True, dashes=False)
+#             plt.xlabel('Threads')
+#             plt.ylabel('Throughput (OP/s)')
+#             g.set(yscale='log')
+#             g.get_figure().savefig("output/" + d + "_tc" + str(i) + "txn" + str(j) + ".pdf")
+#             plt.clf()
