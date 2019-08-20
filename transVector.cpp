@@ -87,6 +87,7 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 				// Check the status of the transaction.
 				typename Desc::TxStatus status = currentPage->transaction->status.load();
 				// No need to help reads, so check if there are any dependencies with writes.
+				 // TODO: We must actually help reads!
 				// If any of the posessed bits of the current page were writes.
 				if ((posessedBits & currentPage->bitset.write) != 0)
 				{

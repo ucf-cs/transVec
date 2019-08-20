@@ -67,6 +67,7 @@ bool CompactVector::updateElement(size_t index, CompactElement &newElem)
         typename Desc::TxStatus status = oldDesc->status.load();
         // If the old element is part of an active transaction.
         // No need to help reads, so check if there are any dependencies with writes.
+        // TODO: We must actually help reads!
         RWOperation *op = NULL;
         if (status == Desc::TxStatus::active && newElem.descriptor->set.load()->getOp(op, index) && op->lastWriteOp != NULL)
         {

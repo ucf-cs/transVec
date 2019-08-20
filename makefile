@@ -1,5 +1,5 @@
 # Default compiler
-SGMTVEC = g++
+SGMTVEC = g++-7
 # Used to build CompactVector
 CMPTVEC = g++-5
 # Used to build GCC STM vector

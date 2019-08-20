@@ -44,6 +44,8 @@ extern std::vector<Desc *> *transactions;
 
 void executeTransactions(int threadNum);
 
+void executeRangedTransactions(int threadNum);
+
 void threadRunner(std::thread *threads, void function(int threadNum));
 
 void preinsert(int threadNum);

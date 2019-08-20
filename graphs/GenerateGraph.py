@@ -18,13 +18,34 @@ df  = pd.read_csv('all_systems_final.txt', sep='\t', names=col, skiprows=1)
 sns.set()
 
 # Filter the data (Add or remove as many parameters as you want)
-fil = df.loc[(df['SYSTEM']=='ARM') & (df['TESTCASE']==17) & (df['TXN_SIZE']==5)]
+fil = df.loc[ \
+    (df['SYSTEM']=='INTEL') & \
+    (df['TESTCASE']==16) & \
+    (df['TXN_SIZE']==5) \
+    #(df['DS']=='SEGME') \
+    ]
+
+# Filtering for comparing help-free ranged reads.
+# fil = df.loc[
+#     (df['SYSTEM']=='INTEL') & \
+#     (((df['TESTCASE']==1) & (df['DS']!='SEGHF')) | ((df['TESTCASE']==20) & (df['DS']=='SEGHF'))) & \
+#     (df['TXN_SIZE']==2)\
+#     ]
+
+# Filtering for comparing help-free random reads.
+# fil = df.loc[
+#     (df['SYSTEM']=='INTEL') & \
+#     (((df['TESTCASE']==4) & (df['DS']!='SEGHF')) | ((df['TESTCASE']==21) & (df['DS']=='SEGHF'))) & \
+#     (df['TXN_SIZE']==5)\
+#     ]
+
+# print(fil)
 
 # There's normally a grey-ish background for some reason. This makes it completely white
 sns.set_style(style='white')
 
 # Plot the data. The seaborn.lineplot documentation (Google) gives descriptions of each of these paramters (and more)
-g = sns.lineplot(data=fil, x='THRD_CNT', y='THRUPUT', hue='DS', style='SYSTEM', err_style=None, markers=True, dashes=False)
+g = sns.lineplot(data=fil, x='THRD_CNT', y='THRUPUT', hue='DS', style='DS', err_style=None, markers=True, dashes=False)
 
 # Label the axes
 plt.xlabel('Threads')

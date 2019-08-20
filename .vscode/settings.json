@@ -55,5 +55,6 @@
         "strstream": "cpp",
         "valarray": "cpp",
         "complex": "cpp"
-    }
+    },
+    "python.pythonPath": "/home/kenneth/anaconda3/envs/python/bin/python"
 }

@@ -9,7 +9,7 @@ void createTransactions()
 	// One transaction per thread.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
 	{
-		size_t numOps = NUM_TRANSACTIONS * TRANSACTION_SIZE;
+		size_t numOps = NUM_TRANSACTIONS / THREAD_COUNT;
 		Operation *ops = new Operation[numOps];
 		// Generate the operations.
 		for (size_t j = 0; j < numOps; j++)

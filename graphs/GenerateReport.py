@@ -7,18 +7,21 @@ import sys
 # A couple of lists that we'll be using
 init_cols  = ['DS', 'TESTCASE', 'SGMT_SIZE', 'NUM_TXN', 'TXN_SIZE', 'THRD_CNT', 'TIME', 'ABORTS']
 final_cols = ['DS', 'TESTCASE', 'SGMT_SIZE', 'NUM_TXN', 'TXN_SIZE', 'THRD_CNT', 'TIME', 'ABORTS', 'SYSTEM', 'THRUPUT', 'RELATIVE']
-structures = ['SEGME', 'COMPA', 'BOOST', 'STMVE']
-systems    = ['INTEL', 'AMD', 'ARM']
+structures = ['SEGME', 'COMPA', 'BOOST', 'STMVE','SEGHF']
+systems    = ['INTEL', 'AMD', 'ARM', 'NUMA']
 
 # Read in the file as a Pandas DataFrame
-df1 = pd.read_csv('sanitizedIntelfinal_report0729202547.txt', sep='\t', names=init_cols, skiprows=1)
-df2 = pd.read_csv('SanitizedAMDfinal_report0730132519.txt',   sep='\t', names=init_cols, skiprows=1)
-df3 = pd.read_csv('SanitizedARMfinal_report0729202242.txt',   sep='\t', names=init_cols, skiprows=1)
+# MAKE SURE TO PUT THEM IN THE SAME ORDER AS THE SYSTEMS LIST ABOVE
+df1 = pd.read_csv('Intelfinal_report0813012620.txt', sep='\t', names=init_cols, skiprows=1)
+df2 = pd.read_csv('AMDfinal_report0813160355.txt',   sep='\t', names=init_cols, skiprows=1)
+df3 = pd.read_csv('ARMincomplete_report.txt',   sep='\t', names=init_cols, skiprows=1)
+df4 = pd.read_csv('NUMAfinal_report0813173042.txt',   sep='\t', names=init_cols, skiprows=1)
 
 # Add the 'SYSTEM' column
 df1['SYSTEM'] = systems[0]
 df2['SYSTEM'] = systems[1]
 df3['SYSTEM'] = systems[2]
+df4['SYSTEM'] = systems[3]
 
 # Concatenate all the dataframes to make 1 large dataframe
 frames = [df1, df2, df3]
@@ -26,6 +29,12 @@ df = pd.concat(frames)
 
 # Add the 'THRUPUT' column (measured in Ops/Second)
 df['THRUPUT'] = df['NUM_TXN'] * df['TXN_SIZE'] * 1e9 / df['TIME']
+
+# Calculate the RELATIVE column and add it for every case
+# THRUPUT = NUM_TXN / TIME * 1e9
+df.loc[(df['TESTCASE']==1) | (df['TESTCASE']==2) | (df['TESTCASE']==20), 'THRUPUT'] = \
+    df.loc[(df['TESTCASE']==1) | (df['TESTCASE']==2) | (df['TESTCASE']==20), 'NUM_TXN'] / \
+    df.loc[(df['TESTCASE']==1) | (df['TESTCASE']==2) | (df['TESTCASE']==20), 'TIME'] * 1e9
 
 # Initialize the RELATIVE column that we're going to fill
 df['RELATIVE'] = np.nan

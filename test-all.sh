@@ -137,6 +137,61 @@ do
     done
 done
 
+# Test help-free reads.
+ds=SEGMENTVEC
+# NUM_CORES will determine up to which value we go to for THREAD_COUNT
+for i in `seq 1 48` #$NUM_CORES`
+do
+    # Test for TRANSACTION_SIZE from 1 - 5
+    for j in `seq 1 5`
+    do
+        # Parsing the values that will be changed during compile time
+        TO_BE_PASSED="|THREAD_COUNT=$i|TRANSACTION_SIZE=$j|HELP_FREE_READS"
+
+        # Loop through the testcases
+        for k in `seq -f "%02g" 1 21` #$NUM_TEST_CASES`
+        do
+            # Tab separated information (Display only the first 5 chars of DS)
+            echo -n -e "SEGHF\t$k\t"                                   >> $REPORT
+
+            echo -e -n "\e[93mStarting testcase$k: "
+            echo -e -n "\e[96mDS = \e[35m$ds\e[96m, THRD_CNT = \e[35m$i\e[96m,"
+            echo -e -n " TXN_SIZE = \e[35m$j\e[96m ... \e[0m"
+            # echo -n "Testcase $k ... "                               >> $REPORT
+
+            # Make the executable file with a different main file everytime
+            make DATA_STRUCTURE=$ds MAIN=test_cases/testcase$k.cpp DEFINES=$TO_BE_PASSED -j$NUM_CORES
+
+            # Check if it compiled correctly or not. If not, output a bunch of -1's
+            compile_val=$?
+            if [[ $compile_val != 0 ]]; then
+                echo -e "\e[91m fail (failed to compile)\e[0m"                
+                # echo "fail (failed to compile)"                      >> $REPORT
+                echo -e "-1\t-1\t-1\t-1\t-1"                         >> $REPORT
+                continue
+            fi
+
+            # Run the executable and suppress all ouptut
+            ./transVec.out                                           >> $REPORT
+
+            # Check if the program crashed or not. If it did, output a bunch of -2's               
+            execution_val=$?
+            if [[ $execution_val != 0 ]]; then
+                echo -e "\e[91m fail (program crashed)\e[0m"                
+                # echo "fail (program crashed)"                        >> $REPORT
+                echo -e "-2\t-2\t-2\t-2\t-2"                         >> $REPORT
+                continue
+            fi
+
+            echo -e "\e[92m Success!\e[0m"
+        done
+
+        # Clean all object files to prepare for the next round of testing
+        make clean
+        echo "====================================================="
+    done
+done
+
 # Clean up after yo self
 echo 
 echo "====================================================="

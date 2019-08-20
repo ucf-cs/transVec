@@ -19,7 +19,7 @@ void createTransactions()
 		{
 			ops[k].type = Operation::OpType(rand() % 6);
 			ops[k].index = rand() % NUM_TRANSACTIONS / 2;
-			ops[k].val = rand() % std::numeric_limits<VAL>::max();;
+			ops[k].val = rand() % std::numeric_limits<VAL>::max();
 		}
 
 		// Create a transaction containing these operations.
@@ -32,6 +32,9 @@ void createTransactions()
 
 int main(void)
 {
+	// This test is not useful for performance. Disable it.
+	return 0;
+
 	// Seed the random number generator.
 	srand(time(NULL));
 
@@ -60,7 +63,7 @@ int main(void)
 	auto finish = std::chrono::high_resolution_clock::now();
 	std::cout << SGMT_SIZE << "\t" << NUM_TRANSACTIONS << "\t";
 	std::cout << TRANSACTION_SIZE << "\t" << THREAD_COUNT << "\t";
-    std::cout << std::chrono::duration_cast<std::chrono::TIME_UNIT>(finish-start).count();
+	std::cout << std::chrono::duration_cast<std::chrono::TIME_UNIT>(finish - start).count();
 	std::cout << "\t" << countAborts(transactions) << "\n";
 
 	// Report on allocator issues.
