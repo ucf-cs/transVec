@@ -9,4 +9,5 @@ output.txt
 # Ignore reports
 reports/*
 graphs/*.txt
-ReportBackup/
+graphs/ReportBackup/
+graphs/output/*

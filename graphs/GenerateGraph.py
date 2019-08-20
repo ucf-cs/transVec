@@ -5,8 +5,8 @@ import pandas as pd
 import seaborn as sns
 import sys
 
-structures = ['SEGME', 'COMPA', 'BOOST', 'STMVE']
-systems    = ['INTEL', 'AMD', 'ARM']
+structures = ['SEGME', 'COMPA', 'BOOST', 'STMVE','SEGHF']
+systems    = ['INTEL', 'AMD', 'ARM', 'NUMA']
 
 # Took this off stack overflow, not really sure how it works, but it keeps the y-axis in scientific notation
 class ScalarFormatterForceFormat(ScalarFormatter):
