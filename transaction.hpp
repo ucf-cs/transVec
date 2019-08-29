@@ -27,7 +27,7 @@ class BoostedElement;
 
 #ifdef HELP_FREE_READS
 // The global version counter.
-// Used for help-free reads.
+// Used for conflict-free reads.
 static std::atomic<size_t> globalVersionCounter(1);
 #endif
 
@@ -55,14 +55,6 @@ struct Operation
 		// Simillar to read, but always at the size index (probably 1?).
 		// Returned answer can be offset by a transaction's push and pop ops.
 		size,
-#ifdef HELP_FREE_READS
-		// A help-free read.
-		// Simillar to normal read, but can be reordered to prevent helping.
-		// NOTE: hfRead inside a transaction will not be serializable like the others.
-		// Should try to keep hfReads to their own transactions for correctness.
-		// You could reason that they are seperate transactions.
-		hfRead,
-#endif
 	};
 
 	// The type of operation being performed.
@@ -113,8 +105,10 @@ struct Desc
 	std::atomic<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *> pages;
 #endif
 #ifdef HELP_FREE_READS
-	// Used to determine how to reorder help-free reads.
+	// Used to determine how to reorder conflict-free reads.
 	std::atomic<size_t> version;
+	// Used to identify whether or not the transaction is of the conflict-free variety.
+	bool isConflictFree = true;
 #endif
 
 	// Create a descriptor object.

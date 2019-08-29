@@ -6,6 +6,7 @@ CMPTVEC = g++-5
 STMVEC  = g++-7
 DATA_STRUCTURE =
 
+# Determine which version of GCC to use.
 # If DATA_STRUCTURE is not defined, just go ahead and figure out which g++ to
 # use using grep. Else pick the g++ depending on what the value of DATA_STRUCUTURE is
 ifeq ($(DATA_STRUCTURE),)
@@ -28,9 +29,17 @@ else
 	endif
 endif
 
-DEBUG_FLAGS = -std=c++14 -g -pthread -fgnu-tm -mcx16 -Wall -Wextra
-OPTIMAL_FLAGS = -std=c++14 -march=native -Ofast -flto -pthread -fgnu-tm -mcx16 -Wall -Wextra
-CC_FLAGS = $(OPTIMAL_FLAGS)
+INCLUDESTO = -Isto/lib -Isto/sto-core -Isto/legacy -Isto/datatype -Isto/benchmark -Isto -Isto/masstree-beta -L/sto/obj
+STDFLAGS = -std=c++14 -pthread -mcx16 -fgnu-tm -Wall -Wextra
+DEBUG_FLAGS = -g 
+OPTIMAL_FLAGS = -march=native -Ofast -flto
+CC_FLAGS = $(INCLUDESTO) $(STDFLAGS) $(OPTIMAL_FLAGS)
+
+# TODO: Make this actually work.
+# # Add these flags for STO
+# ifeq ($(shell head define.hpp | grep "^\#define STOVEC" | wc -l), 1)
+# 	CC_FLAGS += ${INCLUDESTO)
+# endif
 
 # List vectorization at compile time
 #-fopt-info-vec-missed
@@ -45,13 +54,27 @@ CC_FLAGS = $(OPTIMAL_FLAGS)
 # File names
 EXEC    = transVec.out
 MAIN    = test_cases/testcase01.cpp
-SOURCES = $(wildcard *.cpp) test_cases/main.cpp $(MAIN)
-OBJECTS = $(SOURCES:.cpp=.o)
+
+SOURCESCPP = $(wildcard *.cpp) test_cases/main.cpp $(MAIN)
+SOURCESCC =  $(wildcard sto/sto-core/*.cc) sto/masstree-beta/compiler.cc #$(wildcard sto/masstree-beta/*.cc) #$(wildcard **/*.cc)
+#$(foreach d,$(wildcard sto/*),$(call rwildcard,$d/,*.cc) $(filter $(subst *,%,*.cc),$d))
+SOURCES = $(SOURCESCPP) $(SOURCESCC)
+
+OBJECTSCPP = $(SOURCESCPP:.cpp=.o)
+OBJECTSCC = $(SOURCESCC:.cc=.o)
+OBJECTS = $(OBJECTSCPP) $(OBJECTSCC)
+
 DEFINES = 
 
 # Main target
 $(EXEC): $(OBJECTS)
 	@$(CC) $(CC_FLAGS) $(OBJECTS) -o $(EXEC)
+
+sto/sto-core/%.o : sto/sto-core/%.cc
+	@$(CC) $< -c $(CC_FLAGS) -o $@
+
+sto/masstree-beta/%.o : sto/masstree-beta/%.cc
+	@$(CC) $< -c $(CC_FLAGS) -o $@
 
 # To obtain object files
 %.o: %.cpp

@@ -1,7 +1,7 @@
 #include "allocator.hpp"
 
 // Initialize per-thread allocators.
-void threadAllocatorInit(int threadNum)
+void threadAllocatorInit([[maybe_unused]] int threadNum)
 {
 #ifdef SEGMENTVEC
 	Allocator<Page<VAL, SGMT_SIZE>>::threadInit(threadNum);
@@ -24,7 +24,7 @@ void allocatorInit()
 	printf("Initializing the memory allocators.\n");
 	printf("sizeof(Operation *)=%lu\n", sizeof(Operation *));
 #endif
-	MemAllocator<Operation *>::init((NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT)+1);
+	MemAllocator<Operation *>::init((NUM_TRANSACTIONS * TRANSACTION_SIZE * THREAD_COUNT) + 1);
 // NOTE: Other MemAllocators are implicitly initialized.
 // Would be better to initialize them in advance for performance.
 // It's not a big deal if we pre-fill the vector first.

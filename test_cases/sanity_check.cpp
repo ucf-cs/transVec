@@ -9,7 +9,7 @@ int main(void)
     return 1;
 #endif
 
-#if defined(SEGMENTVEC) || defined(COMPACTVEC) || defined(COARSEVEC) || defined(STMVEC)
+#if defined(SEGMENTVEC) || defined(COMPACTVEC) || defined(COARSEVEC) || defined(STMVEC) || defined(STOVEC)
     return 2;
 #endif
 

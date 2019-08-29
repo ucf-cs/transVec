@@ -12,10 +12,10 @@
 # ADDING YOUR OWN TESTCASES: Just create a file named testcaseX.cpp and place
 # it in the test_cases/ directory. Update the variable below to the new number
 # of testcases
-NUM_TEST_CASES=21
+NUM_TEST_CASES=19
 
 # Insert the data structures that you want to test in this array.
-DATA_STRUCTURES=(SEGMENTVEC COMPACTVEC BOOSTEDVEC STMVEC)
+DATA_STRUCTURES=(SEGMENTVEC COMPACTVEC BOOSTEDVEC STMVEC STOVEC)
 
 # Redirect all local error messages to /dev/null (ie "process aborted" errors).
 exec 2> /dev/null
@@ -137,7 +137,7 @@ do
     done
 done
 
-# Test help-free reads.
+# Test conflict-free reads.
 ds=SEGMENTVEC
 # NUM_CORES will determine up to which value we go to for THREAD_COUNT
 for i in `seq 1 48` #$NUM_CORES`
@@ -149,7 +149,7 @@ do
         TO_BE_PASSED="|THREAD_COUNT=$i|TRANSACTION_SIZE=$j|HELP_FREE_READS"
 
         # Loop through the testcases
-        for k in `seq -f "%02g" 1 21` #$NUM_TEST_CASES`
+        for k in `seq -f "%02g" 1 $NUM_TEST_CASES`
         do
             # Tab separated information (Display only the first 5 chars of DS)
             echo -n -e "SEGHF\t$k\t"                                   >> $REPORT

@@ -3,6 +3,12 @@
         {
             "name": "Linux",
             "includePath": [
+                "sto/lib",
+                "sto/sto-core",
+                "sto/legacy",
+                "sto/datatype",
+                "sto/benchmark",
+                "sto/masstree-beta",
                 "${workspaceFolder}/**"
             ],
             "defines": [],

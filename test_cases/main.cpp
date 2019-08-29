@@ -20,6 +20,9 @@ GCCSTMVector *transVector = new GCCSTMVector();
 #ifdef COARSEVEC
 CoarseTransVector *transVector = new CoarseTransVector();
 #endif
+#ifdef STOVEC
+STOVector *transVector = new STOVector();
+#endif
 
 // Input: 1- Array of threads that will execute a fucntion.
 //        2- A function pointer to that function.

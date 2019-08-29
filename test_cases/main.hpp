@@ -35,6 +35,11 @@ extern std::atomic<size_t> abortCount;
 extern GCCSTMVector *transVector;
 #endif
 
+#ifdef STOVEC
+#include "../STOVec.hpp"
+extern STOVector *transVector;
+#endif
+
 #ifdef COARSEVEC
 #include "../vector.hpp"
 extern CoarseTransVector *transVector;

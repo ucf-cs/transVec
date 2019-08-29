@@ -46,8 +46,8 @@ private:
 	// startPage is used in the helping scheme to start inserting at a specific page.
 	void insertPages(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *pages, bool helping = false, size_t startPage = SIZE_MAX);
 
-	// A special case where help-free reads occur.
-	void executeHelpFreeReads(Desc *descriptor);
+	// A special case where conflict-free reads occur.
+	void executeConflictFreeReads(Desc *descriptor);
 
 public:
 	// A page holding our shared size variable.

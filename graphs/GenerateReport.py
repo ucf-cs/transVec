@@ -14,7 +14,7 @@ systems    = ['INTEL', 'AMD', 'ARM', 'NUMA']
 # MAKE SURE TO PUT THEM IN THE SAME ORDER AS THE SYSTEMS LIST ABOVE
 df1 = pd.read_csv('Intelfinal_report0813012620.txt', sep='\t', names=init_cols, skiprows=1)
 df2 = pd.read_csv('AMDfinal_report0813160355.txt',   sep='\t', names=init_cols, skiprows=1)
-df3 = pd.read_csv('ARMincomplete_report.txt',   sep='\t', names=init_cols, skiprows=1)
+df3 = pd.read_csv('ARMfinal_report.txt',   sep='\t', names=init_cols, skiprows=1)
 df4 = pd.read_csv('NUMAfinal_report0813173042.txt',   sep='\t', names=init_cols, skiprows=1)
 
 # Add the 'SYSTEM' column
@@ -24,16 +24,17 @@ df3['SYSTEM'] = systems[2]
 df4['SYSTEM'] = systems[3]
 
 # Concatenate all the dataframes to make 1 large dataframe
-frames = [df1, df2, df3]
+frames = [df1, df2, df3, df4]
 df = pd.concat(frames)
 
 # Add the 'THRUPUT' column (measured in Ops/Second)
-df['THRUPUT'] = df['NUM_TXN'] * df['TXN_SIZE'] * 1e9 / df['TIME']
+df['THRUPUT'] = (df['NUM_TXN'] - df['ABORTS']) * df['TXN_SIZE'] * 1e9 / df['TIME']
 
 # Calculate the RELATIVE column and add it for every case
-# THRUPUT = NUM_TXN / TIME * 1e9
+# THRUPUT = (NUM_TXN - ABORTS) / TIME * 1e9
 df.loc[(df['TESTCASE']==1) | (df['TESTCASE']==2) | (df['TESTCASE']==20), 'THRUPUT'] = \
-    df.loc[(df['TESTCASE']==1) | (df['TESTCASE']==2) | (df['TESTCASE']==20), 'NUM_TXN'] / \
+    (df.loc[(df['TESTCASE']==1) | (df['TESTCASE']==2) | (df['TESTCASE']==20), 'NUM_TXN'] - \
+    df.loc[(df['TESTCASE']==1) | (df['TESTCASE']==2) | (df['TESTCASE']==20), 'NUM_TXN']) / \
     df.loc[(df['TESTCASE']==1) | (df['TESTCASE']==2) | (df['TESTCASE']==20), 'TIME'] * 1e9
 
 # Initialize the RELATIVE column that we're going to fill
@@ -42,7 +43,7 @@ df['RELATIVE'] = np.nan
 # Add the 'RELATIVE' column (The relative performance compared to 1 Thread of the same tescase and txn_size)
 for d in structures:
     for s in systems:
-        for i in range(1, 22):
+        for i in range(1, 20):
             for j in range(1, 6):
                 # null check
                 if df.loc[(df['DS']==d) & (df['SYSTEM']==s) & (df['TESTCASE']==i) & (df['TXN_SIZE']==j)].empty:
