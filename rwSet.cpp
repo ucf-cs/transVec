@@ -94,6 +94,9 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             }
             break;
         case Operation::OpType::write:
+#ifdef CONFLICT_FREE_READS
+            descriptor->isConflictFree = false;
+#endif
             indexes = access(descriptor->ops[i].index);
             getOp(op, indexes);
             // If this location has already been written to, read its value.
@@ -122,6 +125,9 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             op->lastWriteOp = &descriptor->ops[i];
             break;
         case Operation::OpType::pushBack:
+#ifdef CONFLICT_FREE_READS
+            descriptor->isConflictFree = false;
+#endif
             getSize(vector, descriptor);
             // This should never happen, but make sure we don't have an integer overflow.
             if (size == std::numeric_limits<decltype(size)>::max())
@@ -143,6 +149,9 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             op->lastWriteOp = &descriptor->ops[i];
             break;
         case Operation::OpType::popBack:
+#ifdef CONFLICT_FREE_READS
+            descriptor->isConflictFree = false;
+#endif
             getSize(vector, descriptor);
             // Prevent popping past the bottom of the stack.
             if (size < 1)
@@ -179,6 +188,9 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
             op->lastWriteOp = &descriptor->ops[i];
             break;
         case Operation::OpType::size:
+#ifdef CONFLICT_FREE_READS
+            descriptor->isConflictFree = false;
+#endif
             getSize(vector, descriptor);
 
             // NOTE: Don't store in ret. Store in index, as a special case for size calls.
@@ -192,11 +204,6 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
                 maxReserveAbsolute = descriptor->ops[i].index;
             }
             break;
-#ifdef HELP_FREE_READS
-        case Operation::OpType::hfRead:
-            assert(false && "Cannot use help-free reads in a standard transaction.");
-            break;
-#endif
         default:
             // Unexpected operation type found.
             break;

@@ -33,7 +33,7 @@ INCLUDESTO = -Isto/lib -Isto/sto-core -Isto/legacy -Isto/datatype -Isto/benchmar
 STDFLAGS = -std=c++14 -pthread -mcx16 -fgnu-tm -Wall -Wextra
 DEBUG_FLAGS = -g 
 OPTIMAL_FLAGS = -march=native -Ofast -flto
-CC_FLAGS = $(INCLUDESTO) $(STDFLAGS) $(OPTIMAL_FLAGS)
+CC_FLAGS =  $(OPTIMAL_FLAGS) $(INCLUDESTO) $(STDFLAGS)
 
 # TODO: Make this actually work.
 # # Add these flags for STO

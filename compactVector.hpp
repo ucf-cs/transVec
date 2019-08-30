@@ -42,13 +42,13 @@ private:
     // Performs an atomic 16 byte exchange of an element.
     bool updateElement(size_t index, CompactElement &newElem);
     // Insert the elements in the set.
-    void insertElements(RWSet *set, bool helping = false, unsigned int startElement = UINT32_MAX);
+    void insertElements(RWSet *set, unsigned int startElement = UINT32_MAX);
     // Create a RWSet for the transaction.
     // Only used in helping on size conflict.
     bool prepareTransaction(Desc *descriptor);
     // Finish the vector transaction.
     // Used for helping.
-    bool completeTransaction(Desc *descriptor, bool helping = false, unsigned int startElement = UINT32_MAX);
+    bool completeTransaction(Desc *descriptor, unsigned int startElement = UINT32_MAX);
 
 public:
     // A page holding our shared size variable.

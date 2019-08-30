@@ -9,7 +9,7 @@
 //#define BOOSTEDVEC
 //#define COARSEVEC
 //#define STMVEC
-#define STOVEC
+//#define STOVEC
 
 // Change these to test different situations.
 // Makes sense to make this cache line size X associativity (perhaps at L2 level, so 8*16)
@@ -17,8 +17,8 @@
 // NOTE: This may break if division makes this resolve to 0.
 #define SGMT_SIZE ((8 * 16) / (sizeof(VAL) * 2))
 #define NUM_TRANSACTIONS 10000
-#define THREAD_COUNT 24
-#define TRANSACTION_SIZE 5
+//#define THREAD_COUNT 2
+//#define TRANSACTION_SIZE 5
 // Define this to enable the helping scheme.
 #define HELP
 // Define this to debug allocation counting.
@@ -27,8 +27,8 @@
 #ifdef SEGMENTVEC
 // Define this to align SEGMENTVEC pages.
 //#define ALIGNED
-// Enable conflict-free reads and their associated overhead.
-#define HELP_FREE_READS
+// Enable conflict-free reads and their associated (essentially non-existant) overhead.
+#define CONFLICT_FREE_READS
 #endif
 
 // Compact vector requires 32-bit or smaller value types.

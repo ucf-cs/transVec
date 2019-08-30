@@ -135,7 +135,7 @@ public:
         return ret;
     }
 
-    void deallocate(value_type *p, std::size_t n) noexcept // Use pointer if pointer is not a value_type*
+    void deallocate([[maybe_unused]] value_type *p, [[maybe_unused]] std::size_t n) noexcept // Use pointer if pointer is not a value_type*
     {
         // Do nothing. Difficult to deallocate with this setup, so just don't do it.
 

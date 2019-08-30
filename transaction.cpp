@@ -16,7 +16,7 @@ Desc::Desc(unsigned int size, Operation *ops)
 #else
 	set = NULL;
 #endif
-#ifdef HELP_FREE_READS
+#ifdef CONFLICT_FREE_READS
 	// Initialize the time to the lowest possbile value.
 	// This way, we know if it has been set yet.
 	version.store(0);
@@ -78,11 +78,7 @@ void Desc::print()
 
 void Operation::print()
 {
-	const char *typeStrList[] = {"pushBack", "popBack", "reserve", "read", "write", "size",
-#ifdef HELP_FREE_READS
-								 "hfRead"
-#endif
-	};
+	const char *typeStrList[] = {"pushBack", "popBack", "reserve", "read", "write", "size"};
 	size_t typeStrIndex = 0;
 	switch (type)
 	{
@@ -103,11 +99,7 @@ void Operation::print()
 		break;
 	case size:
 		typeStrIndex = 5;
-#ifdef HELP_FREE_READS
-	case hfRead:
-		typeStrIndex = 6;
 		break;
-#endif
 	}
 	std::cout << "Type:\t" << typeStrList[typeStrIndex] << std::endl;
 	std::cout << "index:\t" << index << std::endl;

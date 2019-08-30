@@ -349,22 +349,12 @@ bool TransactionalVector::completeTransaction(Desc *descriptor, bool helping, si
 }
 
 #ifdef HELP_FREE_READS
-void TransactionalVector::executeHelpFreeReads(Desc *descriptor)
+void TransactionalVector::executeConflictFreeReads(Desc *descriptor)
 {
 	// Get the time now.
 	// Any transactions after this will not be considered by these reads.
 	size_t zero = 0;
 	descriptor->version.compare_exchange_strong(zero, globalVersionCounter.fetch_add(1));
-
-	// Validate that this is actually a purely help-free read transaction.
-	// This step can be skipped for performance, but should happen for validation.
-	// We start at 1 since executeTransaction already validated the operation at index 0.
-	/*
-	for (size_t i = 1; i < descriptor->size; i++)
-	{
-		assert(descriptor->ops[i].type == Operation::OpType::hfRead);
-	}
-	*/
 
 	// The set of all transactions ignored by this help-free read transaction.
 	// Used to interpret transactions consistently in a rare edge case.
@@ -477,17 +467,17 @@ void TransactionalVector::executeHelpFreeReads(Desc *descriptor)
 
 void TransactionalVector::executeTransaction(Desc *descriptor)
 {
+	// Initialize the set for the descriptor.
+	prepareTransaction(descriptor);
 #ifdef HELP_FREE_READS
 	// Determine if this is a help-free read transaction.
-	if (descriptor->size > 0 && descriptor->ops[0].type == Operation::OpType::hfRead)
+	if (descriptor->isConflictFree)
 	{
 		// Call the specialized transaction function to handle it.
-		executeHelpFreeReads(descriptor);
+		executeConflictFreeReads(descriptor);
 		return;
 	}
 #endif
-	// Initialize the set for the descriptor.
-	prepareTransaction(descriptor);
 	// If the transaction committed.
 	completeTransaction(descriptor);
 }

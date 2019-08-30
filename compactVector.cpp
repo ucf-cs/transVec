@@ -73,7 +73,7 @@ bool CompactVector::updateElement(size_t index, CompactElement &newElem)
             while (oldDesc->status.load() == Desc::TxStatus::active)
             {
 #ifdef HELP
-                completeTransaction(oldDesc, true, index);
+                completeTransaction(oldDesc, index);
 #endif
             }
             // Update our status to its final (committed or aborted) state.
@@ -82,6 +82,7 @@ bool CompactVector::updateElement(size_t index, CompactElement &newElem)
 
         // We only get the new value if it was write committed.
         // Also check if it matches the end transaction, as that is a special case where we should see a write, even though the set is empty.
+        RWOperation *op = NULL;
         if (oldDesc == endTransaction || (status == Desc::TxStatus::committed && oldDesc->set.load()->getOp(op, index) && op->lastWriteOp != NULL))
         {
             newElem.oldVal = oldElem.newVal;
@@ -120,7 +121,7 @@ bool CompactVector::updateElement(size_t index, CompactElement &newElem)
     return true;
 }
 
-void CompactVector::insertElements(RWSet *set, bool helping, unsigned int startElement)
+void CompactVector::insertElements(RWSet *set, unsigned int startElement)
 {
     // Get the start of the map.
     typename std::map<size_t, RWOperation *, std::equal_to<size_t>, MemAllocator<std::pair<size_t, RWOperation *>>>::reverse_iterator iter = set->operations.rbegin();
@@ -227,10 +228,10 @@ bool CompactVector::prepareTransaction(Desc *descriptor)
     return true;
 }
 
-bool CompactVector::completeTransaction(Desc *descriptor, bool helping, unsigned int startElement)
+bool CompactVector::completeTransaction(Desc *descriptor, unsigned int startElement)
 {
     // Insert the elements.
-    insertElements(descriptor->set.load(), helping, startElement);
+    insertElements(descriptor->set.load(), startElement);
 
     auto active = Desc::TxStatus::active;
     auto committed = Desc::TxStatus::committed;
@@ -267,7 +268,7 @@ void CompactVector::sizeHelp(Desc *descriptor)
     // Must actually start at the very beginning.
     prepareTransaction(descriptor);
     // Must help from the beginning of the list, since we didn't help part way through.
-    completeTransaction(descriptor, true, UINT32_MAX);
+    completeTransaction(descriptor);
 }
 
 void CompactVector::printContents()

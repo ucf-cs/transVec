@@ -127,7 +127,7 @@ void preinsert(int threadNum)
 	return;
 }
 
-size_t countAborts(std::vector<Desc *> *transactions)
+size_t countAborts([[maybe_unused]] std::vector<Desc *> *transactions)
 {
 #ifdef BOOSTEDVEC
 	return abortCount.load();

@@ -55,7 +55,12 @@
         "strstream": "cpp",
         "valarray": "cpp",
         "complex": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "cfenv": "cpp",
+        "iterator": "cpp",
+        "memory_resource": "cpp",
+        "random": "cpp",
+        "set": "cpp"
     },
     "python.pythonPath": "/home/kenneth/anaconda3/envs/python/bin/python"
 }

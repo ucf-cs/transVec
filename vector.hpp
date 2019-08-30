@@ -167,6 +167,7 @@ public:
                 break;
             case Operation::OpType::reserve:
                 ret = vector.reserve(op->index);
+                break;
             default:
                 ret = false;
                 break;
@@ -230,6 +231,7 @@ public:
                     break;
                 case Operation::OpType::reserve:
                     ret = vector.reserve(op->index);
+                    break;
                 default:
                     ret = false;
                     break;
