@@ -75,7 +75,12 @@ int main(void)
 	std::thread threads[THREAD_COUNT];
 
 	// Pre-insertion step.
-	threadRunner(threads, preinsert);
+	//threadRunner(threads, preinsert);
+	// Single-threaded alternative.
+	for (size_t i = 0; i < THREAD_COUNT; i++)
+	{
+		preinsert(i);
+	}
 
 	// Create the transactions that are to be executed and timed below
 	createTransactions();

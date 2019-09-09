@@ -252,7 +252,7 @@ TransactionalVector::TransactionalVector()
 	{
 		endTransaction = new Desc(0, NULL);
 		endTransaction->status.store(Desc::TxStatus::committed);
-#ifdef HELP_FREE_READS
+#ifdef CONFLICT_FREE_READS
 		size_t zero = 0;
 		endTransaction->version.compare_exchange_strong(zero, globalVersionCounter.fetch_add(1));
 #endif
@@ -326,7 +326,7 @@ bool TransactionalVector::completeTransaction(Desc *descriptor, bool helping, si
 
 	auto active = Desc::TxStatus::active;
 	auto committed = Desc::TxStatus::committed;
-#ifdef HELP_FREE_READS
+#ifdef CONFLICT_FREE_READS
 	// Always set the version number before committing.
 	size_t zero = 0;
 	descriptor->version.compare_exchange_strong(zero, globalVersionCounter.fetch_add(1));
@@ -348,7 +348,7 @@ bool TransactionalVector::completeTransaction(Desc *descriptor, bool helping, si
 	return true;
 }
 
-#ifdef HELP_FREE_READS
+#ifdef CONFLICT_FREE_READS
 void TransactionalVector::executeConflictFreeReads(Desc *descriptor)
 {
 	// Get the time now.
@@ -469,7 +469,7 @@ void TransactionalVector::executeTransaction(Desc *descriptor)
 {
 	// Initialize the set for the descriptor.
 	prepareTransaction(descriptor);
-#ifdef HELP_FREE_READS
+#ifdef CONFLICT_FREE_READS
 	// Determine if this is a help-free read transaction.
 	if (descriptor->isConflictFree)
 	{

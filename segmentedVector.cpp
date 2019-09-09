@@ -66,10 +66,13 @@ bool SegmentedVector<T>::allocBucket(size_t bucket)
 // Only do this if T is a pointer type.
 #ifdef SEGMENTVEC
 	// Ensure the segment is initialized to NULL.
+	// This actually doesn't need to be done explicitly.
+	/*
 	for (size_t i = 0; i < bucketSize; i++)
 	{
 		mem[i].store(NULL);
 	}
+	*/
 #endif
 #ifndef BOOSTEDVEC
 	// We need to initialize the NULL pointer if we want to CAS.
@@ -127,7 +130,7 @@ SegmentedVector<T>::SegmentedVector()
 	reserve(1);
 #ifndef BOOSTEDVEC
 	// Ensure that the objects in this vector are actually lock-free.
-	assert(bucketArray[0].load()[0].is_lock_free());
+	//assert(bucketArray[0].load()[0].is_lock_free());
 #endif
 	return;
 }

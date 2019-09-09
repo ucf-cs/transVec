@@ -87,6 +87,13 @@ void preinsert(int threadNum)
 
 	int opsPerThread = NUM_TRANSACTIONS / THREAD_COUNT;
 
+	// Ensure reserves have already completed to prevent them from affecting performance.
+	Operation *reserveOp = new Operation();
+	reserveOp->type = Operation::OpType::reserve;
+	reserveOp->index = NUM_TRANSACTIONS;
+	Desc *reserveDesc = new Desc(1, reserveOp);
+	transVector->executeTransaction(reserveDesc);
+
 	// A list of operations for the current thread.
 	Operation *pushOps = new Operation[opsPerThread];
 

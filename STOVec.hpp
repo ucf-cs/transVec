@@ -22,9 +22,19 @@ public:
                 switch (op->type)
                 {
                 case Operation::OpType::read:
+                    if (vector.size() <= op->index)
+                    {
+                        hasAborted = true;
+                        break;
+                    }
                     op->ret = vector[op->index];
                     break;
                 case Operation::OpType::write:
+                    if (vector.size() <= op->index)
+                    {
+                        hasAborted = true;
+                        break;
+                    }
                     vector[op->index] = op->val;
                     break;
                 case Operation::OpType::pushBack:
@@ -36,6 +46,10 @@ public:
                     break;
                 case Operation::OpType::size:
                     op->ret = vector.size();
+                    if (op->ret == UNSET)
+                    {
+                        hasAborted = true;
+                    }
                     break;
                 case Operation::OpType::reserve:
                     // TODO: There is not a transactionally-safe reserve operation. (Only nontrans_reserve())

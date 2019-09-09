@@ -1,3 +1,5 @@
+// TODO: Unused. Consider removal.
+
 #ifndef RANDOM_POOL_HPP
 #define RANDOM_POOL_HPP
 

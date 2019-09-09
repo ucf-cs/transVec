@@ -30,6 +30,7 @@ else
 endif
 
 INCLUDESTO = -Isto/lib -Isto/sto-core -Isto/legacy -Isto/datatype -Isto/benchmark -Isto -Isto/masstree-beta -L/sto/obj
+# remove mcx16 on ARM
 STDFLAGS = -std=c++14 -pthread -mcx16 -fgnu-tm -Wall -Wextra
 DEBUG_FLAGS = -g 
 OPTIMAL_FLAGS = -march=native -Ofast -flto
@@ -69,6 +70,7 @@ DEFINES =
 # Main target
 $(EXEC): $(OBJECTS)
 	@$(CC) $(CC_FLAGS) $(OBJECTS) -o $(EXEC)
+#add -latomic on ARM
 
 sto/sto-core/%.o : sto/sto-core/%.cc
 	@$(CC) $< -c $(CC_FLAGS) -o $@
