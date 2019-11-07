@@ -38,6 +38,10 @@ int main(void)
 	// Seed the random number generator.
 	srand(time(NULL));
 
+	// Ensure the test process runs at maximum priority.
+	// Only works if run under sudo permissions.
+	setMaxPriority();
+
 	// Pre-fill the allocators.
 	allocatorInit();
 
@@ -47,7 +51,7 @@ int main(void)
 	// Create our threads.
 	std::thread threads[THREAD_COUNT];
 
-	// Pre-insertion step.
+		// Pre-insertion step.
 	//threadRunner(threads, preinsert);
 	// Single-threaded alternative.
 	for (size_t i = 0; i < THREAD_COUNT; i++)

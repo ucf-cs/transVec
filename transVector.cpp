@@ -467,8 +467,6 @@ void TransactionalVector::executeConflictFreeReads(Desc *descriptor)
 
 void TransactionalVector::executeTransaction(Desc *descriptor)
 {
-	// Initialize the set for the descriptor.
-	prepareTransaction(descriptor);
 #ifdef CONFLICT_FREE_READS
 	// Determine if this is a help-free read transaction.
 	if (descriptor->isConflictFree)
@@ -478,6 +476,8 @@ void TransactionalVector::executeTransaction(Desc *descriptor)
 		return;
 	}
 #endif
+	// Initialize the set for the descriptor.
+	prepareTransaction(descriptor);
 	// If the transaction committed.
 	completeTransaction(descriptor);
 }

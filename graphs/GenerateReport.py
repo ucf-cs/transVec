@@ -12,10 +12,10 @@ systems    = ['INTEL', 'AMD', 'ARM', 'NUMA']
 
 # Read in the file as a Pandas DataFrame
 # MAKE SURE TO PUT THEM IN THE SAME ORDER AS THE SYSTEMS LIST ABOVE
-df1 = pd.read_csv('Intelfinal_report0906232313.txt', sep='\t', names=init_cols, skiprows=1)
-df2 = pd.read_csv('AMDfinal_report0906232126.txt',   sep='\t', names=init_cols, skiprows=1)
-df3 = pd.read_csv('ARMfinal_report0906232238.txt',   sep='\t', names=init_cols, skiprows=1)
-df4 = pd.read_csv('NUMAfinal_report0906232125.txt',   sep='\t', names=init_cols, skiprows=1)
+df1 = pd.read_csv('Intelfinal_report0909010953.txt', sep='\t', names=init_cols, skiprows=1)
+df2 = pd.read_csv('AMDfinal_report0909004951.txt',   sep='\t', names=init_cols, skiprows=1)
+df3 = pd.read_csv('ARMfinal_report0909005718.txt',   sep='\t', names=init_cols, skiprows=1)
+df4 = pd.read_csv('NUMAfinal_report0909004949.txt',   sep='\t', names=init_cols, skiprows=1)
 
 # Add the 'SYSTEM' column
 df1['SYSTEM'] = systems[0]

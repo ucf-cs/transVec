@@ -108,7 +108,7 @@ struct Desc
 	// Used to determine how to reorder conflict-free reads.
 	std::atomic<size_t> version;
 	// Used to identify whether or not the transaction is of the conflict-free variety.
-	bool isConflictFree = true;
+	bool isConflictFree = false;
 #endif
 
 	// Create a descriptor object.

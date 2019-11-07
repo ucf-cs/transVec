@@ -18,19 +18,22 @@ void createTransactions()
 			if (rand() % 3 == 0)
 			{
 				// All operations are writes.
-				ops[k].type  = Operation::OpType::write;
-				ops[k].val   = rand() % rand() % std::numeric_limits<VAL>::max();
+				ops[k].type = Operation::OpType::write;
+				ops[k].val = rand() % rand() % std::numeric_limits<VAL>::max();
 				ops[k].index = rand() % NUM_TRANSACTIONS;
 			}
 			else
 			{
 				// Read all elements, split among threads.
-				ops[k].type  = Operation::OpType::read;
+				ops[k].type = Operation::OpType::read;
 				ops[k].index = rand() % NUM_TRANSACTIONS;
 			}
 		}
 
 		Desc *desc = new Desc(TRANSACTION_SIZE, ops);
+#ifdef CONFLICT_FREE_READS
+		desc->isConflictFree = true;
+#endif
 		transactions->push_back(desc);
 	}
 }
@@ -39,6 +42,10 @@ int main(void)
 {
 	// Seed the random number generator.
 	srand(time(NULL));
+
+	// Ensure the test process runs at maximum priority.
+	// Only works if run under sudo permissions.
+	setMaxPriority();
 
 	// Pre-fill the allocators.
 	allocatorInit();
@@ -49,7 +56,7 @@ int main(void)
 	// Create our threads.
 	std::thread threads[THREAD_COUNT];
 
-	// Pre-insertion step.
+		// Pre-insertion step.
 	//threadRunner(threads, preinsert);
 	// Single-threaded alternative.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
@@ -70,7 +77,7 @@ int main(void)
 	auto finish = std::chrono::high_resolution_clock::now();
 	std::cout << SGMT_SIZE << "\t" << NUM_TRANSACTIONS << "\t";
 	std::cout << TRANSACTION_SIZE << "\t" << THREAD_COUNT << "\t";
-    std::cout << std::chrono::duration_cast<std::chrono::TIME_UNIT>(finish-start).count();
+	std::cout << std::chrono::duration_cast<std::chrono::TIME_UNIT>(finish - start).count();
 	std::cout << "\t" << countAborts(transactions) << "\n";
 
 	// Report on allocator issues.

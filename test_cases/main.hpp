@@ -12,8 +12,12 @@
 //#include "../randomPool.hpp"
 #include "../transaction.hpp"
 #include "../allocator.hpp"
+#include "../threadLocalGlobals.hpp"
 
-// ALL GLOBAL VARIABLES ARE INITIALIZED IN main.cpp
+// Used to set process priority in Linux.
+#include <sys/resource.h>
+#include <unistd.h>
+
 #ifdef SEGMENTVEC
 #include "../transVector.hpp"
 extern TransactionalVector *transVector;
@@ -58,5 +62,7 @@ void preinsert(int threadNum);
 void createTransactions(int threadNum);
 
 size_t countAborts(std::vector<Desc *> *transactions);
+
+int setMaxPriority();
 
 #endif

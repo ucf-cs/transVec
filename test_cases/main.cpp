@@ -30,11 +30,29 @@ void threadRunner(std::thread *threads, void function(int threadNum))
 {
 	// Start our threads.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
+	{
 		threads[i] = std::thread(function, i);
+	}
+
+	// Set thread affinity.
+	for (unsigned i = 0; i < THREAD_COUNT; ++i)
+	{
+		// Create a cpu_set_t object representing a set of CPUs. Clear it and mark only CPU i as set.
+		cpu_set_t cpuset;
+		CPU_ZERO(&cpuset);
+		CPU_SET(i, &cpuset);
+		int rc = pthread_setaffinity_np(threads[i].native_handle(), sizeof(cpu_set_t), &cpuset);
+		if (rc != 0)
+		{
+			std::cerr << "Error calling pthread_setaffinity_np: " << rc << "\n";
+		}
+	}
 
 	// Wait for all threads to complete.
 	for (size_t i = 0; i < THREAD_COUNT; i++)
+	{
 		threads[i].join();
+	}
 
 	return;
 }
@@ -88,7 +106,7 @@ void preinsert(int threadNum)
 	int opsPerThread = NUM_TRANSACTIONS / THREAD_COUNT;
 
 	// Ensure reserves have already completed to prevent them from affecting performance.
-	Operation *reserveOp = new Operation();
+	Operation *reserveOp = new Operation[1];
 	reserveOp->type = Operation::OpType::reserve;
 	reserveOp->index = NUM_TRANSACTIONS;
 	Desc *reserveDesc = new Desc(1, reserveOp);
@@ -149,4 +167,16 @@ size_t countAborts([[maybe_unused]] std::vector<Desc *> *transactions)
 	}
 	return retVal;
 #endif
+}
+
+int setMaxPriority()
+{
+	int which = PRIO_PROCESS;
+	id_t pid;
+	int priority = -20;
+	int ret;
+
+	pid = getpid();
+	ret = setpriority(which, pid, priority);
+	return ret;
 }
