@@ -5,7 +5,7 @@ DATA_STRUCTURE =
 
 INCLUDESTO = -Isto/lib -Isto/sto-core -Isto/legacy -Isto/datatype -Isto/benchmark -Isto -Isto/masstree-beta -L/sto/obj
 # remove mcx16 on ARM
-STDFLAGS = -std=c++14 -pthread -mcx16 -fgnu-tm -Wall -Wextra
+STDFLAGS = -std=c++14 -pthread -mcx16 -fgnu-tm -Wall -Wextra -Wno-attributes -Wno-unused-parameter
 DEBUG_FLAGS = -g 
 OPTIMAL_FLAGS = -march=native -Ofast -flto
 CC_FLAGS =  $(OPTIMAL_FLAGS) $(INCLUDESTO) $(STDFLAGS)
