@@ -1,29 +1,7 @@
 # Default compiler
-SGMTVEC = g++-7
-# Used to build CompactVector
-CMPTVEC = g++-5
-# Used to build GCC STM vector
-STMVEC  = g++-7
-DATA_STRUCTURE =
+CC = g++-7
 
-# Determine which version of GCC to use.
-# If DATA_STRUCTURE is not defined, just go ahead and figure out which g++ to
-# use using grep. Else pick the g++ depending on what the value of DATA_STRUCUTURE is
-ifeq ($(DATA_STRUCTURE),)
-	DS =
-	ifeq ($(shell head define.hpp | grep "^\#define COMPACTVEC" | wc -l), 1)
-		CC = $(CMPTVEC)
-	else
-		CC = $(STMVEC)
-	endif
-else
-	DS = |$(DATA_STRUCTURE)
-	ifeq ($(DATA_STRUCTURE), COMPACTVEC)
-		CC = $(CMPTVEC)
-	else
-		CC = $(STMVEC)
-	endif
-endif
+DATA_STRUCTURE =
 
 INCLUDESTO = -Isto/lib -Isto/sto-core -Isto/legacy -Isto/datatype -Isto/benchmark -Isto -Isto/masstree-beta -L/sto/obj
 # remove mcx16 on ARM
@@ -31,12 +9,6 @@ STDFLAGS = -std=c++14 -pthread -mcx16 -fgnu-tm -Wall -Wextra
 DEBUG_FLAGS = -g 
 OPTIMAL_FLAGS = -march=native -Ofast -flto
 CC_FLAGS =  $(OPTIMAL_FLAGS) $(INCLUDESTO) $(STDFLAGS)
-
-# TODO: Make this actually work.
-# # Add these flags for STO
-# ifeq ($(shell head define.hpp | grep "^\#define STOVEC" | wc -l), 1)
-# 	CC_FLAGS += ${INCLUDESTO)
-# endif
 
 # List vectorization at compile time
 #-fopt-info-vec-missed
@@ -65,8 +37,7 @@ DEFINES =
 
 # Main target
 $(EXEC): $(OBJECTS)
-	@$(CC) $(CC_FLAGS) $(OBJECTS) -o $(EXEC)
-#add -latomic on ARM
+	@$(CC) $(CC_FLAGS) $(OBJECTS) -o $(EXEC) -latomic
 
 sto/sto-core/%.o : sto/sto-core/%.cc
 	@$(CC) $< -c $(CC_FLAGS) -o $@
