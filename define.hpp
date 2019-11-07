@@ -4,7 +4,6 @@
 // These are used to switch between different vector implementations.
 // Only uncomment one of them at a time. **Make sure they're all commented if using the test-all.sh script**
 // **It's important to keep these comments as "//#define" instead of "// define"**
-//#define SEGMENTVEC
 //#define COMPACTVEC
 //#define BOOSTEDVEC
 //#define COARSEVEC
@@ -23,13 +22,6 @@
 #define HELP
 // Define this to debug allocation counting.
 //#define ALLOC_COUNT
-
-#ifdef SEGMENTVEC
-// Define this to align SEGMENTVEC pages.
-//#define ALIGNED
-// Enable conflict-free reads and their associated (essentially non-existant) overhead.
-#define CONFLICT_FREE_READS
-#endif
 
 // Compact vector requires 32-bit or smaller value types.
 #ifdef COMPACTVEC

@@ -15,7 +15,7 @@
 NUM_TEST_CASES=19
 
 # Insert the data structures that you want to test in this array.
-DATA_STRUCTURES=(SEGMENTVEC COMPACTVEC BOOSTEDVEC STMVEC STOVEC)
+DATA_STRUCTURES=(COMPACTVEC BOOSTEDVEC STMVEC STOVEC)
 
 # Redirect all local error messages to /dev/null (ie "process aborted" errors).
 exec 2> /dev/null

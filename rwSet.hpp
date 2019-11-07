@@ -9,13 +9,8 @@
 #include <iostream>
 
 #include "define.hpp"
-#include "deltaPage.hpp"
 #include "memAllocator.hpp"
 #include "transaction.hpp"
-#ifdef SEGMENTVEC
-#include "transVector.hpp"
-class TransactionalVector;
-#endif
 #ifdef COMPACTVEC
 #include "compactVector.hpp"
 class CompactVector;
@@ -27,17 +22,11 @@ class BoostedVector;
 class BoostedElement;
 #endif
 
-#if defined SEGMENTVEC || defined COMPACTVEC || defined BOOSTEDVEC
+#if defined COMPACTVEC || defined BOOSTEDVEC
 
 class RWOperation;
 class Operation;
 class Desc;
-
-#ifdef SEGMENTVEC
-typedef MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>> MyPageAllocator;
-typedef MemAllocator<std::pair<size_t, RWOperation *>> MySecondRWOpAllocator;
-typedef MemAllocator<std::pair<size_t, std::map<size_t, RWOperation *, std::less<size_t>, MySecondRWOpAllocator>>> MyRWOpAllocator;
-#endif
 
 // An individual operation on a single element location.
 struct RWOperation
@@ -88,32 +77,6 @@ public:
 	unsigned int getSize(CompactVector *vector, Desc *descriptor = NULL);
 	// Get an op node from a map. Allocate it if it doesn't already exist.
 	bool getOp(RWOperation *&op, size_t index);
-#endif
-#ifdef SEGMENTVEC
-	// Map vector locations to read/write operations.
-	std::unordered_map<size_t,
-					   std::array<RWOperation *, SGMT_SIZE>,
-					   std::hash<size_t>,
-					   std::equal_to<size_t>,
-					   MemAllocator<std::pair<size_t, std::array<RWOperation *, SGMT_SIZE>>>>
-		operations;
-	// Our size descriptor. After reading size, we use this to write a new size value later.
-	Page<size_t, 1> *sizeDesc;
-	// Set this if size changes.
-	size_t size = 0;
-
-	// Return the indexes associated with a RW operation access.
-	static std::pair<size_t, size_t> access(size_t pos);
-	// Converts a transaction descriptor into a read/write set.
-	bool createSet(Desc *descriptor, TransactionalVector *vector);
-	// Convert from a set of reads and writes to a list of pages.
-	// A pointer to the pages is stored in the descriptor.
-	void setToPages(Desc *descriptor);
-	size_t getSize(TransactionalVector *sizeHead, Desc *transaction);
-	// Get an op node from a map. Allocate it if it doesn't already exist.
-	void getOp(RWOperation *&op, std::pair<size_t, size_t> indexes);
-	// Print out a list of all locations with operations associated with them.
-	void printOps();
 #endif
 #ifdef BOOSTEDVEC
 	// Map vector locations to read/write operations.

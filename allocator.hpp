@@ -10,11 +10,7 @@
 #include "define.hpp"
 
 // Contains classes preallocated by the Allocator.
-#include "deltaPage.hpp"
 #include "rwSet.hpp"
-
-template <class T, size_t S>
-class Page;
 
 class RWOperation;
 

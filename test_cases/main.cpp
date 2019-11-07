@@ -4,9 +4,6 @@
 
 // All global variables are initialized here
 std::vector<Desc *> *transactions = new std::vector<Desc *>();
-#ifdef SEGMENTVEC
-TransactionalVector *transVector = new TransactionalVector();
-#endif
 #ifdef COMPACTVEC
 CompactVector *transVector = new CompactVector();
 #endif

@@ -18,11 +18,6 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-#ifdef SEGMENTVEC
-#include "../transVector.hpp"
-extern TransactionalVector *transVector;
-#endif
-
 #ifdef COMPACTVEC
 #include "../compactVector.hpp"
 extern CompactVector *transVector;

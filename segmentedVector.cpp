@@ -63,17 +63,7 @@ bool SegmentedVector<T>::allocBucket(size_t bucket)
 #else
 	T *mem = new T[bucketSize]();
 #endif
-// Only do this if T is a pointer type.
-#ifdef SEGMENTVEC
-	// Ensure the segment is initialized to NULL.
-	// This actually doesn't need to be done explicitly.
-	/*
-	for (size_t i = 0; i < bucketSize; i++)
-	{
-		mem[i].store(NULL);
-	}
-	*/
-#endif
+
 #ifndef BOOSTEDVEC
 	// We need to initialize the NULL pointer if we want to CAS.
 	std::atomic<T> *null = NULL;
@@ -270,9 +260,6 @@ void SegmentedVector<T>::printBuckets()
 		size_t bucketSize = 1 << (highestBit(firstBucketSize) * (i + 1));
 		for (size_t j = 0; j < bucketSize; j++)
 		{
-#ifdef SEGMENTVEC
-			printf("%p\n", bucketArray[i].load()[j].load());
-#endif
 #ifdef COMPACTVEC
 			bucketArray[i].load()[j].load().print();
 #endif
@@ -282,9 +269,6 @@ void SegmentedVector<T>::printBuckets()
 	return;
 }
 
-#ifdef SEGMENTVEC
-template class SegmentedVector<Page<VAL, SGMT_SIZE> *>;
-#endif
 #ifdef COMPACTVEC
 template class SegmentedVector<CompactElement>;
 #endif

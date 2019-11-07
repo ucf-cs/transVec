@@ -4,10 +4,6 @@ Desc::Desc(unsigned int size, Operation *ops)
 {
 	this->size = size;
 	this->ops = ops;
-#ifdef SEGMENTVEC
-	// The page map always starts out empty.
-	pages.store(NULL);
-#endif
 #ifndef BOOSTEDVEC
 	// Transactions are always active at start.
 	status.store(active);
@@ -15,11 +11,6 @@ Desc::Desc(unsigned int size, Operation *ops)
 	set.store(NULL);
 #else
 	set = NULL;
-#endif
-#ifdef CONFLICT_FREE_READS
-	// Initialize the time to the lowest possbile value.
-	// This way, we know if it has been set yet.
-	version.store(0);
 #endif
 	return;
 }

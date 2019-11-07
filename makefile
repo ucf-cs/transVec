@@ -11,18 +11,14 @@ DATA_STRUCTURE =
 # use using grep. Else pick the g++ depending on what the value of DATA_STRUCUTURE is
 ifeq ($(DATA_STRUCTURE),)
 	DS =
-	ifeq ($(shell head define.hpp | grep "^\#define SEGMENTVEC" | wc -l), 1)
-		CC = $(SGMTVEC)
-	else ifeq ($(shell head define.hpp | grep "^\#define COMPACTVEC" | wc -l), 1)
+	ifeq ($(shell head define.hpp | grep "^\#define COMPACTVEC" | wc -l), 1)
 		CC = $(CMPTVEC)
 	else
 		CC = $(STMVEC)
 	endif
 else
 	DS = |$(DATA_STRUCTURE)
-	ifeq ($(DATA_STRUCTURE), SEGMENTVEC)
-		CC = $(SGMTVEC)
-	else ifeq ($(DATA_STRUCTURE), COMPACTVEC)
+	ifeq ($(DATA_STRUCTURE), COMPACTVEC)
 		CC = $(CMPTVEC)
 	else
 		CC = $(STMVEC)

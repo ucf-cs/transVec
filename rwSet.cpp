@@ -1,26 +1,13 @@
 #include "rwSet.hpp"
 
-#if defined SEGMENTVEC || defined COMPACTVEC || defined BOOSTEDVEC
+#if defined COMPACTVEC || defined BOOSTEDVEC
 
 RWSet::~RWSet()
 {
     operations.clear();
-#ifdef SEGMENTVEC
-    sizeDesc = NULL;
-#endif
     return;
 }
 
-#ifdef SEGMENTVEC
-std::pair<size_t, size_t> RWSet::access(size_t pos)
-{
-    size_t first = pos / (size_t)SGMT_SIZE;
-    size_t second = pos % (size_t)SGMT_SIZE;
-    // DEBUG: Ensure we access the correct page and offset for a given segment size.
-    //printf("SGMT_SIZE=%lu\tpos=%lu\tfirst=%lu\tsecond=%lu\n", SGMT_SIZE, pos, first, second);
-    return std::make_pair(first, second);
-}
-#endif
 #ifdef COMPACTVEC
 size_t RWSet::access(unsigned int pos)
 {
@@ -34,9 +21,6 @@ size_t RWSet::access(size_t pos)
 }
 #endif
 
-#ifdef SEGMENTVEC
-bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
-#endif
 #ifdef COMPACTVEC
     bool RWSet::createSet(Desc *descriptor, CompactVector *vector)
 #endif
@@ -51,9 +35,6 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
     // Go through each operation.
     for (size_t i = 0; i < descriptor->size; i++)
     {
-#ifdef SEGMENTVEC
-        std::pair<size_t, size_t> indexes;
-#endif
 #ifdef COMPACTVEC
         unsigned int indexes;
 #endif
@@ -199,12 +180,6 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
     }
 
     // If we accessed size, we need to report what we changed it to.
-#ifdef SEGMENTVEC
-    if (sizeDesc != NULL)
-    {
-        sizeDesc->set(0, NEW_VAL, size);
-    }
-#endif
 #ifdef COMPACTVEC
     // If size changed.
     if (sizeElement != NULL)
@@ -230,138 +205,6 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
     return true;
 }
 
-#ifdef SEGMENTVEC
-void RWSet::setToPages(Desc *descriptor)
-{
-    // All of the pages we want to insert (except size), ordered from low to high.
-    std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator> *pages = Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::alloc();
-
-    // For each page to generate.
-    // These are all independent of shared memory.
-    for (auto i = operations.begin(); i != operations.end(); ++i)
-    {
-        // Create the initial page.
-        Page<VAL, SGMT_SIZE> *page = Allocator<Page<VAL, SGMT_SIZE>>::alloc();
-        // Link the page to the transaction descriptor.
-        page->transaction = descriptor;
-
-        for (size_t j = 0; j < SGMT_SIZE; j++)
-        {
-            RWOperation *op = i->second[j];
-            // Ignore NULL elements in the array.
-            if (op == NULL)
-            {
-                // DEBUG: NULL element in the array.
-                //printf("No op at page %lu index %lu\n", i->first, j);
-                continue;
-            }
-            // Infer a read based on the read list size.
-            page->bitset.read[j] = (op->readList.size() > 0);
-            // Infer a write based on the write op pointer.
-            page->bitset.write[j] = (op->lastWriteOp != NULL);
-            // Check bounds only if the first operation on this element needed to.
-            page->bitset.checkBounds[j] = (op->checkBounds == RWOperation::Assigned::yes) ? true : false;
-            // If a write occured, place the appropriate new value from it.
-            if (op->lastWriteOp != NULL)
-            {
-                page->set(j, NEW_VAL, op->lastWriteOp->val);
-            }
-        }
-        (*pages)[i->first] = page;
-    }
-
-    // Store a pointer to the pages in the descriptor.
-    // Only the first thread to finish the job succeeds here.
-    std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator> *nullVal = NULL;
-    descriptor->pages.compare_exchange_strong(nullVal, pages);
-
-    return;
-}
-#endif
-
-#ifdef SEGMENTVEC
-size_t RWSet::getSize(TransactionalVector *vector, Desc *descriptor)
-{
-    if (sizeDesc != NULL)
-    {
-        return size;
-    }
-
-    // Prepend a read page to size.
-    // The size page is always of size 1.
-    // Set all unchanging page values here.
-    Page<size_t, 1> *tempSizeDesc = Allocator<Page<size_t, 1>>::alloc();
-    tempSizeDesc->bitset.read.set();
-    tempSizeDesc->bitset.write.set();
-    tempSizeDesc->bitset.checkBounds.reset();
-    tempSizeDesc->transaction = descriptor;
-    tempSizeDesc->next = NULL;
-
-    Page<size_t, 1> *rootPage = NULL;
-    do
-    {
-        // Get the current head.
-        rootPage = vector->size.load();
-
-        // Quit if the transaction is no longer active.
-        if (descriptor->status.load() != Desc::TxStatus::active)
-        {
-            return 0;
-        }
-
-        // If the root page does not exist.
-        // Root page should never be NULL, ever.
-        if (rootPage == NULL)
-        {
-            // Assume an initial size of 0.
-            tempSizeDesc->set(0, OLD_VAL, 0);
-        }
-        // If a helper got here first.
-        else if (rootPage->transaction == tempSizeDesc->transaction)
-        {
-            // Do not insert again.
-            break;
-        }
-        else
-        {
-            enum Desc::TxStatus status = rootPage->transaction->status.load();
-            while (status == Desc::TxStatus::active)
-            {
-#ifdef HELP
-                // Help the active transaction.
-                vector->sizeHelp(rootPage->transaction);
-#endif
-                status = rootPage->transaction->status.load();
-            }
-
-            // Store the root page's value as an old value in case we abort.
-            // Get the appropriate value from the root page depending on whether or not it succeeded.
-            size_t value = UNSET;
-            if (status == Desc::TxStatus::committed)
-            {
-                rootPage->get(0, NEW_VAL, value);
-            }
-            else
-            {
-                rootPage->get(0, OLD_VAL, value);
-            }
-            tempSizeDesc->set(0, OLD_VAL, value);
-        }
-        // Append the old page onto the new page. Used to maintain history.
-        tempSizeDesc->next = rootPage;
-    }
-    // Replace the page. Finish on success. Retry on failure.
-    while (!vector->size.compare_exchange_weak(rootPage, tempSizeDesc));
-
-    // Store the actual size locally.
-    vector->size.load()->get(0, OLD_VAL, size);
-
-    // Store the descriptor locally.
-    sizeDesc = tempSizeDesc;
-
-    return size;
-}
-#endif
 #ifdef COMPACTVEC
 // Special way to retrieve the current size.
 unsigned int RWSet::getSize(CompactVector *vector, Desc *descriptor)
@@ -469,19 +312,6 @@ size_t RWSet::getSize(BoostedVector *vector, Desc *descriptor)
 }
 #endif
 
-#ifdef SEGMENTVEC
-void RWSet::getOp(RWOperation *&op, std::pair<size_t, size_t> indexes)
-{
-    op = operations[indexes.first][indexes.second];
-    if (op == NULL)
-    {
-        op = Allocator<RWOperation>::alloc();
-        assert(op != NULL);
-        operations[indexes.first][indexes.second] = op;
-    }
-    return;
-}
-#endif
 #if defined(COMPACTVEC) || defined(BOOSTEDVEC)
 // Get an op node from a map. Allocate it if it doesn't already exist.
 bool RWSet::getOp(RWOperation *&op, size_t index)
@@ -496,19 +326,4 @@ bool RWSet::getOp(RWOperation *&op, size_t index)
 }
 #endif
 
-#ifdef SEGMENTVEC
-void RWSet::printOps()
-{
-    for (auto it = operations.begin(); it != operations.end(); ++it)
-    {
-        std::cout << "Page " << it->first << std::endl;
-        for (int i = SGMT_SIZE - 1; i >= 0; i--)
-        {
-            std::cout << (it->second[i] == NULL ? SGMT_SIZE + 1 : i) << " ";
-        }
-        std::cout << std::endl;
-    }
-    return;
-}
-#endif
 #endif

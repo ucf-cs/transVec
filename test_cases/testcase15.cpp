@@ -9,10 +9,6 @@ void createTransactions()
 	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 	{
 		Operation *ops = new Operation[TRANSACTION_SIZE];
-
-#ifdef CONFLICT_FREE_READS
-		bool isConflictFree = false;
-#endif
 		for (size_t k = 0; k < TRANSACTION_SIZE; k++)
 		{
 			// 33 slow, 66 fast
@@ -81,7 +77,7 @@ int main(void)
 	// Create our threads.
 	std::thread threads[THREAD_COUNT];
 
-		// Pre-insertion step.
+	// Pre-insertion step.
 	//threadRunner(threads, preinsert);
 	// Single-threaded alternative.
 	for (size_t i = 0; i < THREAD_COUNT; i++)

@@ -10,11 +10,11 @@ The actual vector will pre-process each of these transactions into a simpler rea
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <iostream>
 #include <ostream>
 #include <string>
 
 #include "define.hpp"
-#include "deltaPage.hpp"
 #include "memAllocator.hpp"
 
 template <class T, size_t S>
@@ -23,12 +23,6 @@ class Page;
 class RWSet;
 #ifdef BOOSTEDVEC
 class BoostedElement;
-#endif
-
-#ifdef CONFLICT_FREE_READS
-// The global version counter.
-// Used for conflict-free reads.
-static std::atomic<size_t> globalVersionCounter(1);
 #endif
 
 // A standard, user-generated operation.
@@ -100,16 +94,6 @@ struct Desc
 	unsigned int size = 0;
 	// An array of the operations themselves.
 	Operation *ops;
-#ifdef SEGMENTVEC
-	// A list of pages for the transaction to insert.
-	std::atomic<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *> pages;
-#endif
-#ifdef CONFLICT_FREE_READS
-	// Used to determine how to reorder conflict-free reads.
-	std::atomic<size_t> version;
-	// Used to identify whether or not the transaction is of the conflict-free variety.
-	bool isConflictFree = false;
-#endif
 
 	// Create a descriptor object.
 	// ops:     An array of operations, passed by reference.

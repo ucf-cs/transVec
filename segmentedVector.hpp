@@ -10,10 +10,10 @@ We build off of this implementation to add support for those things.
 
 #include <atomic>
 #include <cstddef>
+#include <iostream>
 #include <utility>
 
-// Included so our template knows what a page is.
-#include "deltaPage.hpp"
+#include "allocator.hpp"
 
 template <class T>
 class SegmentedVector

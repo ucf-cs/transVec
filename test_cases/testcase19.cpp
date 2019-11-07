@@ -18,9 +18,6 @@ void createTransactions()
 		ops[0].index = NUM_TRANSACTIONS / THREAD_COUNT;
 
 		Desc *desc = new Desc(1, ops);
-#ifdef CONFLICT_FREE_READS
-		desc->isConflictFree = true;
-#endif
 		transactions->push_back(desc);
 	}
 }
