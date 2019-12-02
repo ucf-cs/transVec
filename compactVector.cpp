@@ -2,6 +2,11 @@
 
 #ifdef COMPACTVEC
 
+// A thread-local help stack, used to prevent cyclic dependencies.
+// The key is the descriptor pointer.
+// The value is the current opid.
+thread_local std::unordered_map<Desc *, size_t> helpstack;
+
 CompactElement::CompactElement() noexcept
 {
     // Ensure all values have appropriate defaults.
@@ -26,20 +31,40 @@ bool CompactVector::reserve(size_t size)
     return array->reserve(size);
 }
 
-bool CompactVector::updateElement(size_t index, CompactElement &newElem)
+// TODO: Decide what we need from this. Some will need to be removed.
+// New element may need to be modified.
+// Only includes the descriptor pointer and perhaps the new value.
+// By the end of this function, newVal should store the value already in newElem in writes, or a copy of the existing value.
+// oldVal should always contain the value represented by the previous transaction.
+// Fails on seeing UNSET, except for push.
+VAL CompactVector::updateElement(size_t index, CompactElement &newElem, Operation::OpType type, bool checkSize = false)
 {
+    Desc *newDesc = newElem.descriptor;
+
     CompactElement oldElem;
+    bool success = false;
     do
     {
-        // Attempt to read the old element.
-        if (!array->read(index, oldElem))
+        // Check the returnVal array first.
+        VAL returnVal = newDesc->returnValues[helpstack[newDesc]].load();
+        // TODO: Use a specially reserved value instead of NULL.
+        if (returnVal != NULL)
         {
-            // Failure means the transaction attempted an invalid read or write, as the vector wasn't allocated to this point.
-            newElem.descriptor->status.store(Desc::TxStatus::aborted);
-            // DEBUG: Abort reporting.
-            //printf("Aborted!\n");
-            // No need to even try anymore. The whole transaction failed.
-            return false;
+            return returnVal;
+        }
+
+        // Attempt to read the old element.
+        if (checkSize || type == Operation::OpType::size)
+        {
+            oldElem = size.load();
+        }
+        else
+        {
+            if (!array->read(index, oldElem))
+            {
+                // Failure means the transaction attempted an invalid read or write, as the vector wasn't allocated to this point.
+                return UNSET;
+            }
         }
 
         // Ensure the oldElem doesn't point to NULL.
@@ -49,131 +74,139 @@ bool CompactVector::updateElement(size_t index, CompactElement &newElem)
 
         // Quit if the transaction is no longer active.
         // Can happen if another thread helped the transaction complete.
-        if (newElem.descriptor->status.load() != Desc::TxStatus::active)
+        if (newDesc->status.load() != Desc::TxStatus::active)
         {
-            return false;
+            returnVal = newDesc->returnValues[helpstack[newDesc]].load();
+            // TODO: Use a specially reserved value instead of NULL.
+            assert(returnVal != NULL);
+            return returnVal;
         }
 
-        // Quit early if the element is already inserted.
-        // May occur during helping.
-        if (oldDesc == newElem.descriptor)
+        // If helping occurred.
+        // The descriptor and values match.
+        if (oldDesc == newDesc && oldElem.newVal == newElem.newVal)
         {
-            // Insertion failed here but succeeded elsewhere.
-            // Act like we succeeded and continue to the next element.
-            return true;
+            // Get and try to set the return value ourselves.
+            // The helper may not have set it yet.
+            // TODO: Use a specially reserved value instead of NULL.
+            VAL null = NULL;
+            newDesc->returnValues[helpstack[newDesc]].compare_exchange_strong(null, newElem.newVal);
+
+            // Whether we succeed or fail, we need to make sure we retrieve a consistent value to maintain determinism.
+            returnVal = newDesc->returnValues[helpstack[newDesc]].load();
+
+            // If it doesn't match, something is probably wrong.
+            assert(newElem.newVal == returnVal);
+            // TODO: Use a specially reserved value instead of NULL.
+            assert(returnVal != NULL);
+            return returnVal;
         }
 
         // Check the status of the transaction.
         typename Desc::TxStatus status = oldDesc->status.load();
-        // If the old element is part of an active transaction.
-        // No need to help reads, so check if there are any dependencies with writes.
-        if (status == Desc::TxStatus::active)
+        // If the old element is part of another active transaction.
+        if (status == Desc::TxStatus::active && oldDesc != newDesc)
         {
             // Help the active transaction.
             while (oldDesc->status.load() == Desc::TxStatus::active)
             {
 #ifdef HELP
-                completeTransaction(oldDesc, index);
+                helpTransaction(oldDesc);
 #endif
             }
             // Update our status to its final (committed or aborted) state.
             status = oldDesc->status.load();
         }
 
-        // We only get the new value if it was write committed.
-        // Also check if it matches the end transaction, as that is a special case where we should see a write, even though the set is empty.
-        RWOperation *op = NULL;
-        if (oldDesc == endTransaction || (status == Desc::TxStatus::committed && oldDesc->set.load()->getOp(op, index) && op->lastWriteOp != NULL))
+        // Get the current value logically stored in the vector.
+        VAL logicalVal;
+        switch (status)
         {
-            newElem.oldVal = oldElem.newVal;
+        case Desc::TxStatus::committed:
+            // We only get the new value if it was committed.
+            logicalVal = oldElem.newVal;
+            break;
+        case Desc::TxStatus::aborted:
+            // Transaction was aborted.
+            // Grab the old page's old value.
+            logicalVal = oldElem.oldVal;
+            break;
+        case Desc::TxStatus::active:
+            // Another operation in the same transaction modified this value.
+            assert(oldDesc == newDesc);
+            // Preserve the oldVal.
+            logicalVal = oldElem.oldVal;
+            break;
+        default:
+            assert(false);
+            break;
         }
-        // Transaction was aborted or operation was a read.
-        // Grab the old page's old value.
+
+        // Now finalize the values we want to use to replace oldElem.
+        // Also determine the return value.
+        VAL ret = UNSET;
+        //newElem.descriptor = newElem.descriptor; // Unchanged.
+        newElem.oldVal = logicalVal;
+        // If this is a checkSize update, we follow different rules.
+        if (checkSize)
+        {
+            switch (type)
+            {
+            case Operation::OpType::read:
+            case Operation::OpType::write:
+            case Operation::OpType::size:
+                newElem.newVal = logicalVal;
+                ret = logicalVal;
+                break;
+            case Operation::OpType::pushBack:
+                newElem.newVal = logicalVal + 1;
+                ret = logicalVal;
+                break;
+            case Operation::OpType::popBack:
+                newElem.newVal = logicalVal - 1;
+                ret = logicalVal - 1;
+                break;
+            default:
+                assert(false);
+                break;
+            }
+        }
         else
         {
-            // Copy over the previous new value to become the replacement's old value.
-            newElem.oldVal = oldElem.oldVal;
+            switch (type)
+            {
+            case Operation::OpType::read:
+            case Operation::OpType::size:
+                newElem.newVal = logicalVal;
+                ret = logicalVal;
+                break;
+            case Operation::OpType::write:
+            case Operation::OpType::pushBack:
+                // newVal is unchanged.
+                ret = newElem.newVal;
+                break;
+            case Operation::OpType::popBack:
+                newElem.newVal = UNSET;
+                ret = UNSET;
+                break;
+            default:
+                assert(false);
+                break;
+            }
         }
 
-        // Abort if the operation fails our bounds check.
-        newElem.descriptor->set.load()->getOp(op, index);
-        if (op != NULL && op->checkBounds == RWOperation::Assigned::yes && newElem.oldVal == UNSET)
+        // Attempt to CAS the new element.
+        if (checkSize || type == Operation::OpType::size)
         {
-            newElem.descriptor->status.store(Desc::TxStatus::aborted);
-            // DEBUG: Abort reporting.
-            //printf("Aborted!\n");
-            // No need to even try anymore. The whole transaction failed.
-            return false;
+            success = size.compare_exchange_strong(oldElem, newElem);
         }
-    } while (!array->tryWrite(index, oldElem, newElem));
-
-    // Store the old value in the associated operations.
-    // We move this here because otherwise we have no index to reference.
-    RWOperation *op = NULL;
-    newElem.descriptor->set.load()->getOp(op, index);
-    // For each operation attempting to read the element.
-    for (size_t i = 0; i < op->readList.size(); i++)
-    {
-        // Assign the return values.
-        op->readList[i]->ret = newElem.oldVal;
-    }
+        else
+        {
+            success = array->tryWrite(index, oldElem, newElem);
+        }
+    } while (!success);
 
     return true;
-}
-
-void CompactVector::insertElements(RWSet *set, unsigned int startElement)
-{
-    // Get the start of the map.
-    typename std::map<size_t, RWOperation *, std::equal_to<size_t>, MemAllocator<std::pair<size_t, RWOperation *>>>::reverse_iterator iter = set->operations.rbegin();
-
-    // Advance to a starting index, if specified.
-    if (startElement < INT32_MAX)
-    {
-        // Attempt to find an operation at the target index.
-        auto foundIter = set->operations.find(startElement);
-        // If we found it.
-        if (foundIter != set->operations.end())
-        {
-            // Reposition our iterator.
-            //iter = make_reverse_iterator(foundIter);
-            iter = std::reverse_iterator<std::_Rb_tree_iterator<std::pair<const size_t, RWOperation *>>>(foundIter);
-        }
-        // If the element is invalid, which should never happen.
-        else
-        {
-            printf("Specified element %du does not exist. Starting from the beginning.\n", startElement);
-        }
-    }
-
-    for (; iter != set->operations.rend(); ++iter)
-    {
-        // If something caused a failure, don't insert any more elements for this transaction.
-        if (set->descriptor->status.load() == Desc::TxStatus::aborted)
-        {
-            break;
-        }
-
-        // The index comes straight from the map.
-        size_t index = iter->first;
-
-        // The element is generated
-        CompactElement element;
-        // NOTE: oldVal is automatically set upon insertion, so don't worry about setting it yet.
-        // Only assign a new value if we actually have one to assign.
-        if (iter->second != NULL && iter->second->lastWriteOp != NULL)
-        {
-            element.newVal = iter->second->lastWriteOp->val;
-        }
-        element.descriptor = set->descriptor;
-
-        // Replace the element.
-        // Returns false if the transaction is no longer active.
-        if (!updateElement(index, element))
-        {
-            break;
-        }
-    }
-    return;
 }
 
 CompactVector::CompactVector()
@@ -185,7 +218,7 @@ CompactVector::CompactVector()
     // Allocate an end transaction.
     if (endTransaction == NULL)
     {
-        endTransaction = new Desc(0, NULL);
+        endTransaction = new Desc(NULL, NULL, NULL, 0);
         endTransaction->status.store(Desc::TxStatus::committed);
     }
     // Initialize size.
@@ -197,78 +230,48 @@ CompactVector::CompactVector()
     return;
 }
 
-bool CompactVector::prepareTransaction(Desc *descriptor)
+bool CompactVector::helpTransaction(Desc *desc)
 {
-    RWSet *set = descriptor->set.load();
-    if (set == NULL)
-    {
-        // Initialize the RWSet object.
-        set = Allocator<RWSet>::alloc();
-
-        // Create the read/write set.
-        // NOTE: Getting size may happen here.
-        // Requires special consideration for the helping scheme.
-        // This will work because helpers will either replace size or find and help an active transaction.
-        set->createSet(descriptor, this);
-
-        RWSet *nullVal = NULL;
-        descriptor->set.compare_exchange_strong(nullVal, set);
-        // TODO2: Preferably deallocate if we fail to CAS.
-    }
-    // Make sure we only work with the set that succeeded first.
-    set = descriptor->set.load();
-    // Ensure that we can fit all of the elements we plan to insert.
-    if (!reserve(set->maxReserveAbsolute > set->size ? set->maxReserveAbsolute : set->size))
-    {
-        descriptor->status.store(Desc::TxStatus::aborted);
-        // DEBUG: Abort reporting.
-        //printf("Aborted!\n");
-        return false;
-    }
-    return true;
-}
-
-bool CompactVector::completeTransaction(Desc *descriptor, unsigned int startElement)
-{
-    // Insert the elements.
-    insertElements(descriptor->set.load(), startElement);
+    // Place the transaction descriptor on the help stack.
+    helpstack[desc] = 0;
+    // A local map, used by the transaction function.
+    valMap *localMap;
+    // Copy the inputMap to the localMap.
+    *localMap = *desc->inputMap;
+    // Run the transaction function.
+    bool ret = desc->func(desc, localMap);
+    // Remove the transaction descriptor from the help stack.
+    helpstack.erase(desc);
 
     auto active = Desc::TxStatus::active;
     auto committed = Desc::TxStatus::committed;
-    // Commit the transaction.
-    // If this fails, either we aborted or some other transaction committed, so no need to retry.
-    if (!descriptor->status.compare_exchange_strong(active, committed))
+    auto aborted = Desc::TxStatus::aborted;
+    // If the function executed successfully.
+    if (ret)
     {
-        // At this point, the transaction either committed or aborted.
-
-        // If the transaction aborted.
-        if (descriptor->status.load() != Desc::TxStatus::committed)
-        {
-            // Return immediately.
-            return false;
-        }
+        // The transaction commits.
+        desc->status.compare_exchange_strong(active, committed);
     }
-    // Commit succeeded.
-    return true;
+    else
+    {
+        // The transaction aborts.
+        // This induces logical rollback.
+        desc->status.compare_exchange_strong(active, aborted);
+    }
+    // Copy the localMap to the outputMap.
+    *desc->outputMap = *localMap;
+    return ret;
 }
 
-void CompactVector::executeTransaction(Desc *descriptor)
+// The transaction execution function. Executes a single transaction.
+bool CompactVector::executeTransaction(bool (*func)(Desc *desc, valMap *localMap), valMap *inMap, valMap *outMap, size_t size)
 {
-    // Initialize the set for the descriptor.
-    prepareTransaction(descriptor);
-    // Complete the transaction.
-    completeTransaction(descriptor);
-}
-
-void CompactVector::sizeHelp(Desc *descriptor)
-{
-    // DEBUG: Print the thread id that is helping.
-    //printf("Thread %lu is helping descriptor %p\n", std::hash<std::thread::id>{}(std::this_thread::get_id()), descriptor);
-
-    // Must actually start at the very beginning.
-    prepareTransaction(descriptor);
-    // Must help from the beginning of the list, since we didn't help part way through.
-    completeTransaction(descriptor);
+    // Create a transaction descriptor to associate with the transaction function.
+    Desc *desc = new Desc(func, inMap, outMap, size);
+    // Perform the transaction, via the helping scheme.
+    helpTransaction(desc);
+    // Execution is successful only if the transaction commits.
+    return desc->status.load() == Desc::TxStatus::committed;
 }
 
 void CompactVector::printContents()
@@ -285,6 +288,146 @@ void CompactVector::printContents()
     }
     printf("\n");
     return;
+}
+
+// TODO: Figure out exactly how this works. This is the most confusing part of the code.
+// Run an operation on the data structure.
+int CompactVector::callOp(Desc *desc, Operation::OpType type, void *fmt...)
+{
+    // Prepare to read the variadic arguments.
+    // For simplcity, we will assume that all arguments were valid for the OpType.
+    va_list args;
+    va_start(args, fmt);
+
+    // Do not execute if the transaction already aborted.
+    if (desc->status.load() == Desc::TxStatus::aborted)
+    {
+        return NULL;
+    }
+    // Acquire the operation's ID.
+    // TODO: How does one get this from the help stack?
+    int opid = helpstack[desc]++;
+    // If the return value was already set.
+    if (desc->returnValues[opid] != NULL)
+    {
+        // Just return that value.
+        return desc->returnValues[opid];
+    }
+    // The operation's return value.
+    // NOTE: Invalid reads and writes should return UNSET for the vector.
+    int ret = NULL;
+    // Run the appropriate function type.
+    switch (type)
+    {
+    case Operation::OpType::read:
+        // Check size.
+        // TODO: Get and validate size, or keep using UNSET.
+
+        // Get the operation index.
+        size_t index = va_arg(args, size_t);
+        // Create a replacement element.
+        CompactElement newElem;
+        newElem.descriptor = desc;
+        if (updateElement(index, newElem))
+        {
+            // Return new value on success.
+            ret = newElem.newVal;
+        }
+        else
+        {
+            // TODO: Is the the proper thing to return?
+            ret = UNSET;
+        }
+        break;
+    case Operation::OpType::write:
+        // TODO: Check size.
+        // Check element at target index.
+        size_t index = va_arg(args, size_t);
+        size_t val = va_arg(args, VAL);
+        // Replace element with our descriptor pointer and new value.
+        // Create a replacement element.
+        CompactElement newElem;
+        newElem.descriptor = desc;
+        newElem.newVal = val;
+        if (updateElement(index, newElem))
+        {
+            // Return new value on success.
+            ret = newElem.newVal;
+        }
+        else
+        {
+            // TODO: Is the the proper thing to return?
+            ret = UNSET;
+        }
+        break;
+    case Operation::OpType::pushBack:
+        // Check size.
+        size_t index = 0; // TODO: Actually check size.
+        // Increment size.
+
+        size_t val = va_arg(args, VAL);
+        // Replace element with our descriptor pointer and new value.
+        // Create a replacement element.
+        CompactElement newElem;
+        newElem.descriptor = desc;
+        newElem.newVal = val;
+        // Place element at target index (size).
+        if (updateElement(index, newElem, type))
+        {
+            // Return new value on success.
+            ret = newElem.newVal;
+        }
+        else
+        {
+            // TODO: Is the the proper thing to return?
+            ret = UNSET;
+        }
+        break;
+    case Operation::OpType::popBack:
+        // Check size.
+        // Decrement size.
+
+        // Place element at target index (decremented size).
+
+        // Replace element with our descriptor pointer and new value.
+        // Create a replacement element.
+        CompactElement newElem;
+        newElem.descriptor = desc;
+        newElem.newVal = UNSET;
+        // Place element at target index (size).
+        if (updateElement(index, newElem, type))
+        {
+            // Return old value on success.
+            ret = newElem.oldVal;
+        }
+        else
+        {
+            // TODO: Is the the proper thing to return?
+            ret = UNSET;
+        }
+        break;
+    case Operation::OpType::size:
+        // Check size.
+        // Replace element with our descriptor pointer.
+        CompactElement newElem;
+        newElem.descriptor = desc;
+        updateElement(0, newElem, type);
+        break;
+    case Operation::OpType::reserve:
+        // Just pass through vector reserve.
+        array->reserve((size_t)args);
+        break;
+    default:
+        break;
+    }
+    // Set the return value.
+    // TODO: Is this safe without atomics? Only if the individual operations are as well. The individual operations must return the same value to all threads if the opid matches.
+    // TODO: Modify my vector to support multiple operations on the same element in the same transaction.
+    desc->returnValues[opid].store(ret);
+    // Advance the help stack?
+    //helpstack.nextOp();
+    // Return the result of the operation.
+    return ret;
 }
 
 #endif

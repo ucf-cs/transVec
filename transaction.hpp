@@ -13,9 +13,12 @@ The actual vector will pre-process each of these transactions into a simpler rea
 #include <iostream>
 #include <ostream>
 #include <string>
+#include <unordered_map>
 
 #include "define.hpp"
 #include "memAllocator.hpp"
+
+typedef std::unordered_map<std::string, void *> valMap;
 
 template <class T, size_t S>
 class Page;
@@ -61,10 +64,6 @@ struct Operation
 	// Used for push and write.
 	// Pop implicitly writes an unset value for bounds checking.
 	VAL val;
-	// The return value for this operation.
-	// Only used for read, pop, and size.
-	// Only safe to read if the transaction has committed.
-	VAL ret;
 
 	void print();
 };
@@ -82,27 +81,31 @@ struct Desc
 		aborted
 	};
 
+	// A function pointer. This function forms the transaction.
+    // The function must be deterministic and operate thread-locally.
+    // The local map can be used to pass in thread-local variables.
+    bool (*func)(Desc *desc, valMap *localMap);
+    // Write variables to this input map to copy them into the function.
+    valMap *inputMap;
+    // When the function completes, the output is copied here.
+    valMap *outputMap;
+
 	// The status of the transaction.
 	std::atomic<TxStatus> status;
-	std::atomic<RWSet *> set;
+
+	// An array of values returned by each insert, delete, and remove.
+    // These can be used in helping to reduce redundant work.
+    std::atomic<VAL> *returnValues;
 #else
 	RWSet *set;
 	// A list of locks aquired that must be released when the transaction finishes.
 	std::vector<BoostedElement *> locks;
 #endif
-	// The number of operations in the transaction.
-	unsigned int size = 0;
-	// An array of the operations themselves.
-	Operation *ops;
 
-	// Create a descriptor object.
-	// ops:     An array of operations, passed by reference.
-	// size:    The number of operations in the operations array.
-	Desc(unsigned int size, Operation *ops);
+	// Descriptor constructor.
+    // Assigns a descriptor function, an input map, and an output map.
+	Desc(bool (*func)(Desc *desc, valMap *localMap), valMap *inMap, valMap *outMap, size_t size);
 	~Desc();
-
-	// Used to get our final results after a transaction commits.
-	VAL *getResult(size_t index);
 
 	// Print out the contents of the vector at a given time.
 	// This function is not atomic unless the transaction has committed or aborted.

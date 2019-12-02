@@ -3,7 +3,9 @@
 
 #include <assert.h>
 #include <atomic>
+#include <cstdarg>
 #include <map>
+#include <set>
 
 #include "allocator.hpp"
 #include "define.hpp"
@@ -33,6 +35,7 @@ class CompactVector
 {
 private:
     // An array of compact elements.
+    // This is the actual array.
     SegmentedVector<CompactElement> *array = NULL;
     // A generic, committed transaction.
     // This is used to resolve uninitialized pages.
@@ -40,15 +43,10 @@ private:
     // Reserve simply passes the request along to the underlying segmented vector.
     bool reserve(size_t size);
     // Performs an atomic 16 byte exchange of an element.
-    bool updateElement(size_t index, CompactElement &newElem);
-    // Insert the elements in the set.
-    void insertElements(RWSet *set, unsigned int startElement = UINT32_MAX);
-    // Create a RWSet for the transaction.
-    // Only used in helping on size conflict.
-    bool prepareTransaction(Desc *descriptor);
+    VAL updateElement(size_t index, CompactElement &newElem, Operation::OpType type, bool checkSize);
     // Finish the vector transaction.
     // Used for helping.
-    bool completeTransaction(Desc *descriptor, unsigned int startElement = UINT32_MAX);
+    bool helpTransaction(Desc *descriptor);
 
 public:
     // A page holding our shared size variable.
@@ -57,11 +55,12 @@ public:
     // Default constructor.
     CompactVector();
     // Apply a transaction to a vector.
-    void executeTransaction(Desc *descriptor);
-    // Called if a transaction is blocking on size.
-    void sizeHelp(Desc *descriptor);
+    bool executeTransaction(bool (*func)(Desc *desc, valMap *localMap), valMap *inMap, valMap *outMap, size_t size);
     // Print out the values stored in the vector.
     void printContents();
+    // Run an operation on a data structure.
+    // Called from within a transaction function.
+    callOp(Desc *desc, Operation::OpType type, void *args...);
 };
 
 #endif

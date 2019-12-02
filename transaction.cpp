@@ -1,14 +1,15 @@
 #include "transaction.hpp"
 
-Desc::Desc(unsigned int size, Operation *ops)
+Desc::Desc(bool (*func)(Desc *desc, valMap *localMap), valMap *inMap, valMap *outMap, size_t size)
 {
-	this->size = size;
-	this->ops = ops;
 #ifndef BOOSTEDVEC
 	// Transactions are always active at start.
 	status.store(active);
-	// The RWSet always starts out empty.
-	set.store(NULL);
+
+	this->func = func;
+	inputMap = inMap;
+	outputMap = outMap;
+	returnValues = new std::atomic<int> [size];
 #else
 	set = NULL;
 #endif
@@ -17,26 +18,8 @@ Desc::Desc(unsigned int size, Operation *ops)
 
 Desc::~Desc()
 {
-	//delete ops;
+	delete[] returnValues;
 	return;
-}
-
-VAL *Desc::getResult(size_t index)
-{
-	// If we request a result at an invalid operation index.
-	if (index >= size)
-	{
-		return NULL;
-	}
-#ifndef BOOSTEDVEC
-	// If the transaction has not yet committed.
-	if (status.load() != committed)
-	{
-		return NULL;
-	}
-#endif
-	// Return the value returned by the operation.
-	return &(ops[index].ret);
 }
 
 #ifndef BOOSTEDVEC
@@ -57,13 +40,6 @@ void Desc::print()
 		break;
 	}
 	printf("Transaction status:\t%s\n", statusStrList[statusStrIndex]);
-
-	printf("Ops: (size=%u)\n", size);
-	for (size_t i = 0; i < size; i++)
-	{
-		ops[i].print();
-		printf("\n");
-	}
 }
 #endif
 
@@ -95,5 +71,4 @@ void Operation::print()
 	std::cout << "Type:\t" << typeStrList[typeStrIndex] << std::endl;
 	std::cout << "index:\t" << index << std::endl;
 	std::cout << "val:\t" << val << std::endl;
-	std::cout << "ret:\t" << ret << std::endl;
 }
