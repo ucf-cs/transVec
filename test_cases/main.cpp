@@ -169,6 +169,42 @@ size_t countAborts([[maybe_unused]] std::vector<Desc *> *transactions)
 #endif
 }
 
+#ifdef METRICS
+std::chrono::high_resolution_clock::duration measurePreprocessTime([[maybe_unused]] std::vector<Desc *> *transactions)
+{
+	std::chrono::high_resolution_clock::duration retVal = std::chrono::high_resolution_clock::duration::zero();
+	for (size_t i = 0; i < transactions->size(); i++)
+	{
+		Desc *desc = transactions->at(i);
+		retVal += desc->preprocessTime - desc->startTime;
+	}
+	retVal /= transactions->size();
+	return retVal;
+}
+std::chrono::high_resolution_clock::duration measureSharedTime([[maybe_unused]] std::vector<Desc *> *transactions)
+{
+	std::chrono::high_resolution_clock::duration retVal = std::chrono::high_resolution_clock::duration::zero();
+	for (size_t i = 0; i < transactions->size(); i++)
+	{
+		Desc *desc = transactions->at(i);
+		retVal += desc->endTime - desc->preprocessTime;
+	}
+	retVal /= transactions->size();
+	return retVal;
+}
+std::chrono::high_resolution_clock::duration measureTotalTime([[maybe_unused]] std::vector<Desc *> *transactions)
+{
+	std::chrono::high_resolution_clock::duration retVal = std::chrono::high_resolution_clock::duration::zero();
+	for (size_t i = 0; i < transactions->size(); i++)
+	{
+		Desc *desc = transactions->at(i);
+		retVal += desc->endTime - desc->startTime;
+	}
+	retVal /= transactions->size();
+	return retVal;
+}
+#endif
+
 int setMaxPriority()
 {
 	int which = PRIO_PROCESS;

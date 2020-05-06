@@ -254,10 +254,19 @@ bool CompactVector::completeTransaction(Desc *descriptor, unsigned int startElem
 
 void CompactVector::executeTransaction(Desc *descriptor)
 {
+#ifdef METRICS
+    descriptor->startTime = std::chrono::high_resolution_clock::now();
+#endif
     // Initialize the set for the descriptor.
     prepareTransaction(descriptor);
+#ifdef METRICS
+    descriptor->preprocessTime = std::chrono::high_resolution_clock::now();
+#endif
     // Complete the transaction.
     completeTransaction(descriptor);
+#ifdef METRICS
+    descriptor->endTime = std::chrono::high_resolution_clock::now();
+#endif
 }
 
 void CompactVector::sizeHelp(Desc *descriptor)

@@ -100,6 +100,11 @@ int main(void)
 	std::cout << SGMT_SIZE << "\t" << NUM_TRANSACTIONS << "\t";
 	std::cout << TRANSACTION_SIZE << "\t" << THREAD_COUNT << "\t";
 	std::cout << std::chrono::duration_cast<std::chrono::TIME_UNIT>(finish - start).count();
+#ifdef METRICS
+	std::cout << "Average preprocessing time" + std::chrono::duration_cast<std::chrono::TIME_UNIT>(measurePreprocessTime(transactions)).count();
+	std::cout << "Average shared memory time" + std::chrono::duration_cast<std::chrono::TIME_UNIT>(measureSharedTime(transactions)).count();
+	std::cout << "Average transaction time" + std::chrono::duration_cast<std::chrono::TIME_UNIT>(measureTotalTime(transactions)).count();
+#endif
 	std::cout << "\t" << countAborts(transactions) << "\n";
 
 	// Report on allocator issues.

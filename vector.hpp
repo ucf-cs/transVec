@@ -142,6 +142,11 @@ private:
 public:
     void executeTransaction(Desc *desc)
     {
+#ifdef METRICS
+        desc->startTime = std::chrono::high_resolution_clock::now();
+        // This vector doesn't use pre-processing.
+        desc->preprocessTime = desc->startTime;
+#endif
         bool ret = true;
         mtx.lock();
         //printf("%lu got lock.\n", std::hash<std::thread::id>()(std::this_thread::get_id()));
@@ -188,6 +193,9 @@ public:
         }
         //printf("%lu releasing lock.\n", std::hash<std::thread::id>()(std::this_thread::get_id()));
         mtx.unlock();
+#ifdef METRICS
+        desc->endTime = std::chrono::high_resolution_clock::now();
+#endif
         return;
     }
     void printContents()
@@ -206,6 +214,11 @@ private:
 public:
     void executeTransaction(Desc *desc)
     {
+#ifdef METRICS
+        desc->startTime = std::chrono::high_resolution_clock::now();
+        // This vector doesn't use pre-processing.
+        desc->preprocessTime = desc->startTime;
+#endif
         bool ret = true;
         __transaction_atomic
         {
@@ -251,6 +264,9 @@ public:
         {
             desc->status.store(Desc::TxStatus::aborted);
         }
+#ifdef METRICS
+        desc->endTime = std::chrono::high_resolution_clock::now();
+#endif
         return;
     }
     void printContents()

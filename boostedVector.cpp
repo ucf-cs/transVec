@@ -68,13 +68,24 @@ bool BoostedVector::prepareTransaction(Desc *descriptor)
     descriptor->set = Allocator<RWSet>::alloc();
     // Create the read/write set.
     descriptor->set->createSet(descriptor, this);
+#ifdef METRICS
+    descriptor->preprocessTime = std::chrono::high_resolution_clock::now();
+#endif
     // Ensure that we can fit all of the elements we plan to insert.
     return reserve(descriptor->set->maxReserveAbsolute > descriptor->set->size ? descriptor->set->maxReserveAbsolute : descriptor->set->size);
 }
 
 bool BoostedVector::executeTransaction(Desc *descriptor)
 {
+#ifdef METRICS
+    descriptor->startTime = std::chrono::high_resolution_clock::now();
+#endif
+
     bool ret = prepareTransaction(descriptor) && insertElements(descriptor);
+
+#ifdef METRICS
+    descriptor->endTime = std::chrono::high_resolution_clock::now();
+#endif
 
     // As the transaction has completed, release all locks in the order obtained.
     // Always unlock, regardless of what the functions return.

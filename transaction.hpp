@@ -110,6 +110,14 @@ struct Desc
 	// Used to identify whether or not the transaction is of the conflict-free variety.
 	bool isConflictFree = false;
 #endif
+#ifdef METRICS
+	// The time when the transaction started
+	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
+    // The time when preprocessing completed and shared memory modifications started.
+    std::chrono::time_point<std::chrono::high_resolution_clock> preprocessTime;
+	// The time when the transaction completed.
+    std::chrono::time_point<std::chrono::high_resolution_clock> endTime;
+#endif
 
 	// Create a descriptor object.
 	// ops:     An array of operations, passed by reference.

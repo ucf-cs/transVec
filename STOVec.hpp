@@ -13,6 +13,11 @@ private:
 public:
     void executeTransaction(Desc *desc)
     {
+#ifdef METRICS
+        desc->startTime = std::chrono::high_resolution_clock::now();
+        // This vector doesn't use pre-processing.
+        desc->preprocessTime = desc->startTime;
+#endif
         hasAborted = false;
         { // Scoped section.
             TransactionGuard t;
@@ -75,6 +80,9 @@ public:
         {
             desc->status.store(Desc::TxStatus::aborted);
         }
+#ifdef METRICS
+        desc->endTime = std::chrono::high_resolution_clock::now();
+#endif
         return;
     }
     void printContents()

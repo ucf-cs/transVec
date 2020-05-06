@@ -471,15 +471,33 @@ void TransactionalVector::executeTransaction(Desc *descriptor)
 	// Determine if this is a help-free read transaction.
 	if (descriptor->isConflictFree)
 	{
+#ifdef METRICS
+		descriptor->startTime = std::chrono::high_resolution_clock::now();
+		// Help-free read don't use pre-processing.
+		descriptor->preprocessTime = desc->startTime;
+#endif
 		// Call the specialized transaction function to handle it.
 		executeConflictFreeReads(descriptor);
+#ifdef METRICS
+		descriptor->endTime = std::chrono::high_resolution_clock::now();
+#endif
 		return;
 	}
+#endif // CONFLICT_FREE_READS
+
+#ifdef METRICS
+	descriptor->startTime = std::chrono::high_resolution_clock::now();
 #endif
 	// Initialize the set for the descriptor.
 	prepareTransaction(descriptor);
+#ifdef METRICS
+	descriptor->preprocessTime = std::chrono::high_resolution_clock::now();
+#endif
 	// If the transaction committed.
 	completeTransaction(descriptor);
+#ifdef METRICS
+	descriptor->endTime = std::chrono::high_resolution_clock::now();
+#endif
 }
 
 void TransactionalVector::sizeHelp(Desc *descriptor)
