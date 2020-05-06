@@ -234,7 +234,7 @@ bool RWSet::createSet(Desc *descriptor, TransactionalVector *vector)
 void RWSet::setToPages(Desc *descriptor)
 {
     // All of the pages we want to insert (except size), ordered from low to high.
-    std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator> *pages = Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::alloc();
+    std::map<size_t, Page<VAL, SGMT_SIZE> *, ORDER, MyPageAllocator> *pages = Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, ORDER, MyPageAllocator>>::alloc();
 
     // For each page to generate.
     // These are all independent of shared memory.
@@ -272,7 +272,7 @@ void RWSet::setToPages(Desc *descriptor)
 
     // Store a pointer to the pages in the descriptor.
     // Only the first thread to finish the job succeeds here.
-    std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator> *nullVal = NULL;
+    std::map<size_t, Page<VAL, SGMT_SIZE> *, ORDER, MyPageAllocator> *nullVal = NULL;
     descriptor->pages.compare_exchange_strong(nullVal, pages);
 
     return;

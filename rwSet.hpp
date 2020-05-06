@@ -36,7 +36,7 @@ class Desc;
 #ifdef SEGMENTVEC
 typedef MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>> MyPageAllocator;
 typedef MemAllocator<std::pair<size_t, RWOperation *>> MySecondRWOpAllocator;
-typedef MemAllocator<std::pair<size_t, std::map<size_t, RWOperation *, std::less<size_t>, MySecondRWOpAllocator>>> MyRWOpAllocator;
+typedef MemAllocator<std::pair<size_t, std::map<size_t, RWOperation *, ORDER, MySecondRWOpAllocator>>> MyRWOpAllocator;
 #endif
 
 // An individual operation on a single element location.
@@ -70,7 +70,7 @@ public:
 	// Map vector locations to read/write operations.
 	std::map<size_t,
 			 RWOperation *,
-			 std::less<size_t>,
+			 ORDER,
 			 MemAllocator<std::pair<size_t, RWOperation *>>>
 		operations;
 	// The descriptor associated with this set.
@@ -119,7 +119,7 @@ public:
 	// Map vector locations to read/write operations.
 	std::map<size_t,
 			 RWOperation *,
-			 std::less<size_t>,
+			 ORDER,
 			 MemAllocator<std::pair<size_t, RWOperation *>>>
 		operations;
 	bool hasSize = false;

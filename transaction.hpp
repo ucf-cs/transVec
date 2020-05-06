@@ -102,7 +102,7 @@ struct Desc
 	Operation *ops;
 #ifdef SEGMENTVEC
 	// A list of pages for the transaction to insert.
-	std::atomic<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *> pages;
+	std::atomic<std::map<size_t, Page<VAL, SGMT_SIZE> *, ORDER, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *> pages;
 #endif
 #ifdef CONFLICT_FREE_READS
 	// Used to determine how to reorder conflict-free reads.
@@ -113,10 +113,10 @@ struct Desc
 #ifdef METRICS
 	// The time when the transaction started
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
-    // The time when preprocessing completed and shared memory modifications started.
-    std::chrono::time_point<std::chrono::high_resolution_clock> preprocessTime;
+	// The time when preprocessing completed and shared memory modifications started.
+	std::chrono::time_point<std::chrono::high_resolution_clock> preprocessTime;
 	// The time when the transaction completed.
-    std::chrono::time_point<std::chrono::high_resolution_clock> endTime;
+	std::chrono::time_point<std::chrono::high_resolution_clock> endTime;
 #endif
 
 	// Create a descriptor object.

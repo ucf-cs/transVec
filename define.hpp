@@ -47,4 +47,15 @@ typedef unsigned int VAL;
 const VAL UNSET = UINT32_MAX;
 #endif
 
+// Define the preferred order to perform shared memory modifications.
+// Greater: Low to high index.
+// Less: High to low index.
+#ifdef HIGHTOLOW
+// Optimized order
+#define ORDER std::less<size_t>
+#else
+// Non-optimized order
+#define ORDER std::greater<size_t>
+#endif
+
 #endif

@@ -6,7 +6,7 @@ void threadAllocatorInit([[maybe_unused]] int threadNum)
 #ifdef SEGMENTVEC
 	Allocator<Page<VAL, SGMT_SIZE>>::threadInit(threadNum);
 	Allocator<Page<size_t, 1>>::threadInit(threadNum);
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::threadInit(threadNum);
+	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, ORDER, MyPageAllocator>>::threadInit(threadNum);
 #endif
 #ifdef COMPACTVEC
 	Allocator<CompactElement>::threadInit(threadNum);
@@ -45,9 +45,9 @@ void allocatorInit()
 	Allocator<Page<size_t, 1>>::init((NUM_TRANSACTIONS + 1) * TRANSACTION_SIZE);
 // Preallocate page maps.
 #ifdef ALLOC_COUNT
-	printf("sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>)=%lu\n", sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>));
+	printf("sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, ORDER, MyPageAllocator>)=%lu\n", sizeof(std::map<size_t, Page<VAL, SGMT_SIZE> *, ORDER, MyPageAllocator>));
 #endif
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::init((NUM_TRANSACTIONS + 1) * TRANSACTION_SIZE);
+	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, ORDER, MyPageAllocator>>::init((NUM_TRANSACTIONS + 1) * TRANSACTION_SIZE);
 #endif
 #ifdef COMPACTVEC
 // Preallocate compact elements.
@@ -80,7 +80,7 @@ void allocatorReport()
 #ifdef SEGMENTVEC
 	Allocator<Page<VAL, SGMT_SIZE>>::report();
 	Allocator<Page<size_t, 1>>::report();
-	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MyPageAllocator>>::report();
+	Allocator<std::map<size_t, Page<VAL, SGMT_SIZE> *, ORDER, MyPageAllocator>>::report();
 #endif
 #ifdef COMPACTVEC
 // Preallocate compact elements.

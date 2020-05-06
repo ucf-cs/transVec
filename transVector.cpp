@@ -184,11 +184,11 @@ bool TransactionalVector::prependPage(size_t index, Page<VAL, SGMT_SIZE> *page)
 	return true;
 }
 
-void TransactionalVector::insertPages(std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *pages, bool helping, size_t startPage)
+void TransactionalVector::insertPages(std::map<size_t, Page<VAL, SGMT_SIZE> *, ORDER, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>> *pages, bool helping, size_t startPage)
 {
 	assert(pages != NULL);
 	// Get the start of the map.
-	typename std::map<size_t, Page<VAL, SGMT_SIZE> *, std::less<size_t>, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>>::reverse_iterator iter = pages->rbegin();
+	typename std::map<size_t, Page<VAL, SGMT_SIZE> *, ORDER, MemAllocator<std::pair<size_t, Page<VAL, SGMT_SIZE> *>>>::reverse_iterator iter = pages->rbegin();
 	// Advance to a target index, if specified.
 	if (startPage < SIZE_MAX)
 	{
