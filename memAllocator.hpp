@@ -99,6 +99,7 @@ public:
     // Use pointer if pointer is not a value_type*
     value_type *allocate(std::size_t n)
     {
+        //return (T *)malloc(sizeof(T) * n);
 #ifdef ALLOC_COUNT
         // Increment counter.
         count.fetch_add(n);

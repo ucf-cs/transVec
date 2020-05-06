@@ -94,7 +94,7 @@ do
                 TO_BE_PASSED="|THREAD_COUNT=$i|TRANSACTION_SIZE=$j"
 
                 # Loop through the testcases
-                for k in "04" "05" "07" "14"
+                for k in "04" "05" "07"
                 do
                     # Tab separated information (Display only the first 5 chars of DS)
                     echo -n -e "${ds:0:5}\t$k\t"                                   >> $REPORT

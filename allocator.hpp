@@ -81,6 +81,7 @@ public:
   // Get a delta page with the appropriate size.
   static DataType *alloc()
   {
+    //return new DataType();
 #ifdef ALLOC_COUNT
     // Increment counter.
     Allocator<DataType>::count.fetch_add(1);
