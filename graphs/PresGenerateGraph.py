@@ -15,7 +15,7 @@ class ScalarFormatterForceFormat(ScalarFormatter):
 
 # Read in the file as a Pandas DataFrame
 col = ['DATA STRUCTURE', 'TESTCASE', 'SGMT_SIZE', 'NUM_TXN', 'TXN_SIZE', 'THRD_CNT', 'TIME', 'ABORTS', 'SYSTEM', 'THRUPUT', 'RELATIVE', 'JOINT']
-df  = pd.read_csv('all_systems_final.txt', sep='\t', names=col, skiprows=1)
+df  = pd.read_csv('all_systems_final renamed.txt', sep='\t', names=col, skiprows=1)
 
 # The plot settings (There are a few settings you can mess around with. They're all on Google. I'll be using the defaults)
 sns.set(rc={'figure.figsize':(7.5,5)})
@@ -112,7 +112,7 @@ plt.clf()
 fil = df.loc[ \
    (df['TESTCASE']==7) & \
    (df['TXN_SIZE']==5) & \
-   ((df['DATA STRUCTURE']=='BOOST') | (df['DATA STRUCTURE']=='COMPA')) \
+   ((df['DATA STRUCTURE']=='TB') | (df['DATA STRUCTURE']=='Compact')) \
    #(df['DATA STRUCTURE']=='COMPA') \
    ]
 sns.set_style(style='white')
