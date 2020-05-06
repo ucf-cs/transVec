@@ -6,6 +6,9 @@
 
 void createTransactions()
 {
+#ifdef CONFLICT_FREE_READS
+	bool isConflictFree = true;
+#endif
 	// Prepare to read the entire vector.
 	for (size_t j = 0; j < NUM_TRANSACTIONS; j++)
 	{
@@ -21,6 +24,10 @@ void createTransactions()
 				ops[k].type = Operation::OpType::write;
 				ops[k].val = rand() % std::numeric_limits<VAL>::max();
 				ops[k].index = rand() % NUM_TRANSACTIONS;
+#ifdef CONFLICT_FREE_READS
+				// If even one operation isn't a read, then we can't execute it in a conflict-free way.
+				isConflictFree = false;
+#endif
 			}
 			else
 			{
@@ -32,7 +39,7 @@ void createTransactions()
 
 		Desc *desc = new Desc(TRANSACTION_SIZE, ops);
 #ifdef CONFLICT_FREE_READS
-		desc->isConflictFree = true;
+		desc->isConflictFree = isConflictFree;
 #endif
 		transactions->push_back(desc);
 	}
@@ -56,7 +63,7 @@ int main(void)
 	// Create our threads.
 	std::thread threads[THREAD_COUNT];
 
-		// Pre-insertion step.
+	// Pre-insertion step.
 	//threadRunner(threads, preinsert);
 	// Single-threaded alternative.
 	for (size_t i = 0; i < THREAD_COUNT; i++)

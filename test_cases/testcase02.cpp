@@ -24,7 +24,7 @@ void createTransactions()
 
 		Desc *desc = new Desc(numOps, ops);
 #ifdef CONFLICT_FREE_READS
-		desc->isConflictFree = true;
+		desc->isConflictFree = false;
 #endif
 		transactions->push_back(desc);
 	}
