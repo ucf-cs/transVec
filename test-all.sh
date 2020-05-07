@@ -48,7 +48,8 @@ make clean
 # echo "====================================================="             >> $REPORT
 # echo                                                                     >> $REPORT
 echo -n -e "DS\tTC\tSGMT\tNUM_TXN\t"     >> $REPORT
-echo -e "TXN_SIZ\tTHRD_CT\tTIME\tABRTS"                   >> $REPORT
+echo -n -e "TXN_SIZ\tTHRD_CT\tTIME\tABRTS"                   >> $REPORT
+echo -e "\tPREP\tSHARED\tTOTAL"                   >> $REPORT
 
 # More grepping to get data that will be useful to print out
 NUM_TXN=$(grep "NUM_TRANSACTIONS" define.hpp | grep "[0-9]*" -o)

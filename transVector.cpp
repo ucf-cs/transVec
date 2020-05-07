@@ -474,7 +474,7 @@ void TransactionalVector::executeTransaction(Desc *descriptor)
 #ifdef METRICS
 		descriptor->startTime = std::chrono::high_resolution_clock::now();
 		// Help-free read don't use pre-processing.
-		descriptor->preprocessTime = desc->startTime;
+		descriptor->preprocessTime = descriptor->startTime;
 #endif
 		// Call the specialized transaction function to handle it.
 		executeConflictFreeReads(descriptor);

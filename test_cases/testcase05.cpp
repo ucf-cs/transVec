@@ -63,15 +63,21 @@ int main(void)
 
 	// Get end time and count abort(s)
 	auto finish = std::chrono::high_resolution_clock::now();
+
+	auto preprocess = measurePreprocessTime(transactions);
+	auto shared = measureSharedTime(transactions);
+	auto total = measureTotalTime(transactions);
+
 	std::cout << SGMT_SIZE << "\t" << NUM_TRANSACTIONS << "\t";
 	std::cout << TRANSACTION_SIZE << "\t" << THREAD_COUNT << "\t";
 	std::cout << std::chrono::duration_cast<std::chrono::TIME_UNIT>(finish - start).count();
+	std::cout << "\t" << countAborts(transactions);
 #ifdef METRICS
-	std::cout << "Average preprocessing time" + std::chrono::duration_cast<std::chrono::TIME_UNIT>(measurePreprocessTime(transactions)).count();
-	std::cout << "Average shared memory time" + std::chrono::duration_cast<std::chrono::TIME_UNIT>(measureSharedTime(transactions)).count();
-	std::cout << "Average transaction time" + std::chrono::duration_cast<std::chrono::TIME_UNIT>(measureTotalTime(transactions)).count();
+	std::cout << "\t" << preprocess.count();
+	std::cout << "\t" << shared.count();
+	std::cout << "\t" << total.count();
 #endif
-	std::cout << "\t" << countAborts(transactions) << "\n";
+	std::cout << "\n";
 
 	// Report on allocator issues.
 	allocatorReport();

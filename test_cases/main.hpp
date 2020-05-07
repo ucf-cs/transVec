@@ -64,9 +64,9 @@ void createTransactions(int threadNum);
 size_t countAborts(std::vector<Desc *> *transactions);
 
 #ifdef METRICS
-std::chrono::high_resolution_clock::duration measurePreprocessTime([[maybe_unused]] std::vector<Desc *> *transactions);
-std::chrono::high_resolution_clock::duration measureSharedTime([[maybe_unused]] std::vector<Desc *> *transactions);
-std::chrono::high_resolution_clock::duration measureTotalTime([[maybe_unused]] std::vector<Desc *> *transactions);
+std::chrono::TIME_UNIT measurePreprocessTime([[maybe_unused]] std::vector<Desc *> *transactions);
+std::chrono::TIME_UNIT measureSharedTime([[maybe_unused]] std::vector<Desc *> *transactions);
+std::chrono::TIME_UNIT measureTotalTime([[maybe_unused]] std::vector<Desc *> *transactions);
 #endif
 
 int setMaxPriority();

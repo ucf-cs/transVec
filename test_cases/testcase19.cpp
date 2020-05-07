@@ -14,8 +14,8 @@ void createTransactions()
 		// All operations are reserve.
 		ops[0].type = Operation::OpType::reserve;
 
-		// Push random values into the vector.
-		ops[0].index = NUM_TRANSACTIONS / THREAD_COUNT;
+		// Reserve up to a large range.
+		ops[0].index = 1000000;
 
 		Desc *desc = new Desc(1, ops);
 #ifdef CONFLICT_FREE_READS
@@ -37,19 +37,8 @@ int main(void)
 	// Pre-fill the allocators.
 	allocatorInit();
 
-	// Reserve the transaction vector, for minor performance gains.
-	transactions->reserve(THREAD_COUNT);
-
 	// Create our threads.
 	std::thread threads[THREAD_COUNT];
-
-		// Pre-insertion step.
-	//threadRunner(threads, preinsert);
-	// Single-threaded alternative.
-	for (size_t i = 0; i < THREAD_COUNT; i++)
-	{
-		preinsert(i);
-	}
 
 	// Create the transactions that are to be executed and timed below
 	createTransactions();
@@ -62,15 +51,21 @@ int main(void)
 
 	// Get end time and count abort(s)
 	auto finish = std::chrono::high_resolution_clock::now();
+
+	auto preprocess = measurePreprocessTime(transactions);
+	auto shared = measureSharedTime(transactions);
+	auto total = measureTotalTime(transactions);
+
 	std::cout << SGMT_SIZE << "\t" << NUM_TRANSACTIONS << "\t";
 	std::cout << TRANSACTION_SIZE << "\t" << THREAD_COUNT << "\t";
 	std::cout << std::chrono::duration_cast<std::chrono::TIME_UNIT>(finish - start).count();
+	std::cout << "\t" << countAborts(transactions);
 #ifdef METRICS
-	std::cout << "Average preprocessing time" + std::chrono::duration_cast<std::chrono::TIME_UNIT>(measurePreprocessTime(transactions)).count();
-	std::cout << "Average shared memory time" + std::chrono::duration_cast<std::chrono::TIME_UNIT>(measureSharedTime(transactions)).count();
-	std::cout << "Average transaction time" + std::chrono::duration_cast<std::chrono::TIME_UNIT>(measureTotalTime(transactions)).count();
+	std::cout << "\t" << preprocess.count();
+	std::cout << "\t" << shared.count();
+	std::cout << "\t" << total.count();
 #endif
-	std::cout << "\t" << countAborts(transactions) << "\n";
+	std::cout << "\n";
 
 	// Report on allocator issues.
 	allocatorReport();

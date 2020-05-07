@@ -170,9 +170,9 @@ size_t countAborts([[maybe_unused]] std::vector<Desc *> *transactions)
 }
 
 #ifdef METRICS
-std::chrono::high_resolution_clock::duration measurePreprocessTime([[maybe_unused]] std::vector<Desc *> *transactions)
+std::chrono::TIME_UNIT measurePreprocessTime([[maybe_unused]] std::vector<Desc *> *transactions)
 {
-	std::chrono::high_resolution_clock::duration retVal = std::chrono::high_resolution_clock::duration::zero();
+	std::chrono::TIME_UNIT retVal = std::chrono::TIME_UNIT(0);
 	for (size_t i = 0; i < transactions->size(); i++)
 	{
 		Desc *desc = transactions->at(i);
@@ -181,9 +181,9 @@ std::chrono::high_resolution_clock::duration measurePreprocessTime([[maybe_unuse
 	retVal /= transactions->size();
 	return retVal;
 }
-std::chrono::high_resolution_clock::duration measureSharedTime([[maybe_unused]] std::vector<Desc *> *transactions)
+std::chrono::TIME_UNIT measureSharedTime([[maybe_unused]] std::vector<Desc *> *transactions)
 {
-	std::chrono::high_resolution_clock::duration retVal = std::chrono::high_resolution_clock::duration::zero();
+	std::chrono::TIME_UNIT retVal = std::chrono::TIME_UNIT(0);
 	for (size_t i = 0; i < transactions->size(); i++)
 	{
 		Desc *desc = transactions->at(i);
@@ -192,9 +192,9 @@ std::chrono::high_resolution_clock::duration measureSharedTime([[maybe_unused]] 
 	retVal /= transactions->size();
 	return retVal;
 }
-std::chrono::high_resolution_clock::duration measureTotalTime([[maybe_unused]] std::vector<Desc *> *transactions)
+std::chrono::TIME_UNIT measureTotalTime([[maybe_unused]] std::vector<Desc *> *transactions)
 {
-	std::chrono::high_resolution_clock::duration retVal = std::chrono::high_resolution_clock::duration::zero();
+	std::chrono::TIME_UNIT retVal = std::chrono::TIME_UNIT(0);
 	for (size_t i = 0; i < transactions->size(); i++)
 	{
 		Desc *desc = transactions->at(i);

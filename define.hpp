@@ -23,6 +23,8 @@
 #define HELP
 // Define this to debug allocation counting.
 //#define ALLOC_COUNT
+// Define this to capture performance metrics (average transaction times)
+#define METRICS
 
 #ifdef SEGMENTVEC
 // Define this to align SEGMENTVEC pages.
