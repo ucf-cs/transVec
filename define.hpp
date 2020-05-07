@@ -23,6 +23,8 @@
 #define HELP
 // Define this to debug allocation counting.
 //#define ALLOC_COUNT
+// Define this to optimize traversal order.
+#define HIGHTOLOW
 // Define this to capture performance metrics (average transaction times)
 #define METRICS
 
