@@ -46,6 +46,10 @@ bool BoostedVector::insertElements(Desc *descriptor)
         elem->lock.lock();
         // Push the lock to the list so we can unlock it when the transaction completes.
         descriptor->locks.push_back(elem);
+        // Abort if we are out of bounds.
+        if(iter->second->checkBounds == Assigned::yes && elem->val == UNSET) {
+            return false;
+        }
         // If any reads are pending.
         if (!iter->second->readList.empty())
         {
