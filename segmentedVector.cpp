@@ -6,7 +6,7 @@ size_t SegmentedVector<T>::highestBit(unsigned int val)
 	// Subtract 1 so the rightmost position is 0 instead of 1.
 	return (sizeof(val) * 8) - __builtin_clz(val | 1) - 1;
 
-	// Slower alternate approach.
+	// Slower alternative approach.
 	size_t onePos = 0;
 	for (size_t i = 0; i <= 8 * sizeof(size_t); i++)
 	{
@@ -63,17 +63,7 @@ bool SegmentedVector<T>::allocBucket(size_t bucket)
 #else
 	T *mem = new T[bucketSize]();
 #endif
-// Only do this if T is a pointer type.
-#ifdef SEGMENTVEC
-	// Ensure the segment is initialized to NULL.
-	// This actually doesn't need to be done explicitly.
-	/*
-	for (size_t i = 0; i < bucketSize; i++)
-	{
-		mem[i].store(NULL);
-	}
-	*/
-#endif
+
 #ifndef BOOSTEDVEC
 	// We need to initialize the NULL pointer if we want to CAS.
 	std::atomic<T> *null = NULL;
@@ -118,14 +108,6 @@ SegmentedVector<T>::SegmentedVector()
 #else
 	bucketArray = new std::atomic<T *>[buckets]();
 #endif
-	// Ensure the array is entirely NULL by default to avoid undefined behavior.
-	// NOTE: No need to do this because the array should always be NULL by default.
-	/*
-	for (size_t i = 0; i < buckets; i++)
-	{
-		bucketArray[i].store(NULL);
-	}
-	*/
 	// Initialize the first segment in the second level.
 	reserve(1);
 #ifndef BOOSTEDVEC
